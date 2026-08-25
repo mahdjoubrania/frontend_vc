@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'https://romantic-enjoyment-production-f458.up.railway.app/';
 
 const loginForm = document.getElementById('login-form');
 const alertBox = document.getElementById('alert-box');
