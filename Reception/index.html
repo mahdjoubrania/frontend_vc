@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VerifCar - Espace Réception</title>
+
+  <!-- Google Fonts & Bootstrap -->
+  <link href="../img/IMG_7697.png" rel="icon">
+  <link href="../img/IMG_7697.png" rel="apple-touch-icon">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Mobile Top Navigation Bar -->
+<header class="mobile-navbar justify-content-between align-items-center px-3 py-2 bg-white border-bottom shadow-sm">
+  <div class="d-flex align-items-center gap-2">
+    <button class="btn btn-light border-0" id="sidebar-toggle-btn" type="button">
+      <i class="bi bi-list fs-3 text-dark"></i>
+    </button>
+    <img src="../img/IMG_7697.png" alt="VérifCar Logo" style="max-height: 38px; object-fit: contain;">
+  </div>
+  <div class="avatar bg-primary text-white rounded-circle shadow-sm d-flex align-items-center justify-content-center" style="width: 34px; height: 34px; font-size: 13px;">RC</div>
+</header>
+
+<!-- Sidebar Overlay -->
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+<div class="d-flex">
+  <!-- Sidebar -->
+   <aside id="sidebar" class="sidebar p-3 d-flex flex-column justify-content-between">
+
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-4 px-2">
+          <img src="../img/IMG_7697.png" alt="VérifCar Logo" style="max-height: 45px; object-fit: contain;">
+          <div><h6 class="fw-bold mb-0 text-dark">VerifCar</h6><small class="text-muted fs-12">v1.0 - Admin</small></div>
+        </div>
+        
+          <button class="btn-close d-lg-none" id="sidebar-close-btn"></button>
+
+        <div class="menu-label">RECEPTION</div>
+        <ul class="nav nav-pills flex-column mb-3">
+          <li class="nav-item"><a href="index.html" class="nav-link active"><i class="bi bi-grid-1x2 me-2"></i> Tableau de bord</a></li>
+          <li class="nav-item"><a href="clients.html" class="nav-link text-secondary"><i class="bi bi-car-front me-2"></i> Clients & Véhicules</a></li>
+          <li class="nav-item"><a href="rapports.html" class="nav-link text-secondary"><i class="bi bi-file-earmark-bar-graph me-2"></i> Rapports D'Inspection</a></li>
+        </ul>
+      </div>
+
+            <div class="user-profile p-2 rounded d-flex align-items-center justify-content-between border-top pt-3">
+        <div class="d-flex align-items-center gap-2">
+          <div class="avatar bg-primary text-white rounded-circle" id="admin-avatar">--</div>
+          <div>
+            <h6 class="mb-0 fw-bold fs-14" id="admin-name">Chargement...</h6>
+            <small class="text-muted fs-12">Reception</small>
+          </div>
+        </div>
+        <button id="logout-btn" class="btn btn-link text-danger p-0 fs-5" title="Déconnexion"><i class="bi bi-box-arrow-right"></i></button>
+      </div>
+    </aside>
+    <!-- Main Content Area -->
+    <main class="main-content flex-grow-1 p-3 p-lg-4">
+      
+      <!-- Section 1: Rendez-vous -->
+      <section id="section-appointments" class="tab-section">
+        
+        <!-- Header Bar -->
+        <header class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+          <div>
+            <h4 class="fw-bold text-dark mb-1 fs-5 fs-lg-4">Accueil & Prise de Rendez-vous</h4>
+            <p class="text-muted small mb-0">Gestion des entrées du jour, suivi des délais (1h) et paiements</p>
+          </div>
+          <button class="btn btn-primary custom-btn custom-btn-primary shadow-sm w-100 w-sm-auto" data-bs-toggle="modal" data-bs-target="#addRendezVousModal">
+            <i class="bi bi-plus-lg me-1"></i> Nouveau Rendez-vous
+          </button>
+        </header>
+
+        <!-- KPI Cards Summary -->
+        <div class="row g-2 g-md-3 mb-4">
+          <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm p-3 kpi-card kpi-today bg-white h-100">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="text-muted fs-11 fw-bold text-uppercase">Aujourd'hui</div>
+                  <h3 class="fw-bold text-dark my-1" id="count-today">0</h3>
+                  <span class="text-muted fs-12 d-none d-sm-inline">Rendez-vous</span>
+                </div>
+                <div class="kpi-icon bg-primary bg-opacity-10 text-primary">
+                  <i class="bi bi-calendar-event"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm p-3 kpi-card kpi-pending bg-white h-100">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="text-muted fs-11 fw-bold text-uppercase">En Attente</div>
+                  <h3 class="fw-bold text-warning my-1" id="count-pending">0</h3>
+                  <span class="text-muted fs-12 d-none d-sm-inline">Au garage</span>
+                </div>
+                <div class="kpi-icon bg-warning bg-opacity-10 text-warning">
+                  <i class="bi bi-hourglass-split"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm p-3 kpi-card kpi-progress bg-white h-100">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="text-muted fs-11 fw-bold text-uppercase">En Cours</div>
+                  <h3 class="fw-bold text-info my-1" id="count-progress">0</h3>
+                  <span class="text-muted fs-12 d-none d-sm-inline">Inspection</span>
+                </div>
+                <div class="kpi-icon bg-info bg-opacity-10 text-info">
+                  <i class="bi bi-tools"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm p-3 kpi-card kpi-completed bg-white h-100">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="text-muted fs-11 fw-bold text-uppercase">Terminés</div>
+                  <h3 class="fw-bold text-success my-1" id="count-completed">0</h3>
+                  <span class="text-muted fs-12 d-none d-sm-inline">Prêts</span>
+                </div>
+                <div class="kpi-icon bg-success bg-opacity-10 text-success">
+                  <i class="bi bi-check2-circle"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Data Card -->
+        <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 bg-white">
+          <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
+            <h5 class="fw-bold text-dark mb-0 fs-6 fs-md-5">Rendez-vous & Inspections du jour</h5>
+            
+            <div class="d-flex flex-column flex-sm-row gap-2 align-items-stretch align-items-sm-center">
+              <div class="btn-group btn-group-sm w-100 w-sm-auto" role="group">
+                <button type="button" class="btn btn-outline-primary active px-3" id="btn-view-table" onclick="toggleView('table')">
+                  <i class="bi bi-table me-1"></i> Tableau
+                </button>
+                <button type="button" class="btn btn-outline-primary px-3" id="btn-view-calendar" onclick="toggleView('calendar')">
+                  <i class="bi bi-calendar3 me-1"></i> Calendrier
+                </button>
+              </div>
+
+              <div class="input-group input-group-sm style-search w-100" style="max-width: 300px;">
+                <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                <input type="text" id="search-input" class="form-control bg-light border-start-0" placeholder="Rechercher client, véhicule...">
+              </div>
+            </div>
+          </div>
+
+          <!-- Table View -->
+          <div id="view-table-container" class="table-responsive">
+            <table class="table align-middle custom-table mb-0">
+              <thead>
+                <tr>
+                  <th>CLIENT</th>
+                  <th>TÉLÉPHONE</th>
+                  <th>VÉHICULE / MATRICULE</th>
+                  <th>HEURE</th>
+                  <th>ATELIER</th>
+                  <th>TEMPS RESTANT</th>
+                  <th>PAIEMENT</th>
+                  <th>STATUT</th>
+                  <th class="text-end">ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody id="rdv-table-body">
+                <!-- Dynamic Content -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Calendar View Container -->
+          <div id="view-calendar-container" class="d-none mt-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <button class="btn btn-sm btn-outline-secondary px-3" onclick="changeMonth(-1)"><i class="bi bi-chevron-left me-1"></i> Précédent</button>
+              <h6 class="fw-bold mb-0 text-capitalize text-dark" id="calendar-month-year"></h6>
+              <button class="btn btn-sm btn-outline-secondary px-3" onclick="changeMonth(1)">Suivant <i class="bi bi-chevron-right ms-1"></i></button>
+            </div>
+            <div class="calendar-grid" id="calendar-grid">
+              <!-- Dynamic Calendar -->
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Section 2: Clients -->
+      <section id="section-clients" class="tab-section d-none">
+        <header class="mb-4">
+          <h4 class="fw-bold text-dark mb-1">Clients & Véhicules</h4>
+          <p class="text-muted small mb-0">Base de données des clients enregistrés et historique des véhicules</p>
+        </header>
+        <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 bg-white">
+          <div class="table-responsive">
+            <table class="table align-middle custom-table mb-0">
+              <thead>
+                <tr>
+                  <th>NOM CLIENT</th>
+                  <th>TÉLÉPHONE</th>
+                  <th>IDENTIFIANT / N° NATIONALE</th>
+                  <th>DATE D'INSCRIPTION</th>
+                </tr>
+              </thead>
+              <tbody id="clients-table-body">
+                <!-- Dynamic Content -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 3: Rapports -->
+      <section id="section-reports" class="tab-section d-none">
+        <header class="mb-4">
+          <h4 class="fw-bold text-dark mb-1">Rapports</h4>
+          <p class="text-muted small mb-0">Aperçu des performances, revenus et statistiques d'inspection</p>
+        </header>
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+          <div class="text-center py-5 text-muted">
+            <i class="bi bi-bar-chart-line fs-1 text-secondary mb-2 d-block"></i>
+            <h6 class="fw-bold">Rapports et statistiques</h6>
+            <p class="small mb-0">Les données de ventes et d'inspections s'afficheront ici.</p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Modal Nouveau Rendez-vous -->
+  <div class="modal fade" id="addRendezVousModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow-lg rounded-4">
+        <div class="modal-header border-bottom p-3 px-4">
+          <h5 class="fw-bold modal-title text-dark fs-6 fs-md-5"><i class="bi bi-car-front text-primary me-2"></i>Nouveau Client & Rendez-vous</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        
+        <form id="rdv-form">
+          <div class="modal-body p-3 p-md-4">
+            <div class="row g-3">
+              <!-- Client Info -->
+              <div class="col-12"><h6 class="fw-bold text-primary fs-12 text-uppercase mb-0"><i class="bi bi-person me-1"></i> Informations Client</h6></div>
+              <div class="col-12 col-md-6">
+                <label class="form-label small text-muted fw-semibold">Nom & Prénom *</label>
+                <input type="text" id="client-name" class="form-control" placeholder="ex: Karim Benali" required>
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="form-label small text-muted fw-semibold">Numéro de Téléphone *</label>
+                <input type="tel" id="client-phone" class="form-control" placeholder="0550123456" required>
+              </div>
+
+              <!-- Car Info -->
+              <div class="col-12 mt-3"><h6 class="fw-bold text-primary fs-12 text-uppercase mb-0"><i class="bi bi-car-front me-1"></i> Informations Véhicule</h6></div>
+              <div class="col-12 col-md-4">
+                <label class="form-label small text-muted fw-semibold">Marque & Modèle *</label>
+                <input type="text" id="car-make-model" class="form-control" placeholder="ex: Golf 7" required>
+              </div>
+              <div class="col-12 col-md-4">
+                <label class="form-label small text-muted fw-semibold">Immatriculation *</label>
+                <input type="text" id="car-matricule" class="form-control" placeholder="ex: 12345 116 16" required>
+              </div>
+              <div class="col-12 col-md-4">
+                <label class="form-label small text-muted fw-semibold">N° Châssis (VIN)</label>
+                <input type="text" id="car-vin" class="form-control" placeholder="Numéro VIN (Optionnel)">
+              </div>
+
+              <!-- Services -->
+              <div class="col-12 mt-3"><h6 class="fw-bold text-primary fs-12 text-uppercase mb-0"><i class="bi bi-check2-square me-1"></i> Type de Prestation</h6></div>
+              <div class="col-12">
+                <div class="row g-2 bg-light p-3 rounded-3 border mx-0">
+                  <div class="col-6 col-sm-4">
+                    <div class="form-check">
+                      <input class="form-check-input service-checkbox" type="checkbox" value="VÉRIFICATION COMPLÈTE" id="srv-1">
+                      <label class="form-check-label fs-12 fw-semibold" for="srv-1">VÉRIFICATION COMPLÈTE</label>
+                    </div>
+                  </div>
+                  <div class="col-6 col-sm-4">
+                    <div class="form-check">
+                      <input class="form-check-input service-checkbox" type="checkbox" value="KILOMETRAGE" id="srv-2">
+                      <label class="form-check-label fs-12 fw-semibold" for="srv-2">KILOMETRAGE</label>
+                    </div>
+                  </div>
+                  <div class="col-6 col-sm-4">
+                    <div class="form-check">
+                      <input class="form-check-input service-checkbox" type="checkbox" value="MOTEUR" id="srv-3">
+                      <label class="form-check-label fs-12 fw-semibold" for="srv-3">MOTEUR</label>
+                    </div>
+                  </div>
+                  <div class="col-6 col-sm-4">
+                    <div class="form-check">
+                      <input class="form-check-input service-checkbox" type="checkbox" value="TOLE" id="srv-4">
+                      <label class="form-check-label fs-12 fw-semibold" for="srv-4">TOLE</label>
+                    </div>
+                  </div>
+                  <div class="col-6 col-sm-4">
+                    <div class="form-check">
+                      <input class="form-check-input service-checkbox" type="checkbox" value="SUSPENSION" id="srv-5">
+                      <label class="form-check-label fs-12 fw-semibold" for="srv-5">SUSPENSION</label>
+                    </div>
+                  </div>
+                  <div class="col-6 col-sm-4">
+                    <div class="form-check">
+                      <input class="form-check-input service-checkbox" type="checkbox" value="SCANNER" id="srv-6">
+                      <label class="form-check-label fs-12 fw-semibold" for="srv-6">SCANNER</label>
+                    </div>
+                  </div>
+                </div>
+                <input type="text" id="service-autre" class="form-control mt-2" placeholder="Autre prestation spécifique...">
+              </div>
+
+              <!-- Date & Payment -->
+              <div class="col-12 mt-3"><h6 class="fw-bold text-primary fs-12 text-uppercase mb-0"><i class="bi bi-clock me-1"></i> Planning & Règlement</h6></div>
+              <div class="col-6">
+                <label class="form-label small text-muted fw-semibold">Date *</label>
+                <input type="date" id="rdv-date-only" class="form-control" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label small text-muted fw-semibold">Heure *</label>
+                <input type="time" id="rdv-time-only" class="form-control" required>
+              </div>
+
+              <div class="col-6">
+                <label class="form-label small text-muted fw-semibold">Prix Total (DZD) *</label>
+                <input type="number" id="total-amount" class="form-control" placeholder="9000" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label small text-muted fw-semibold">Versement (DZD) *</label>
+                <input type="number" id="versement-amount" class="form-control" placeholder="4000" required>
+              </div>
+
+              <!-- Remarks -->
+              <div class="col-12">
+                <label class="form-label small text-muted fw-semibold">Remarques</label>
+                <textarea id="vehicle-notes" class="form-control" rows="2" placeholder="Notes particulières..."></textarea>
+              </div>
+            </div>
+          </div>
+          
+          <div class="modal-footer border-top p-3 px-4 bg-light rounded-bottom-4">
+            <button type="button" class="btn btn-light px-4 fw-semibold" data-bs-dismiss="modal">Annuler</button>
+            <button type="submit" class="btn btn-primary custom-btn px-4 fw-bold">Enregistrer</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="reception.js"></script>
+  
+ <script>
+  function loadAdminProfile() {
+    const userSessionRaw = localStorage.getItem('verifcar_admin_user');
+    const userSession = userSessionRaw ? JSON.parse(userSessionRaw) : null;
+
+    if (userSession) {
+      const adminFullName = userSession.fullName || userSession.full_name || 'Admin';
+      if (document.getElementById('admin-name')) {
+        document.getElementById('admin-name').innerText = adminFullName;
+      }
+      if (document.getElementById('admin-avatar')) {
+        document.getElementById('admin-avatar').innerText = adminFullName.charAt(0).toUpperCase();
+      }
+    } else {
+      if (document.getElementById('admin-name')) document.getElementById('admin-name').innerText = 'Administrateur';
+      if (document.getElementById('admin-avatar')) document.getElementById('admin-avatar').innerText = 'AD';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    loadAdminProfile();
+    
+    const toggleBtn = document.getElementById('sidebar-toggle-btn');
+    const closeBtn = document.getElementById('sidebar-close-btn');
+    const sidebar = document.querySelector('.sidebar'); // التحديد بواسطة الكلاس لتجنب error null
+    const overlay = document.getElementById('sidebar-overlay');
+
+    function openSidebar() {
+      if (sidebar) sidebar.classList.add('show');
+      if (overlay) overlay.classList.add('show');
+    }
+
+    function closeSidebar() {
+      if (sidebar) sidebar.classList.remove('show');
+      if (overlay) overlay.classList.remove('show');
+    }
+
+    if (toggleBtn) toggleBtn.addEventListener('click', openSidebar);
+    if (closeBtn) closeBtn.addEventListener('click', closeSidebar);
+    if (overlay) overlay.addEventListener('click', closeSidebar);
+  });
+</script>
+</body>
+</html>
