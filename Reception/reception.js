@@ -27,7 +27,7 @@ function checkAuth() {
 
   if (!rawUser || !token) {
     alert('Accès non autorisé.');
-    window.location.href = '../auth/auth.html';
+    window.location.href = '../Auth/auth.html';
     return;
   }
 
@@ -36,7 +36,7 @@ function checkAuth() {
 
   if (!allowedRoles.includes(userRole)) {
     alert('Accès non autorisé.');
-    window.location.href = '../auth/auth.html';
+    window.location.href = '../Auth/auth.html';
     return;
   }
 
