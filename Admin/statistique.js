@@ -1,5 +1,5 @@
 
-const API_BASE_URL = 'https://romantic-enjoyment-production-f458.up.railway.app';
+const API_BASE_URL = 'https://romantic-enjoyment-production-f458.up.railway.app/api';
 
 let revenueChartInstance = null;
 let typeChartInstance = null;
