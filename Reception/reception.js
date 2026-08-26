@@ -320,6 +320,21 @@ async function handleNewAppointment(e) {
   const make = carInput[0] || 'Inconnu';
   const model = carInput.slice(1).join(' ') || 'Inconnu';
 
+  // --- حساب مبالغ الدفع وتحديد حالة التسديد تلقائياً ---
+  const totalAmount = parseFloat(document.getElementById('total-amount').value) || 0;
+  const versement = parseFloat(document.getElementById('versement-amount').value) || 0;
+  const rest = totalAmount - versement;
+
+  let calculatedPaymentStatus = 'PENDING_VERSEMENT'; // القيمة الافتراضية إذا لم يدفع شيئاً (أو 'UNPAID')
+
+  if (versement <= 0) {
+    calculatedPaymentStatus = 'PENDING_VERSEMENT'; // لم يدفع بتاتاً
+  } else if (rest <= 0) {
+    calculatedPaymentStatus = 'FULLY_PAID'; // دفع تام
+  } else {
+    calculatedPaymentStatus = 'ADVANCE_PAID'; // دفع جزء والباقي ما زال متبقياً (عربون/تسديد جزئي)
+  }
+
   const payload = {
     clientName: document.getElementById('client-name').value.trim(),
     phone: document.getElementById('client-phone').value.trim(),
@@ -329,10 +344,10 @@ async function handleNewAppointment(e) {
     vin: document.getElementById('car-vin').value.trim(),
     typedeverification: selectedServices.join(', '),
     appointmentDate: fullDateTime,
-    totalAmount: parseFloat(document.getElementById('total-amount').value) || 0,
-    versement: parseFloat(document.getElementById('versement-amount').value) || 0,
+    totalAmount: totalAmount,
+    versement: versement,
     notes: document.getElementById('vehicle-notes').value.trim(),
-    paymentStatus: 'UNPAID',
+    paymentStatus: calculatedPaymentStatus, // استخدام الحالة المحسوبة ديناميكياً
     status: 'PENDING'
   };
 
