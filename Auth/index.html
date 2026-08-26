@@ -54,7 +54,7 @@
           <div class="text-center mb-4">
             <img src="../img/IMG_7697.png" alt="VérifCar Logo" class="auth-logo mb-3">
             <h4 class="fw-bold text-dark m-0">Espace Connexion</h4>
-            <p class="text-muted small mt-1">Sélectionnez votre rôle et saisissez votre mot de passe</p>
+            <p class="text-muted small mt-1">Sélectionnez votre Numéro de Téléphone et saisissez votre mot de passe</p>
           </div>
 
           <!-- Alert Box -->
@@ -62,20 +62,14 @@
 
           <!-- Form -->
           <form id="login-form" autocomplete="off">
-            
-
             <div class="input-group-custom">
-              <label for="Role">Rôle utilisateur</label>
-              <div class="input-box">
-                <i class="bi bi-person-badge-fill"></i>
-                <select id="Role" name="username" class="form-select" autocomplete="username" required>
-  <option value="" disabled selected>Sélectionnez votre rôle</option>
-  <option value="ADMIN">ADMIN</option>
-  <option value="RECEPTION">RECEPTION</option>
-  <option value="TECHNICIAN">TECHNICIAN</option>
-</select>
-              </div>
-            </div>
+  <label for="phone">Numéro de Téléphone</label>
+  <div class="input-box">
+    <i class="bi bi-telephone-fill"></i>
+    <input type="tel" id="phone" name="phone" class="form-control" placeholder="06XXXXXXXX" required>
+  </div>
+</div>
+            
 
             <!-- Password -->
             <div class="input-group-custom mb-4">

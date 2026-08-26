@@ -2,7 +2,7 @@ const API_URL = 'https://romantic-enjoyment-production-f458.up.railway.app/api';
 
 const loginForm = document.getElementById('login-form');
 const alertBox = document.getElementById('alert-box');
-const roleInput = document.getElementById('Role'); 
+const phoneInput = document.getElementById('phone'); 
 const passwordInput = document.getElementById('password');
 const togglePasswordBtn = document.getElementById('toggle-password');
 const toggleIcon = document.getElementById('toggle-icon');
@@ -10,7 +10,7 @@ const btnSubmit = document.getElementById('btn-submit');
 const btnText = document.getElementById('btn-text');
 const btnSpinner = document.getElementById('btn-spinner');
 
-
+// إظهار وإخفاء كلمة المرور
 if (togglePasswordBtn && passwordInput && toggleIcon) {
   togglePasswordBtn.addEventListener('click', () => {
     const isPassword = passwordInput.type === 'password';
@@ -19,15 +19,15 @@ if (togglePasswordBtn && passwordInput && toggleIcon) {
   });
 }
 
-
+// معالجة تسجيل الدخول
 if (loginForm) {
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    const role = roleInput ? roleInput.value.trim() : '';
+    const phone = phoneInput ? phoneInput.value.trim() : '';
     const password = passwordInput ? passwordInput.value.trim() : '';
 
-    if (!role || !password) {
+    if (!phone || !password) {
       showAlert('Veuillez remplir tous les champs.', 'danger');
       return;
     }
@@ -39,14 +39,13 @@ if (loginForm) {
       const res = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role, password }) 
+        body: JSON.stringify({ phone, password }) 
       });
 
       const data = await res.json();
 
       if (res.ok) {
-        const userData = data.user || { role: role, fullName: 'User' };
-        localStorage.setItem('verifcar_admin_user', JSON.stringify(userData));
+        const userData = data.user || { phone: phone, fullName: 'User' };
         
         if (data.token) {
           localStorage.setItem('token', data.token);
@@ -54,12 +53,18 @@ if (loginForm) {
 
         showAlert('Connexion réussie, redirection...', 'success');
 
+        // التوجيه والتخزين بحسب الدور المرجع من قاعدة البيانات
         setTimeout(() => {
-          if (userData.role === 'ADMIN') {
+          const userRole = (userData.role || '').toUpperCase();
+
+          if (userRole === 'ADMIN') {
+            localStorage.setItem('verifcar_admin_user', JSON.stringify(userData));
             window.location.href = '../Admin/index.html'; 
-          } else if (userData.role === 'RECEPTION') {
+          } else if (userRole === 'RECEPTION') {
+            localStorage.setItem('verifcar_reception_user', JSON.stringify(userData));
             window.location.href = '../Reception/index.html'; 
           } else {
+            localStorage.setItem('verifcar_user', JSON.stringify(userData));
             window.location.href = '../Admin/index.html';
           }
         }, 800);
