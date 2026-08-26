@@ -4,6 +4,17 @@ let revenueChartInstance = null;
 let typeChartInstance = null;
 let rawRevenueData = []; 
 
+// الحصول على توكن التوثيق من الجلسة
+function getAuthToken() {
+  const userSessionRaw = localStorage.getItem('verifcar_admin_user');
+  if (!userSessionRaw) return '';
+  try {
+    const userSession = JSON.parse(userSessionRaw);
+    return userSession.token || userSession.accessToken || '';
+  } catch (e) {
+    return '';
+  }
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   const userSessionRaw = localStorage.getItem('verifcar_admin_user');
@@ -11,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (!userSession || userSession.role !== 'ADMIN') {
     alert('Accès refusé : Seul l\'administrateur est autorisé à accéder à cette page.');
-    window.location.href = '../Auth/auth.html';
+    window.location.href = '../Auth/index.html';
     return;
   }
 
@@ -22,9 +33,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   initMobileSidebar();
   setupFilterEvents();
-  loadDashboardData();
+  loadDashboardSummary(); // تم تصحيح استدعاء الدالة الرئيسية هنا
 });
-
 
 function initMobileSidebar() {
   const sidebar = document.getElementById('sidebar');
@@ -35,29 +45,68 @@ function initMobileSidebar() {
   if (closeBtn && sidebar) closeBtn.addEventListener('click', () => sidebar.classList.remove('show'));
 }
 
-
 async function loadDashboardSummary() {
   try {
-    const res = await fetch(`${API_URL}/admin/dashboard`, {
-      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    // 1. طلب بيانات اللوحة الرئيسية بالمسار الصحيح
+    const res = await fetch(`${API_URL}/admin/dashboard-summary`, {
+      headers: { 
+        'Authorization': `Bearer ${getAuthToken()}`,
+        'Content-Type': 'application/json'
+      }
     });
     
     if (res.ok) {
       const data = await res.json();
       
-      // تحديث بطاقات الإحصائيات (KPI Cards)
+      // 2. تحديث بطاقات الإحصائيات (KPI Cards)
       if (data.users) {
-        document.getElementById('total-users').innerText = data.users.totalUsers || 0;
-        document.getElementById('reception-count').innerText = data.users.receptionCount || 0;
-        document.getElementById('tech-count').innerText = data.users.techCount || 0;
-        document.getElementById('admin-count').innerText = data.users.adminCount || 0;
+        const totalUsersElem = document.getElementById('total-users-count') || document.getElementById('total-users');
+        if (totalUsersElem) totalUsersElem.innerText = data.users.totalUsers || 0;
+        
+        if (document.getElementById('reception-count')) 
+          document.getElementById('reception-count').innerText = data.users.receptionCount || 0;
+        if (document.getElementById('tech-count')) 
+          document.getElementById('tech-count').innerText = data.users.techCount || 0;
+        if (document.getElementById('admin-count')) 
+          document.getElementById('admin-count').innerText = data.users.adminCount || 0;
+      }
+
+      // 3. رسم مخطط الإيرادات
+      if (data.revenue) {
+        rawRevenueData = data.revenue;
+        filterAndRenderRevenue();
+      }
+
+      // 4. رسم مخطط أنواع الفحوصات
+      if (data.inspectionTypes) {
+        initTypeChart(data.inspectionTypes);
       }
     }
+
+    // 5. جلب جدول المواعيد الأخيرة
+    loadRecentAppointments();
+
   } catch (error) {
     console.error("Erreur lors du chargement des statistiques:", error);
   }
 }
 
+async function loadRecentAppointments() {
+  try {
+    const res = await fetch(`${API_URL}/admin/appointments?limit=5`, {
+      headers: { 
+        'Authorization': `Bearer ${getAuthToken()}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    if (res.ok) {
+      const appointments = await res.json();
+      renderRecentTickets(Array.isArray(appointments) ? appointments.slice(0, 5) : []);
+    }
+  } catch (error) {
+    console.error("Erreur lors du chargement des rendez-vous récents:", error);
+  }
+}
 
 function setupFilterEvents() {
   const periodSelect = document.getElementById('revenue-period-select');
@@ -76,11 +125,9 @@ function setupFilterEvents() {
   applyBtn?.addEventListener('click', filterAndRenderRevenue);
 }
 
-
 function filterAndRenderRevenue() {
   const period = document.getElementById('revenue-period-select')?.value || 'year';
   const now = new Date();
-
 
   if (period === 'year') {
     const monthLabels = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
@@ -99,7 +146,6 @@ function filterAndRenderRevenue() {
     return;
   }
 
-  
   let datesList = [];
 
   if (period === 'month') {
@@ -131,7 +177,6 @@ function filterAndRenderRevenue() {
     }
   }
 
-
   const totalsMap = {};
   const versementsMap = {};
 
@@ -140,7 +185,6 @@ function filterAndRenderRevenue() {
     versementsMap[d] = 0;
   });
 
- 
   rawRevenueData.forEach(item => {
     const itemDate = item.date ? item.date.split('T')[0] : null;
     if (itemDate && totalsMap.hasOwnProperty(itemDate)) {
@@ -148,7 +192,6 @@ function filterAndRenderRevenue() {
       versementsMap[itemDate] += Number(item.total_versement) || 0;
     }
   });
-
 
   const displayLabels = datesList.map(d => {
     const parts = d.split('-');
@@ -160,7 +203,6 @@ function filterAndRenderRevenue() {
 
   renderRevenueChart(displayLabels, totalsData, versementsData);
 }
-
 
 function renderRevenueChart(labels, totalPrixData, versementData) {
   const ctx = document.getElementById('revenueChart');
@@ -242,23 +284,26 @@ function initTypeChart(inspectionTypes) {
   });
 }
 
-
 function renderRecentTickets(tickets) {
   const tableBody = document.getElementById('recent-tickets-body');
   if (!tableBody) return;
 
-  if (tickets.length === 0) {
+  if (!tickets || tickets.length === 0) {
     tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-3">Aucun rendez-vous récent</td></tr>`;
     return;
   }
 
   tableBody.innerHTML = '';
   tickets.forEach(ticket => {
+    const ticketNum = ticket.ticket_number || ticket.id || '-';
+    const clientName = ticket.client_name || ticket.client_full_name || 'N/A';
+    const vehicleName = ticket.vehicle_name || (ticket.brand ? `${ticket.brand} ${ticket.model || ''}` : 'N/A');
+
     const row = `
       <tr>
-        <td class="fw-bold text-primary">#RDV-${ticket.ticket_number}</td>
-        <td><div class="fw-semibold text-dark">${ticket.client_name || 'N/A'}</div></td>
-        <td>${ticket.vehicle_name || 'N/A'}</td>
+        <td class="fw-bold text-primary">#RDV-${ticketNum}</td>
+        <td><div class="fw-semibold text-dark">${clientName}</div></td>
+        <td>${vehicleName}</td>
         <td>${formatDateTime(ticket.appointment_date)}</td>
         <td><span class="badge ${getStatusBadgeClass(ticket.status)} px-2 py-1">${ticket.status || 'PENDING'}</span></td>
         <td class="fw-bold text-dark">${ticket.total_amount ? Number(ticket.total_amount).toLocaleString() + ' DZD' : '-'}</td>
@@ -273,6 +318,7 @@ function getStatusBadgeClass(status) {
     case 'COMPLETED': return 'bg-success-subtle text-success';
     case 'PENDING': return 'bg-warning-subtle text-warning';
     case 'CANCELLED':
+    case 'CANCELED':
     case 'NO_SHOW': return 'bg-danger-subtle text-danger';
     default: return 'bg-primary-subtle text-primary';
   }
@@ -285,7 +331,6 @@ function formatDateTime(dateTimeStr) {
          ' ' + 
          date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 }
-
 
 const logoutBtn = document.getElementById('logout-btn');
 if (logoutBtn) {
