@@ -27,7 +27,7 @@ function checkAuth() {
 
   if (!rawUser || !token) {
     alert('Accès non autorisé.');
-    window.location.href = '../Auth/auth.html';
+    window.location.href = '../Auth/index.html';
     return;
   }
 
@@ -36,7 +36,7 @@ function checkAuth() {
 
   if (!allowedRoles.includes(userRole)) {
     alert('Accès non autorisé.');
-    window.location.href = '../Auth/auth.html';
+    window.location.href = '../Auth/index.html';
     return;
   }
 
@@ -71,7 +71,7 @@ async function loadDashboardData() {
       renderCalendarView();
     } else if (res.status === 401 || res.status === 403) {
       alert('Session expirée. Veuillez vous reconnecter.');
-      window.location.href = '../Auth/auth.html';
+      window.location.href = '../Auth/index.html';
     }
   } catch (error) {
     console.error('Erreur lors du chargement des rendez-vous:', error);
@@ -251,7 +251,7 @@ function setupEventListeners() {
       localStorage.removeItem('verifcar_reception_user');
       localStorage.removeItem('verifcar_user');
       localStorage.removeItem('verifcar_admin_user');
-      window.location.href = '../Auth/auth.html';
+      window.location.href = '../Auth/index.html';
     });
   }
 
