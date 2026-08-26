@@ -364,28 +364,46 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="reception.js"></script>
   
- <script>
-  function loadAdminProfile() {
-    const userSessionRaw = localStorage.getItem('verifcar_admin_user');
-    const userSession = userSessionRaw ? JSON.parse(userSessionRaw) : null;
+<script>
+  // التحقق من صلاحيات الدخول وتحميل بيانات المستخدم
+  function initAuthAndProfile() {
+    // قراءة البيانات من المفتاح الخاص بالاستقبال أو المفاتيح البديلة
+    const rawUser = localStorage.getItem('verifcar_reception_user') 
+                 || localStorage.getItem('verifcar_user') 
+                 || localStorage.getItem('verifcar_admin_user');
+    const token = localStorage.getItem('token');
 
-    if (userSession) {
-      const adminFullName = userSession.fullName || userSession.full_name || 'Admin';
-      if (document.getElementById('admin-name')) {
-        document.getElementById('admin-name').innerText = adminFullName;
-      }
-      if (document.getElementById('admin-avatar')) {
-        document.getElementById('admin-avatar').innerText = adminFullName.charAt(0).toUpperCase();
-      }
-    } else {
-      if (document.getElementById('admin-name')) document.getElementById('admin-name').innerText = 'Administrateur';
-      if (document.getElementById('admin-avatar')) document.getElementById('admin-avatar').innerText = 'AD';
+    // إذا لم تكن البيانات أو الـ token موجودة، يتم التوجيه لصفحة الدخول
+    if (!rawUser || !token) {
+      alert('Accès non autorisé.');
+      window.location.href = '../Auth/auth.html';
+      return;
     }
+
+    const userSession = JSON.parse(rawUser);
+    const userRole = (userSession.role || '').toUpperCase();
+
+    // السماح فقط لموظفي الاستقبال والمسؤولين
+    if (userRole !== 'RECEPTION' && userRole !== 'ADMIN') {
+      alert('Accès non autorisé.');
+      window.location.href = '../Auth/auth.html';
+      return;
+    }
+
+    // عرض بيانات الاسم والصورة الشخصية (Avatar)
+    const fullName = userSession.fullName || userSession.full_name || 'Réception';
+    const nameElem = document.getElementById('admin-name');
+    const avatarElem = document.getElementById('admin-avatar');
+
+    if (nameElem) nameElem.innerText = fullName;
+    if (avatarElem) avatarElem.innerText = fullName.charAt(0).toUpperCase();
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    loadAdminProfile();
+    // 1. تشغيل فحص الدخول وتحديث الملف الشخصي
+    initAuthAndProfile();
     
+    // 2. التحكم في الشريحة الجانبية (Sidebar) للشاشات الصغيرة
     const toggleBtn = document.getElementById('sidebar-toggle-btn');
     const closeBtn = document.getElementById('sidebar-close-btn');
     const sidebar = document.querySelector('.sidebar'); 
@@ -404,6 +422,17 @@
     if (toggleBtn) toggleBtn.addEventListener('click', openSidebar);
     if (closeBtn) closeBtn.addEventListener('click', closeSidebar);
     if (overlay) overlay.addEventListener('click', closeSidebar);
+
+    // 3. معالجة زر تسجيل الخروج
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('verifcar_reception_user');
+        localStorage.removeItem('verifcar_user');
+        window.location.href = '../Auth/auth.html';
+      });
+    }
   });
 </script>
 </body>

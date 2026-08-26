@@ -13,19 +13,42 @@ document.addEventListener('DOMContentLoaded', () => {
   setupEventListeners();
 });
 
+function getAuthToken() {
+  return localStorage.getItem('token') || '';
+}
+
 function checkAuth() {
-  const userSession = JSON.parse(localStorage.getItem('verifcar_admin_user'));
+  const rawUser = localStorage.getItem('verifcar_reception_user') 
+               || localStorage.getItem('verifcar_user') 
+               || localStorage.getItem('verifcar_admin_user');
+  
+  const token = getAuthToken();
   const allowedRoles = ['ADMIN', 'RECEPTION'];
 
-  if (!userSession || !allowedRoles.includes(userSession.role)) {
+  if (!rawUser || !token) {
     alert('Accès non autorisé.');
     window.location.href = '../Auth/auth.html';
     return;
   }
 
-  const nameEl = document.getElementById('receptionist-name');
-  if (nameEl && userSession.fullName) {
-    nameEl.innerText = userSession.fullName;
+  const userSession = JSON.parse(rawUser);
+  const userRole = (userSession.role || '').toUpperCase();
+
+  if (!allowedRoles.includes(userRole)) {
+    alert('Accès non autorisé.');
+    window.location.href = '../Auth/auth.html';
+    return;
+  }
+
+  const nameEl = document.getElementById('admin-name') || document.getElementById('receptionist-name');
+  if (nameEl && (userSession.fullName || userSession.full_name)) {
+    nameEl.innerText = userSession.fullName || userSession.full_name;
+  }
+
+  const avatarEl = document.getElementById('admin-avatar');
+  if (avatarEl && (userSession.fullName || userSession.full_name)) {
+    const name = userSession.fullName || userSession.full_name;
+    avatarEl.innerText = name.charAt(0).toUpperCase();
   }
 }
 
@@ -34,12 +57,21 @@ function checkAuth() {
 // ==========================================
 async function loadDashboardData() {
   try {
-    const res = await fetch(`${API_URL}/admin/appointments`);
+    const res = await fetch(`${API_URL}/admin/appointments`, {
+      headers: {
+        'Authorization': `Bearer ${getAuthToken()}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
     if (res.ok) {
       appointmentsData = await res.json();
       renderAppointmentsTable(appointmentsData);
       updateKPIs(appointmentsData);
       renderCalendarView();
+    } else if (res.status === 401 || res.status === 403) {
+      alert('Session expirée. Veuillez vous reconnecter.');
+      window.location.href = '../Auth/auth.html';
     }
   } catch (error) {
     console.error('Erreur lors du chargement des rendez-vous:', error);
@@ -50,20 +82,17 @@ function getRemainingTime(appointmentDateStr) {
   if (!appointmentDateStr) return '-';
 
   const startTime = new Date(appointmentDateStr).getTime();
-  const endTime = startTime + (60 * 60 * 1000); // وقت انتهاء مهلة الساعة
+  const endTime = startTime + (60 * 60 * 1000); // مهلة ساعة واحدة
   const now = new Date().getTime();
 
-  // 1. إذا كان الوقت الحالي قبل وقت الموعد المحدد
   if (now < startTime) {
     return `<span class="badge bg-secondary">Pas encore commencé</span>`;
   }
 
-  // 2. إذا مرت أكثر من ساعة على وقت الموعد
   if (now >= endTime) {
     return `<span class="badge bg-danger">Terminé (1h écoulée)</span>`;
   }
 
-  // 3. أثناء فترة الساعة (بدءاً من وقت الموعد)
   const diff = endTime - now;
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
   const seconds = Math.floor((diff % (1000 * 60)) / 1000);
@@ -138,7 +167,6 @@ function renderAppointmentsTable(data) {
     `;
   }).join('');
 
-  // تنظيف العداد السابق لمنع استهلاك الذاكرة وإعادة تشغيله
   if (timerInterval) clearInterval(timerInterval);
   timerInterval = setInterval(() => {
     data.forEach(item => {
@@ -156,7 +184,10 @@ async function changeStatus(id, newStatus) {
   try {
     const res = await fetch(`${API_URL}/admin/appointments/${id}/status`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Authorization': `Bearer ${getAuthToken()}`,
+        'Content-Type': 'application/json' 
+      },
       body: JSON.stringify({ status: newStatus })
     });
 
@@ -174,7 +205,10 @@ async function updatePaymentStatus(id, newStatus) {
   try {
     const res = await fetch(`${API_URL}/admin/appointments/${id}/payment-status`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Authorization': `Bearer ${getAuthToken()}`,
+        'Content-Type': 'application/json' 
+      },
       body: JSON.stringify({ payment_status: newStatus })
     });
     if (!res.ok) throw new Error();
@@ -213,6 +247,9 @@ function setupEventListeners() {
   const logoutBtn = document.getElementById('logout-btn');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', () => {
+      localStorage.removeItem('token');
+      localStorage.removeItem('verifcar_reception_user');
+      localStorage.removeItem('verifcar_user');
       localStorage.removeItem('verifcar_admin_user');
       window.location.href = '../Auth/auth.html';
     });
@@ -238,7 +275,9 @@ function setupEventListeners() {
       const phone = e.target.value.trim();
       if (phone.length >= 8) {
         try {
-          const res = await fetch(`${API_URL}/clients/search?query=${encodeURIComponent(phone)}`);
+          const res = await fetch(`${API_URL}/clients/search?query=${encodeURIComponent(phone)}`, {
+            headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+          });
           if (res.ok) {
             const clients = await res.json();
             if (clients.length > 0) {
@@ -261,7 +300,6 @@ function setupEventListeners() {
   }
 }
 
-// تحديث تلقائي كل 30 ثانية من الخادم
 setInterval(loadDashboardData, 30000);
 
 // ==========================================
@@ -301,7 +339,10 @@ async function handleNewAppointment(e) {
   try {
     const res = await fetch(`${API_URL}/admin/appointments`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Authorization': `Bearer ${getAuthToken()}`,
+        'Content-Type': 'application/json' 
+      },
       body: JSON.stringify(payload)
     });
 
@@ -405,28 +446,23 @@ async function cancelAppointment(id) {
 function switchTab(tabName, event) {
   if (event) event.preventDefault();
 
-  // إخفاء جميع الأقسام
   document.querySelectorAll('.tab-section').forEach(section => {
     section.classList.add('d-none');
   });
 
-  // إلغاء التحديد النشط من القائمة الجانبية
   document.querySelectorAll('.sidebar .nav-link').forEach(link => {
     link.classList.remove('active');
     link.classList.add('text-secondary');
   });
 
-  // إظهار القسم المطلوب
   const targetSection = document.getElementById(`section-${tabName}`);
   if (targetSection) {
     targetSection.classList.remove('d-none');
   }
 
-  // تفعيل الزر المظفور
   const activeTab = document.getElementById(`tab-${tabName}`);
   if (activeTab) {
     activeTab.classList.add('active');
     activeTab.classList.remove('text-secondary');
   }
 }
-getRemainingTime
