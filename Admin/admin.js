@@ -36,29 +36,25 @@ function initMobileSidebar() {
 }
 
 
-async function loadDashboardData() {
+async function loadDashboardSummary() {
   try {
-    const res = await fetch(`${API_URL}/admin/dashboard-summary`);
-    if (!res.ok) throw new Error('Erreur réseau / API');
+    const res = await fetch(`${API_URL}/admin/dashboard`, {
+      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    });
     
-    const data = await res.json();
-
-    if (data.users) {
-      if (document.getElementById('total-users-count')) document.getElementById('total-users-count').innerText = data.users.totalUsers || 0;
-      if (document.getElementById('reception-count')) document.getElementById('reception-count').innerText = data.users.receptionCount || 0;
-      if (document.getElementById('tech-count')) document.getElementById('tech-count').innerText = data.users.techCount || 0;
-      if (document.getElementById('admin-count')) document.getElementById('admin-count').innerText = data.users.adminCount || 0;
+    if (res.ok) {
+      const data = await res.json();
+      
+      // تحديث بطاقات الإحصائيات (KPI Cards)
+      if (data.users) {
+        document.getElementById('total-users').innerText = data.users.totalUsers || 0;
+        document.getElementById('reception-count').innerText = data.users.receptionCount || 0;
+        document.getElementById('tech-count').innerText = data.users.techCount || 0;
+        document.getElementById('admin-count').innerText = data.users.adminCount || 0;
+      }
     }
-
-    renderRecentTickets(data.recentTickets || []);
-    
-   
-    rawRevenueData = data.revenue || [];
-    filterAndRenderRevenue();
-    initTypeChart(data.inspectionTypes || []);
-
-  } catch (err) {
-    console.error('Erreur lors du chargement du Dashboard:', err);
+  } catch (error) {
+    console.error("Erreur lors du chargement des statistiques:", error);
   }
 }
 
@@ -295,6 +291,6 @@ const logoutBtn = document.getElementById('logout-btn');
 if (logoutBtn) {
   logoutBtn.addEventListener('click', () => {
     localStorage.removeItem('verifcar_admin_user');
-    window.location.href = '../Auth/auth.html';
+    window.location.href = '../Auth/index.html';
   });
 }
