@@ -314,6 +314,18 @@
   let allClientsCache = [];
   let deleteTargetClient = null;
 
+  // دالة مساعدة للحصول على الهيدرز مع الـ Token
+  function getAuthHeaders() {
+    const userSessionRaw = localStorage.getItem('verifcar_admin_user');
+    const userSession = userSessionRaw ? JSON.parse(userSessionRaw) : null;
+    const token = userSession ? (userSession.token || userSession.accessToken) : '';
+    
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    };
+  }
+
   // تحميل ملف المسؤول
   function loadAdminProfile() {
     const userSessionRaw = localStorage.getItem('verifcar_admin_user');
@@ -333,7 +345,7 @@
     }
   }
 
-  // عرض الجدول وتعديل عرض السيارات لإضافة زر تعديل السيارة
+  // عرض الجدول
   function renderClientsTable(clients) {
     const body = document.getElementById('clients-table-body');
     if (!body) return;
@@ -405,7 +417,9 @@
   // جلب العملاء
   async function loadClientsData() {
     try {
-      const res = await fetch(`${API_URL}/admin/clients`);
+      const res = await fetch(`${API_URL}/admin/clients`, {
+        headers: getAuthHeaders()
+      });
       if (res.ok) {
         allClientsCache = await res.json();
         renderClientsTable(allClientsCache);
@@ -447,7 +461,7 @@
     renderClientsTable(filtered);
   }
 
-  // 1. فتح نافذة تعديل العميل
+  // نوافذ التعديل والإضافة
   function openEditModal(id, name, phone) {
     document.getElementById('edit-client-id').value = id;
     document.getElementById('edit-client-fullname').value = name;
@@ -455,13 +469,11 @@
     new bootstrap.Modal(document.getElementById('editClientModal')).show();
   }
 
-  // 2. فتح نافذة إضافة سيارة
   function openAddVehicleModal(clientId) {
     document.getElementById('vehicle-client-id').value = clientId;
     new bootstrap.Modal(document.getElementById('addVehicleModal')).show();
   }
 
-  // 3. فتح نافذة تعديل سيارة
   function openEditVehicleModal(vehicleId, make, model, plate, vin) {
     document.getElementById('edit-veh-id').value = vehicleId;
     document.getElementById('edit-veh-make').value = make;
@@ -471,7 +483,6 @@
     new bootstrap.Modal(document.getElementById('editVehicleModal')).show();
   }
 
-  // 4. فتح نافذة اختيار الحذف (سيارة أم عميل)
   function openDeleteChoiceModal(clientId) {
     deleteTargetClient = allClientsCache.find(c => c.id === clientId);
     if (!deleteTargetClient) return;
@@ -497,9 +508,37 @@
     new bootstrap.Modal(document.getElementById('deleteChoiceModal')).show();
   }
 
-  // --- الطلبات لـ API (AJAX Fetch Requests) ---
+  // --- العمليات (AJAX Fetch Requests) ---
 
-  // حفظ تعديل العميل
+  // 1. إضافة عميل جديد (كانت مفقودة!)
+  async function handleAddClientSubmit(e) {
+    e.preventDefault();
+    const fullName = document.getElementById('client-fullname').value;
+    const phone = document.getElementById('client-phone').value;
+
+    try {
+      const res = await fetch(`${API_URL}/admin/clients`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ fullName, phone })
+      });
+
+      if (res.ok) {
+        const modalEl = document.getElementById('addClientModal');
+        bootstrap.Modal.getInstance(modalEl)?.hide();
+        document.getElementById('add-client-form').reset();
+        loadClientsData();
+      } else {
+        const errData = await res.json();
+        alert(errData.message || "Erreur lors de la création du client");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Erreur de connexion au serveur");
+    }
+  }
+
+  // 2. تعديل عميل
   async function handleEditClientSubmit(e) {
     e.preventDefault();
     const id = document.getElementById('edit-client-id').value;
@@ -509,7 +548,7 @@
     try {
       const res = await fetch(`${API_URL}/admin/clients/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ fullName, phone })
       });
 
@@ -518,14 +557,16 @@
         bootstrap.Modal.getInstance(modalEl)?.hide();
         loadClientsData();
       } else {
-        alert("Erreur lors de la mise à jour du client");
+        const errData = await res.json();
+        alert(errData.message || "Erreur lors de la mise à jour du client");
       }
     } catch (err) {
       console.error(err);
+      alert("Erreur de connexion au serveur");
     }
   }
 
-  // حفظ إضافة سيارة جديدة
+  // 3. إضافة سيارة
   async function handleAddVehicleSubmit(e) {
     e.preventDefault();
     const clientId = document.getElementById('vehicle-client-id').value;
@@ -537,7 +578,7 @@
     try {
       const res = await fetch(`${API_URL}/admin/vehicles`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ clientId, make, model, licensePlate, vinNumber })
       });
 
@@ -547,14 +588,16 @@
         document.getElementById('add-vehicle-form').reset();
         loadClientsData();
       } else {
-        alert("Erreur lors de l'ajout du véhicule");
+        const errData = await res.json();
+        alert(errData.message || "Erreur lors de l'ajout du véhicule");
       }
     } catch (err) {
       console.error(err);
+      alert("Erreur de connexion au serveur");
     }
   }
 
-  // حفظ تعديل بيانات السيارة
+  // 4. تعديل سيارة
   async function handleEditVehicleSubmit(e) {
     e.preventDefault();
     const vehicleId = document.getElementById('edit-veh-id').value;
@@ -566,7 +609,7 @@
     try {
       const res = await fetch(`${API_URL}/admin/vehicles/${vehicleId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ make, model, licensePlate, vinNumber })
       });
 
@@ -575,20 +618,23 @@
         bootstrap.Modal.getInstance(modalEl)?.hide();
         loadClientsData();
       } else {
-        alert("Erreur lors de la modification du véhicule");
+        const errData = await res.json();
+        alert(errData.message || "Erreur lors de la modification du véhicule");
       }
     } catch (err) {
       console.error(err);
+      alert("Erreur de connexion au serveur");
     }
   }
 
-  // حذف سيارة منفردة
+  // 5. حذف سيارة واحدة
   async function deleteSingleVehicle(vehicleId) {
     if (!confirm('Voulez-vous vraiment supprimer cette véhicule ?')) return;
 
     try {
       const res = await fetch(`${API_URL}/admin/vehicles/${vehicleId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: getAuthHeaders()
       });
 
       if (res.ok) {
@@ -596,21 +642,24 @@
         bootstrap.Modal.getInstance(modalEl)?.hide();
         loadClientsData();
       } else {
-        alert("Erreur lors de la suppression du véhicule");
+        const errData = await res.json();
+        alert(errData.message || "Erreur lors de la suppression du véhicule");
       }
     } catch (err) {
       console.error(err);
+      alert("Erreur de connexion au serveur");
     }
   }
 
-  // حذف العميل كاملاً
+  // 6. حذف العميل بالكامل
   async function deleteEntireClient() {
     if (!deleteTargetClient) return;
     if (!confirm(`Voulez-vous vraiment supprimer le client ${deleteTargetClient.full_name} et toutes ses données ?`)) return;
 
     try {
       const res = await fetch(`${API_URL}/admin/clients/${deleteTargetClient.id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: getAuthHeaders()
       });
 
       if (res.ok) {
@@ -618,10 +667,12 @@
         bootstrap.Modal.getInstance(modalEl)?.hide();
         loadClientsData();
       } else {
-        alert("Erreur lors de la suppression du client");
+        const errData = await res.json();
+        alert(errData.message || "Erreur lors de la suppression du client");
       }
     } catch (err) {
       console.error(err);
+      alert("Erreur de connexion au serveur");
     }
   }
 
@@ -637,12 +688,13 @@
     });
 
     // ربط النماذج بالدوال (Event Listeners)
+    document.getElementById('add-client-form')?.addEventListener('submit', handleAddClientSubmit);
     document.getElementById('edit-client-form')?.addEventListener('submit', handleEditClientSubmit);
     document.getElementById('add-vehicle-form')?.addEventListener('submit', handleAddVehicleSubmit);
     document.getElementById('edit-vehicle-form')?.addEventListener('submit', handleEditVehicleSubmit);
     document.getElementById('delete-entire-client-btn')?.addEventListener('click', deleteEntireClient);
 
-    // عناصر القائمة الجانبية للشاشات الصغيرة
+    // Sidebar Mobile Controls
     let overlay = document.querySelector('.sidebar-overlay');
     if (!overlay) {
       overlay = document.createElement('div');
@@ -654,19 +706,20 @@
     const toggleBtn = document.getElementById('mobile-sidebar-toggle');
     const closeBtn = document.getElementById('sidebar-close-btn');
 
-    function openSidebar() {
+    toggleBtn?.addEventListener('click', () => {
       sidebar?.classList.add('show');
       overlay?.classList.add('show');
-    }
+    });
 
-    function closeSidebar() {
+    closeBtn?.addEventListener('click', () => {
       sidebar?.classList.remove('show');
       overlay?.classList.remove('show');
-    }
+    });
 
-    toggleBtn?.addEventListener('click', openSidebar);
-    closeBtn?.addEventListener('click', closeSidebar);
-    overlay?.addEventListener('click', closeSidebar);
+    overlay?.addEventListener('click', () => {
+      sidebar?.classList.remove('show');
+      overlay?.classList.remove('show');
+    });
   });
 </script>
  <script>
