@@ -392,7 +392,7 @@
         const headers = { 'Content-Type': 'application/json' };
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
-        const res = await fetch('http://localhost:5000/api/admin/cancelled-appointments', { headers });
+        const res = await fetch('https://romantic-enjoyment-production-f458.up.railway.app/api/admin/cancelled-appointments', { headers });
 
         if (res.ok) {
           const cancelledEvents = await res.json();
