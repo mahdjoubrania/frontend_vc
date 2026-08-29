@@ -57,7 +57,6 @@ function checkAuth() {
 // ==========================================
 async function loadDashboardData() {
   try {
-    // جلب مواعيد اليوم فقط عبر المسار الجديد
     const res = await fetch(`${API_URL}/admin/appointments/today`, {
       headers: {
         'Authorization': `Bearer ${getAuthToken()}`,
@@ -79,15 +78,24 @@ async function loadDashboardData() {
   }
 }
 
-// حساب الوقت الحقيقي وإظهار الكرونو أو زر "En cours"
+// دالة تحويل التاريخ إلى وقت محلي دقيق
+function parseLocalAppointmentDate(dateStr) {
+  if (!dateStr) return null;
+  const parts = dateStr.split(/[- : T]/);
+  if (parts.length < 5) return null;
+
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10) - 1;
+  const day = parseInt(parts[2], 10);
+  const hours = parseInt(parts[3], 10);
+  const minutes = parseInt(parts[4], 10);
+
+  return new Date(year, month, day, hours, minutes, 0);
+}
+
+// حساب الوقت والتوقيت التنازلي التلقائي عند حلول الوقت
 function getRemainingTime(item) {
   const currentStatus = item.status || item.extendedProps?.status;
-
-  if (['PENDING', 'READY_FOR_WORKSHOP'].includes(currentStatus)) {
-    return `<button class="btn btn-sm btn-outline-success py-0 px-2 fs-12" onclick="startChronometer('${item.id}')">
-              <i class="bi bi-play-fill me-1"></i> En cours
-            </button>`;
-  }
 
   if (currentStatus === 'COMPLETED') {
     return `<span class="badge bg-success"><i class="bi bi-check-all"></i> Terminé</span>`;
@@ -97,20 +105,33 @@ function getRemainingTime(item) {
     return `<span class="badge bg-danger">${item.cancel_reason || 'Annulé'}</span>`;
   }
 
-  // حساب مهلة الكرونو بدءاً من وقت الضغط على En Cours
-  const startTime = item.started_at ? new Date(item.started_at).getTime() : new Date().getTime();
-  const endTime = startTime + (60 * 60 * 1000); // 1 hour
+  const dateStr = item.appointment_date || item.start || item.appointmentDate;
+  const appDate = parseLocalAppointmentDate(dateStr);
+
+  if (!appDate) return `<span class="badge bg-secondary">--</span>`;
+
+  const appTime = appDate.getTime();
   const now = new Date().getTime();
 
-  if (now >= endTime) {
+  // 1. الموعد لم يحن وقته بعد
+  if (now < appTime) {
+    const timeUntilApp = Math.ceil((appTime - now) / (1000 * 60));
+    return `<span class="badge bg-light text-muted border">Pas encore (${timeUntilApp}m)</span>`;
+  }
+
+  // 2. الموعد حان وقته أو تجاوزه: يبدأ العد التنازلي لـ 60 دقيقة
+  const durationMs = 60 * 60 * 1000;
+  const elapsedTime = now - appTime;
+  const remainingTimeMs = durationMs - elapsedTime;
+
+  if (remainingTimeMs <= 0) {
     return `<span class="badge bg-danger">⏱️ Dépassement (+1h)</span>`;
   }
 
-  const diff = endTime - now;
-  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+  const minutesLeft = Math.floor(remainingTimeMs / (1000 * 60));
+  const secondsLeft = Math.floor((remainingTimeMs % (1000 * 60)) / 1000);
 
-  return `<span class="badge bg-primary fs-12">⏳ ${minutes}m ${seconds}s</span>`;
+  return `<span class="badge bg-primary fs-12">⏳ ${minutesLeft}m ${secondsLeft}s</span>`;
 }
 
 function renderAppointmentsTable(data) {
@@ -129,9 +150,12 @@ function renderAppointmentsTable(data) {
   }
 
   tbody.innerHTML = data.map(item => {
-    const appDate = item.appointment_date || item.start || item.appointmentDate;
+    const appDateRaw = item.appointment_date || item.start || item.appointmentDate;
+    const appDate = parseLocalAppointmentDate(appDateRaw);
+    
+    // تنسيق عرض الساعة المكتوبة
     const timeFormatted = appDate 
-      ? new Date(appDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      ? appDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       : 'N/A';
 
     const currentStatus = item.extendedProps?.status || item.status || 'PENDING';
@@ -196,7 +220,6 @@ function renderAppointmentsTable(data) {
 // 3. ACTIONS & API CALLS
 // ==========================================
 
-// بدء التوقيت فور الضغط على زر En cours
 async function startChronometer(id) {
   await changeStatus(id, 'IN_PROGRESS');
 }
@@ -246,7 +269,7 @@ function updateKPIs(data) {
   const todayCount = data.filter(a => {
     const dateVal = a.appointment_date || a.start || a.appointmentDate;
     if (!dateVal) return false;
-    return new Date(dateVal).toISOString().split('T')[0] === todayStr;
+    return dateVal.startsWith(todayStr);
   }).length;
 
   const pendingCount = data.filter(a => ['PENDING', 'EN_ATTENTE'].includes(a.extendedProps?.status || a.status)).length;
@@ -268,7 +291,6 @@ function updateKPIs(data) {
 // 4. MODALS MANAGEMENT (EDIT & CANCEL)
 // ==========================================
 
-// فتح النافذة المنبثقة للتعديل
 function openEditModal(item) {
   document.getElementById('edit-rdv-id').value = item.id;
   document.getElementById('edit-client-name').value = item.client_name || '';
@@ -282,14 +304,12 @@ function openEditModal(item) {
   modal.show();
 }
 
-// فتح نافذة اختيار سبب الإلغاء
 function openCancelModal(id) {
   document.getElementById('cancel-rdv-id').value = id;
   const modal = new bootstrap.Modal(document.getElementById('cancelReasonModal'));
   modal.show();
 }
 
-// تأكيد الإلغاء مع السبب
 async function confirmCancelWithReason() {
   const id = document.getElementById('cancel-rdv-id').value;
   const selectedReason = document.querySelector('input[name="cancelReason"]:checked')?.value;
@@ -377,7 +397,6 @@ function setupEventListeners() {
     rdvForm.addEventListener('submit', handleNewAppointment);
   }
 
-  // الاستماع لحدث نموذج التعديل
   const editForm = document.getElementById('edit-rdv-form');
   if (editForm) {
     editForm.addEventListener('submit', async (e) => {
