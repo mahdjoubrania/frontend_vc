@@ -326,16 +326,15 @@ function getStatusBadgeClass(status) {
 
 function formatDateTime(dateTimeStr) {
   if (!dateTimeStr) return '-';
-  const date = new Date(dateTimeStr);
-  return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) + 
-         ' ' + 
-         date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-}
+  
+  // التعامل مع النص المباشر لمنع تحويل التوقيت تلقائياً
+  const cleanStr = dateTimeStr.replace('T', ' ').replace('Z', '');
+  const parts = cleanStr.split(' ');
+  const dateParts = parts[0].split('-');
+  const timeParts = parts[1] ? parts[1].split(':') : ['00', '00'];
 
-const logoutBtn = document.getElementById('logout-btn');
-if (logoutBtn) {
-  logoutBtn.addEventListener('click', () => {
-    localStorage.removeItem('verifcar_admin_user');
-    window.location.href = '../Auth/index.html';
-  });
+  const formattedDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+  const formattedTime = `${timeParts[0]}:${timeParts[1]}`;
+
+  return `${formattedDate} ${formattedTime}`;
 }

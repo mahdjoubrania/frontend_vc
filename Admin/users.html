@@ -214,7 +214,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   
  <script>
- 
+  
   const API_URL = 'https://romantic-enjoyment-production-f458.up.railway.app/api/admin';
   let usersCache = [];
   let deleteUserId = null;
@@ -237,47 +237,46 @@
     }
   }
 
+  function renderTable(users) {
+    const tbody = document.getElementById('users-table-body');
+    if (!tbody) return;
 
- function renderTable(users) {
-  const tbody = document.getElementById('users-table-body');
-  if (!tbody) return;
+    tbody.innerHTML = '';
 
-  tbody.innerHTML = '';
+    if (!users || users.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">Aucun utilisateur trouvé</td></tr>`;
+      return;
+    }
 
-  if (!users || users.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">Aucun utilisateur trouvé</td></tr>`;
-    return;
+    users.forEach(u => {
+      const statusBadge = (u.isActive === 1 || u.isActive === true)
+        ? `<span class="badge bg-success-subtle text-success px-2 py-1 rounded-pill">Actif</span>`
+        : `<span class="badge bg-danger-subtle text-danger px-2 py-1 rounded-pill">Inactif</span>`;
+
+      const safeName = (u.fullName || '').replace(/'/g, "\\'");
+      const safePhone = (u.phone || '').replace(/'/g, "\\'");
+      const safeRole = (u.role || '').replace(/'/g, "\\'");
+
+      const row = `
+        <tr>
+          <td class="ps-3 fw-bold text-secondary">#${u.id}</td>
+          <td class="fw-semibold text-dark">${u.fullName || 'N/A'}</td>
+          <td>${u.phone || 'N/A'}</td>
+          <td><span class="badge bg-light text-dark border px-2 py-1">${u.role || 'user'}</span></td>
+          <td>${statusBadge}</td>
+          <td class="pe-3 text-end text-nowrap">
+            <button class="btn btn-sm btn-light border rounded-2 text-primary me-1" title="Modifier" onclick="openEditModal(${u.id}, '${safeName}', '${safePhone}', '${safeRole}', ${u.isActive})">
+              <i class="bi bi-pencil"></i>
+            </button>
+            <button class="btn btn-sm btn-light border rounded-2 text-danger" title="Désactiver" onclick="openDeleteModal(${u.id})">
+              <i class="bi bi-person-x"></i>
+            </button>
+          </td>
+        </tr>
+      `;
+      tbody.insertAdjacentHTML('beforeend', row);
+    });
   }
-
-  users.forEach(u => {
-    const statusBadge = (u.isActive === 1 || u.isActive === true)
-      ? `<span class="badge bg-success-subtle text-success px-2 py-1 rounded-pill">Actif</span>`
-      : `<span class="badge bg-danger-subtle text-danger px-2 py-1 rounded-pill">Inactif</span>`;
-
-    const safeName = (u.fullName || '').replace(/'/g, "\\'");
-    const safePhone = (u.phone || '').replace(/'/g, "\\'");
-    const safeRole = (u.role || '').replace(/'/g, "\\'");
-
-    const row = `
-      <tr>
-        <td class="ps-3 fw-bold text-secondary">#${u.id}</td>
-        <td class="fw-semibold text-dark">${u.fullName || 'N/A'}</td>
-        <td>${u.phone || 'N/A'}</td>
-        <td><span class="badge bg-light text-dark border px-2 py-1">${u.role || 'user'}</span></td>
-        <td>${statusBadge}</td>
-        <td class="pe-3 text-end text-nowrap">
-          <button class="btn btn-sm btn-light border rounded-2 text-primary me-1" title="Modifier" onclick="openEditModal(${u.id}, '${safeName}', '${safePhone}', '${safeRole}', ${u.isActive})">
-            <i class="bi bi-pencil"></i>
-          </button>
-          <button class="btn btn-sm btn-light border rounded-2 text-danger" title="Désactiver" onclick="openDeleteModal(${u.id})">
-            <i class="bi bi-person-x"></i>
-          </button>
-        </td>
-      </tr>
-    `;
-    tbody.insertAdjacentHTML('beforeend', row);
-  });
-}
 
   async function loadUsers() {
     try {
@@ -295,22 +294,18 @@
     }
   }
 
-  // 3. دالة الفلترة للبحث المباشر
   function filterUsers(query) {
     const searchTerm = query.toLowerCase().trim();
-
     if (!searchTerm) {
       renderTable(usersCache);
       return;
     }
-
     const filtered = usersCache.filter(u => {
       const nameMatch = u.fullName && u.fullName.toLowerCase().includes(searchTerm);
       const phoneMatch = u.phone && u.phone.toLowerCase().includes(searchTerm);
       const roleMatch = u.role && u.role.toLowerCase().includes(searchTerm);
       return nameMatch || phoneMatch || roleMatch;
     });
-
     renderTable(filtered);
   }
 
@@ -329,54 +324,124 @@
     new bootstrap.Modal(document.getElementById('deleteUserModal')).show();
   }
 
-
   document.addEventListener('DOMContentLoaded', () => {
     loadAdminProfile();
     loadUsers();
 
-
+    // 1. البحث
     const searchInput = document.getElementById('search-input');
-    searchInput?.addEventListener('input', (e) => {
-      filterUsers(e.target.value);
+    searchInput?.addEventListener('input', (e) => filterUsers(e.target.value));
+
+    // 2. تسجيل الخروج
+    const logoutBtn = document.getElementById('logout-btn');
+    logoutBtn?.addEventListener('click', () => {
+      localStorage.removeItem('verifcar_admin_user');
+      window.location.href = '../Auth/index.html';
     });
 
-    const logoutBtn = document.getElementById('logout-btn');
-    if (logoutBtn) {
-      logoutBtn.addEventListener('click', () => {
-        localStorage.removeItem('verifcar_admin_user');
-        window.location.href = '../Auth/auth.html';
-      });
-    }
+    // 3. إضافة مستخدم جديد (Create)
+    const addUserForm = document.getElementById('add-user-form');
+    addUserForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const payload = {
+        fullName: document.getElementById('user-fullname').value,
+        phone: document.getElementById('user-phone').value,
+        role: document.getElementById('user-role').value,
+        password: document.getElementById('user-password').value
+      };
 
+      try {
+        const res = await fetch(`${API_URL}/users`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (res.ok) {
+          bootstrap.Modal.getInstance(document.getElementById('addUserModal')).hide();
+          addUserForm.reset();
+          loadUsers();
+        } else {
+          alert(data.message || 'Erreur lors de la création.');
+        }
+      } catch (err) {
+        alert('Erreur de connexion au serveur.');
+      }
+    });
 
+    // 4. تعديل مستخدم (Update)
+    const editUserForm = document.getElementById('edit-user-form');
+    editUserForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const userId = document.getElementById('edit-user-id').value;
+      const payload = {
+        fullName: document.getElementById('edit-user-fullname').value,
+        phone: document.getElementById('edit-user-phone').value,
+        role: document.getElementById('edit-user-role').value,
+        isActive: document.getElementById('edit-user-status').value === "1",
+        password: document.getElementById('edit-user-password').value
+      };
+
+      try {
+        const res = await fetch(`${API_URL}/users/${userId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (res.ok) {
+          bootstrap.Modal.getInstance(document.getElementById('editUserModal')).hide();
+          loadUsers();
+        } else {
+          alert(data.message || 'Erreur lors de la mise à jour.');
+        }
+      } catch (err) {
+        alert('Erreur de connexion au serveur.');
+      }
+    });
+
+    // 5. تعطيل مستخدم (Delete/Deactivate)
+    const confirmDeleteBtn = document.getElementById('confirm-delete-user-btn');
+    confirmDeleteBtn?.addEventListener('click', async () => {
+      if (!deleteUserId) return;
+      try {
+        const res = await fetch(`${API_URL}/users/${deleteUserId}`, {
+          method: 'DELETE'
+        });
+        const data = await res.json();
+        if (res.ok) {
+          bootstrap.Modal.getInstance(document.getElementById('deleteUserModal')).hide();
+          deleteUserId = null;
+          loadUsers();
+        } else {
+          alert(data.message || 'Erreur lors de la désactivation.');
+        }
+      } catch (err) {
+        alert('Erreur de connexion au serveur.');
+      }
+    });
+
+    // إدارة Sidebar للأجهزة المحمولة
     let overlay = document.querySelector('.sidebar-overlay');
     if (!overlay) {
       overlay = document.createElement('div');
       overlay.className = 'sidebar-overlay';
       document.body.appendChild(overlay);
     }
-
     const sidebar = document.querySelector('.sidebar');
     const toggleBtn = document.getElementById('mobile-sidebar-toggle');
     const closeBtn = document.getElementById('sidebar-close-btn');
 
-    function openSidebar() {
-      sidebar?.classList.add('show');
-      overlay?.classList.add('show');
-    }
-
-    function closeSidebar() {
-      sidebar?.classList.remove('show');
-      overlay?.classList.remove('show');
-    }
-
-    toggleBtn?.addEventListener('click', openSidebar);
-    closeBtn?.addEventListener('click', closeSidebar);
-    overlay?.addEventListener('click', closeSidebar);
+    toggleBtn?.addEventListener('click', () => { sidebar?.classList.add('show'); overlay?.classList.add('show'); });
+    closeBtn?.addEventListener('click', () => { sidebar?.classList.remove('show'); overlay?.classList.remove('show'); });
+    overlay?.addEventListener('click', () => { sidebar?.classList.remove('show'); overlay?.classList.remove('show'); });
   });
 </script>
+ 
+
+</script>
 <script>
-// إزالة التركيز عن الأزرار قبل إغلاق أي نافذة Modal لتفادي تحذيرات accessibility
+
 document.addEventListener('DOMContentLoaded', () => {
   const modals = document.querySelectorAll('.modal');
   

@@ -76,6 +76,7 @@
     </aside>
 
     <!-- Main Content -->
+    <!-- Main Content -->
     <main class="main-content flex-grow-1 p-4">
     <header class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4 bg-white p-3 rounded-4 shadow-sm">
   <!-- الجزء الأيسر: زر القائمة للهاتف + الشعار للهاتف + المسار (Breadcrumb) -->
@@ -245,34 +246,75 @@
     </div>
   </div>
 
-  <!-- Modal Confirmation Suppression (بديل نافذة التأكيد العادية) -->
-  <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-      <div class="modal-content rounded-4 border-0 shadow text-center p-3">
-        <div class="modal-body">
-          <div class="text-danger mb-3">
-            <i class="bi bi-exclamation-circle fs-1"></i>
-          </div>
-          <h5 class="fw-bold mb-2">Supprimer le client ?</h5>
-          <p class="text-muted fs-14 mb-4">Cette action est irréversible et supprimera le profil du client.</p>
-          <div class="d-flex gap-2 justify-content-center">
-            <button type="button" class="btn btn-light rounded-3 w-50" data-bs-dismiss="modal">Annuler</button>
-            <button type="button" id="confirm-delete-btn" class="btn btn-danger rounded-3 w-50">Supprimer</button>
+  <!-- Modal Modifier Véhicule -->
+<div class="modal fade" id="editVehicleModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 border-0 shadow">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold text-dark"><i class="bi bi-pencil-square text-warning me-2"></i>Modifier Véhicule</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="edit-vehicle-form">
+        <input type="hidden" id="edit-veh-id">
+        <div class="modal-body p-4">
+          <div class="row g-3">
+            <div class="col-6">
+              <label class="form-label fw-medium text-dark">Marque</label>
+              <input type="text" id="edit-veh-make" class="form-control rounded-3" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-medium text-dark">Modèle</label>
+              <input type="text" id="edit-veh-model" class="form-control rounded-3">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-medium text-dark">Immatriculation</label>
+              <input type="text" id="edit-veh-plate" class="form-control rounded-3">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-medium text-dark">Numéro Chassis (VIN)</label>
+              <input type="text" id="edit-veh-vin" class="form-control rounded-3">
+            </div>
           </div>
         </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-primary rounded-3 px-4">Sauvegarder</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Choix de Suppression -->
+<div class="modal fade" id="deleteChoiceModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 border-0 shadow p-3">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold text-dark"><i class="bi bi-trash text-danger me-2"></i>Que souhaitez-vous supprimer ?</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted">Choisissez si vous voulez supprimer le client entier ou juste une véhicule spécifique.</p>
+        <div id="delete-vehicles-list" class="mb-3"></div>
+      </div>
+      <div class="modal-footer border-0 pt-0 d-flex justify-content-between">
+        <button type="button" id="delete-entire-client-btn" class="btn btn-outline-danger rounded-3"><i class="bi bi-person-x"></i> Supprimer Client</button>
+        <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Annuler</button>
       </div>
     </div>
   </div>
+</div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   
 
- <script>
+<script>
   const API_URL = 'https://romantic-enjoyment-production-f458.up.railway.app/api';
   let allClientsCache = [];
-  let deleteTargetId = null;
+  let deleteTargetClient = null;
 
+  // تحميل ملف المسؤول
   function loadAdminProfile() {
     const userSessionRaw = localStorage.getItem('verifcar_admin_user');
     const userSession = userSessionRaw ? JSON.parse(userSessionRaw) : null;
@@ -291,7 +333,7 @@
     }
   }
 
- 
+  // عرض الجدول وتعديل عرض السيارات لإضافة زر تعديل السيارة
   function renderClientsTable(clients) {
     const body = document.getElementById('clients-table-body');
     if (!body) return;
@@ -309,9 +351,14 @@
       let vehiclesHtml = '<span class="text-muted fs-13">Aucun véhicule</span>';
       if (c.vehicles && c.vehicles.length > 0) {
         vehiclesHtml = c.vehicles.map(v => `
-          <div class="d-flex align-items-center gap-2 mb-1">
-            <span class="fw-medium text-dark">${v.make} ${v.model || ''}</span>
-            <span class="badge bg-light text-dark border px-2 py-0 fs-12">${v.license_plate || 'Sans Immatriculation'}</span>
+          <div class="d-flex align-items-center justify-content-between gap-2 mb-1 p-1 bg-light rounded border">
+            <div>
+              <span class="fw-medium text-dark">${v.make} ${v.model || ''}</span>
+              <span class="badge bg-white text-dark border px-2 py-0 fs-12 ms-1">${v.license_plate || 'Sans Immatriculation'}</span>
+            </div>
+            <button class="btn btn-sm text-warning p-0 ms-2" title="Modifier Véhicule" onclick="openEditVehicleModal(${v.id}, '${v.make}', '${v.model || ''}', '${v.license_plate || ''}', '${v.vin_number || ''}')">
+              <i class="bi bi-pencil-fill"></i>
+            </button>
           </div>
         `).join('');
       }
@@ -345,7 +392,7 @@
             <button class="btn btn-sm btn-light border rounded-2 me-1 text-primary" title="Modifier" onclick="openEditModal(${c.id}, '${c.full_name}', '${c.phone}')">
               <i class="bi bi-pencil"></i>
             </button>
-            <button class="btn btn-sm btn-light border rounded-2 text-danger" title="Supprimer" onclick="openDeleteModal(${c.id})">
+            <button class="btn btn-sm btn-light border rounded-2 text-danger" title="Supprimer" onclick="openDeleteChoiceModal(${c.id})">
               <i class="bi bi-trash"></i>
             </button>
           </td>
@@ -355,7 +402,7 @@
     });
   }
 
- 
+  // جلب العملاء
   async function loadClientsData() {
     try {
       const res = await fetch(`${API_URL}/admin/clients`);
@@ -373,7 +420,7 @@
     }
   }
 
-
+  // تصفية العملاء
   function filterClients(query) {
     const searchTerm = query.toLowerCase().trim();
 
@@ -390,7 +437,7 @@
         const makeMatch = v.make && v.make.toLowerCase().includes(searchTerm);
         const modelMatch = v.model && v.model.toLowerCase().includes(searchTerm);
         const plateMatch = v.license_plate && v.license_plate.toLowerCase().includes(searchTerm);
-        const vinMatch = v.vin && v.vin.toLowerCase().includes(searchTerm);
+        const vinMatch = v.vin_number && v.vin_number.toLowerCase().includes(searchTerm);
         return makeMatch || modelMatch || plateMatch || vinMatch;
       });
 
@@ -400,6 +447,7 @@
     renderClientsTable(filtered);
   }
 
+  // 1. فتح نافذة تعديل العميل
   function openEditModal(id, name, phone) {
     document.getElementById('edit-client-id').value = id;
     document.getElementById('edit-client-fullname').value = name;
@@ -407,25 +455,192 @@
     new bootstrap.Modal(document.getElementById('editClientModal')).show();
   }
 
+  // 2. فتح نافذة إضافة سيارة
   function openAddVehicleModal(clientId) {
     document.getElementById('vehicle-client-id').value = clientId;
     new bootstrap.Modal(document.getElementById('addVehicleModal')).show();
   }
 
-  function openDeleteModal(id) {
-    deleteTargetId = id;
-    new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
+  // 3. فتح نافذة تعديل سيارة
+  function openEditVehicleModal(vehicleId, make, model, plate, vin) {
+    document.getElementById('edit-veh-id').value = vehicleId;
+    document.getElementById('edit-veh-make').value = make;
+    document.getElementById('edit-veh-model').value = model;
+    document.getElementById('edit-veh-plate').value = plate;
+    document.getElementById('edit-veh-vin').value = vin;
+    new bootstrap.Modal(document.getElementById('editVehicleModal')).show();
   }
 
+  // 4. فتح نافذة اختيار الحذف (سيارة أم عميل)
+  function openDeleteChoiceModal(clientId) {
+    deleteTargetClient = allClientsCache.find(c => c.id === clientId);
+    if (!deleteTargetClient) return;
+
+    const listContainer = document.getElementById('delete-vehicles-list');
+    if (listContainer) {
+      listContainer.innerHTML = '';
+      if (deleteTargetClient.vehicles && deleteTargetClient.vehicles.length > 0) {
+        listContainer.innerHTML = '<label class="form-label fw-bold fs-14">Supprimer une véhicule :</label>';
+        deleteTargetClient.vehicles.forEach(v => {
+          listContainer.innerHTML += `
+            <div class="d-flex justify-content-between align-items-center bg-light p-2 rounded mb-2 border">
+              <div><strong>${v.make} ${v.model || ''}</strong> (${v.license_plate || 'N/A'})</div>
+              <button class="btn btn-sm btn-outline-danger" onclick="deleteSingleVehicle(${v.id})">Supprimer</button>
+            </div>
+          `;
+        });
+      } else {
+        listContainer.innerHTML = '<p class="text-muted fs-13">Ce client n\'a pas de véhicules.</p>';
+      }
+    }
+
+    new bootstrap.Modal(document.getElementById('deleteChoiceModal')).show();
+  }
+
+  // --- الطلبات لـ API (AJAX Fetch Requests) ---
+
+  // حفظ تعديل العميل
+  async function handleEditClientSubmit(e) {
+    e.preventDefault();
+    const id = document.getElementById('edit-client-id').value;
+    const fullName = document.getElementById('edit-client-fullname').value;
+    const phone = document.getElementById('edit-client-phone').value;
+
+    try {
+      const res = await fetch(`${API_URL}/admin/clients/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fullName, phone })
+      });
+
+      if (res.ok) {
+        const modalEl = document.getElementById('editClientModal');
+        bootstrap.Modal.getInstance(modalEl)?.hide();
+        loadClientsData();
+      } else {
+        alert("Erreur lors de la mise à jour du client");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  // حفظ إضافة سيارة جديدة
+  async function handleAddVehicleSubmit(e) {
+    e.preventDefault();
+    const clientId = document.getElementById('vehicle-client-id').value;
+    const make = document.getElementById('veh-make').value;
+    const model = document.getElementById('veh-model').value;
+    const licensePlate = document.getElementById('veh-plate').value;
+    const vinNumber = document.getElementById('veh-vin').value;
+
+    try {
+      const res = await fetch(`${API_URL}/admin/vehicles`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientId, make, model, licensePlate, vinNumber })
+      });
+
+      if (res.ok) {
+        const modalEl = document.getElementById('addVehicleModal');
+        bootstrap.Modal.getInstance(modalEl)?.hide();
+        document.getElementById('add-vehicle-form').reset();
+        loadClientsData();
+      } else {
+        alert("Erreur lors de l'ajout du véhicule");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  // حفظ تعديل بيانات السيارة
+  async function handleEditVehicleSubmit(e) {
+    e.preventDefault();
+    const vehicleId = document.getElementById('edit-veh-id').value;
+    const make = document.getElementById('edit-veh-make').value;
+    const model = document.getElementById('edit-veh-model').value;
+    const licensePlate = document.getElementById('edit-veh-plate').value;
+    const vinNumber = document.getElementById('edit-veh-vin').value;
+
+    try {
+      const res = await fetch(`${API_URL}/admin/vehicles/${vehicleId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ make, model, licensePlate, vinNumber })
+      });
+
+      if (res.ok) {
+        const modalEl = document.getElementById('editVehicleModal');
+        bootstrap.Modal.getInstance(modalEl)?.hide();
+        loadClientsData();
+      } else {
+        alert("Erreur lors de la modification du véhicule");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  // حذف سيارة منفردة
+  async function deleteSingleVehicle(vehicleId) {
+    if (!confirm('Voulez-vous vraiment supprimer cette véhicule ?')) return;
+
+    try {
+      const res = await fetch(`${API_URL}/admin/vehicles/${vehicleId}`, {
+        method: 'DELETE'
+      });
+
+      if (res.ok) {
+        const modalEl = document.getElementById('deleteChoiceModal');
+        bootstrap.Modal.getInstance(modalEl)?.hide();
+        loadClientsData();
+      } else {
+        alert("Erreur lors de la suppression du véhicule");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  // حذف العميل كاملاً
+  async function deleteEntireClient() {
+    if (!deleteTargetClient) return;
+    if (!confirm(`Voulez-vous vraiment supprimer le client ${deleteTargetClient.full_name} et toutes ses données ?`)) return;
+
+    try {
+      const res = await fetch(`${API_URL}/admin/clients/${deleteTargetClient.id}`, {
+        method: 'DELETE'
+      });
+
+      if (res.ok) {
+        const modalEl = document.getElementById('deleteChoiceModal');
+        bootstrap.Modal.getInstance(modalEl)?.hide();
+        loadClientsData();
+      } else {
+        alert("Erreur lors de la suppression du client");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  // الأحداث المربوطة بالصفحة
   document.addEventListener('DOMContentLoaded', () => {
     loadAdminProfile();
     loadClientsData();
 
-    // ربط حقل البحث بحادث الكتابة
+    // البحث
     const searchInput = document.getElementById('search-input');
     searchInput?.addEventListener('input', (e) => {
       filterClients(e.target.value);
     });
+
+    // ربط النماذج بالدوال (Event Listeners)
+    document.getElementById('edit-client-form')?.addEventListener('submit', handleEditClientSubmit);
+    document.getElementById('add-vehicle-form')?.addEventListener('submit', handleAddVehicleSubmit);
+    document.getElementById('edit-vehicle-form')?.addEventListener('submit', handleEditVehicleSubmit);
+    document.getElementById('delete-entire-client-btn')?.addEventListener('click', deleteEntireClient);
 
     // عناصر القائمة الجانبية للشاشات الصغيرة
     let overlay = document.querySelector('.sidebar-overlay');

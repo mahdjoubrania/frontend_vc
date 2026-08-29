@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VérifCar - Espace Technicien</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+   
+    <aside class="sidebar">
+        <div>
+            <div class="brand-logo">
+                <i class="fa-solid fa-shield-halved fa-lg"></i>
+                <div>
+                    <div>VérifCar</div>
+                    <small class="text-muted font-monospace" style="font-size: 11px;">v1.0 - Technicien</small>
+                </div>
+            </div>
+
+            
+            <ul class="nav nav-pills flex-column nav-menu" id="sidebarTabs" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" id="tab-inspections-link" data-bs-toggle="tab" data-bs-target="#tab-inspections">
+                        <i class="fa-solid fa-gauge-high"></i>
+                        <span>Mes Inspections</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="tab-clients-link" data-bs-toggle="tab" data-bs-target="#tab-clients">
+                        <i class="fa-solid fa-car-side"></i>
+                        <span>Clients & Véhicules</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="tab-modules-link" data-bs-toggle="tab" data-bs-target="#tab-modules">
+                        <i class="fa-solid fa-microchip"></i>
+                        <span>Modules d'Inspection</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="tab-rapports-link" data-bs-toggle="tab" data-bs-target="#tab-rapports">
+                        <i class="fa-solid fa-file-lines"></i>
+                        <span>Rapports Validés</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="user-profile">
+            <div class="d-flex align-items-center gap-2">
+                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 35px; height: 35px; font-weight: bold;">T</div>
+                <div>
+                    <div class="fw-bold" style="font-size: 14px;">Technicien</div>
+                    <small class="text-muted" style="font-size: 11px;">Atelier Général</small>
+                </div>
+            </div>
+            <a href="#" class="text-danger"><i class="fa-solid fa-right-from-bracket"></i></a>
+        </div>
+    </aside>
+
+ 
+    <main class="main-content">
+        <div class="tab-content" id="sidebarTabsContent">
+            
+        
+            <div class="tab-pane fade show active" id="tab-inspections">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h3 class="fw-bold m-0">Planning du jour</h3>
+                        <p class="text-muted m-0">Mouvements et rendez-vous triés par ordre chronologique</p>
+                    </div>
+                </div>
+
+                <!-- Stat Cards -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <div class="stat-card" style="border-left: 4px solid #0d6efd;">
+                            <div>
+                                <small class="text-muted fw-bold">AUJOURD'HUI</small>
+                                <h2 class="fw-bold my-1">6</h2>
+                                <small class="text-muted">Rendez-vous</small>
+                            </div>
+                            <div class="stat-icon bg-primary-subtle text-primary p-3 rounded"><i class="fa-solid fa-calendar-day"></i></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card" style="border-left: 4px solid #ffc107;">
+                            <div>
+                                <small class="text-muted fw-bold">EN ATTENTE</small>
+                                <h2 class="fw-bold my-1">2</h2>
+                                <small class="text-muted">Au garage</small>
+                            </div>
+                            <div class="stat-icon bg-warning-subtle text-warning p-3 rounded"><i class="fa-solid fa-clock"></i></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card" style="border-left: 4px solid #0dcaf0;">
+                            <div>
+                                <small class="text-muted fw-bold">EN COURS</small>
+                                <h2 class="fw-bold my-1">1</h2>
+                                <small class="text-muted">Inspection</small>
+                            </div>
+                            <div class="stat-icon bg-info-subtle text-info p-3 rounded"><i class="fa-solid fa-wrench"></i></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card" style="border-left: 4px solid #198754;">
+                            <div>
+                                <small class="text-muted fw-bold">TERMINÉS</small>
+                                <h2 class="fw-bold my-1">3</h2>
+                                <small class="text-muted">Prêts</small>
+                            </div>
+                            <div class="stat-icon bg-success-subtle text-success p-3 rounded"><i class="fa-solid fa-circle-check"></i></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table المواعيد بترتيب الزمني -->
+                <div class="content-card">
+                    <h5 class="fw-bold mb-3">Rendez-vous triés par heure</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>HEURE</th>
+                                    <th>CLIENT</th>
+                                    <th>TÉLÉPHONE</th>
+                                    <th>VÉHICULE / MATRICULE</th>
+                                    <th>ATELIER</th>
+                                    <th>STATUT</th>
+                                    <th class="text-end">ACTION</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="badge bg-dark"><i class="fa-regular fa-clock me-1"></i>09:10</span></td>
+                                    <td class="fw-bold">Othmane Ayoub</td>
+                                    <td>0794516925</td>
+                                    <td>Kongo Inconnu <br><small class="text-muted">500061-120-31</small></td>
+                                    <td><span class="badge bg-light text-dark border">VÉRIFICATION COMPLÈTE</span></td>
+                                    <td><span class="badge badge-status bg-warning-subtle text-warning">En Attente</span></td>
+                                    <td class="text-end"><button class="btn btn-primary btn-sm rounded-pill" onclick="location.href='technician-inspection.html?id=1'"><i class="fa-solid fa-play"></i> Commencer</button></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-dark"><i class="fa-regular fa-clock me-1"></i>10:15</span></td>
+                                    <td class="fw-bold">Mekki Farouk</td>
+                                    <td>0692908883</td>
+                                    <td>Renault clio5 <br><small class="text-muted">505442-123-31</small></td>
+                                    <td><span class="badge bg-light text-dark border">VÉRIFICATION COMPLÈTE</span></td>
+                                    <td><span class="badge badge-status bg-success-subtle text-success">Terminé</span></td>
+                                    <td class="text-end"><button class="btn btn-outline-secondary btn-sm rounded-pill"><i class="fa-solid fa-eye"></i> Voir</button></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-dark"><i class="fa-regular fa-clock me-1"></i>11:00</span></td>
+                                    <td class="fw-bold">touhami houcine</td>
+                                    <td>0697096724</td>
+                                    <td>Ford Fiesta <br><small class="text-muted">504283-115-16</small></td>
+                                    <td><span class="badge bg-light text-dark border">TOLE</span></td>
+                                    <td><span class="badge badge-status bg-info-subtle text-info">En Cours</span></td>
+                                    <td class="text-end"><button class="btn btn-warning btn-sm text-white rounded-pill" onclick="location.href='technician-inspection.html?id=3'"><i class="fa-solid fa-pen-to-square"></i> Reprendre</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. تبويب جدول العملاء وسياراتهم المستقل -->
+            <div class="tab-pane fade" id="tab-clients">
+                <h3 class="fw-bold mb-4">Base Clients & Véhicules</h3>
+                <div class="content-card">
+                    <div class="d-flex justify-content-between mb-3">
+                        <input type="text" class="form-control w-25" placeholder="Rechercher client ou immatriculation...">
+                    </div>
+                    <table class="table table-striped align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#ID</th>
+                                <th>Nom du Client</th>
+                                <th>Téléphone</th>
+                                <th>Marque & Modèle</th>
+                                <th>Immatriculation</th>
+                                <th>Dernier Passage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>#C-101</td>
+                                <td class="fw-bold">Othmane Ayoub</td>
+                                <td>0794516925</td>
+                                <td>Renault Kongo</td>
+                                <td>500061-120-31</td>
+                                <td>Aujourd'hui</td>
+                            </tr>
+                            <tr>
+                                <td>#C-102</td>
+                                <td class="fw-bold">Mekki Farouk</td>
+                                <td>0692908883</td>
+                                <td>Renault Clio 5</td>
+                                <td>505442-123-31</td>
+                                <td>Aujourd'hui</td>
+                            </tr>
+                            <tr>
+                                <td>#C-103</td>
+                                <td class="fw-bold">touhami houcine</td>
+                                <td>0697096724</td>
+                                <td>Ford Fiesta</td>
+                                <td>504283-115-16</td>
+                                <td>Aujourd'hui</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 3. تبويب وحدات الفحص (Scanner, Moteur, Suspension, Tôle, Kilométrage) -->
+            <div class="tab-pane fade" id="tab-modules">
+                <h3 class="fw-bold mb-4">Modules de Contrôle Technique</h3>
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="card h-100 shadow-sm border-0 text-center p-4">
+                            <div class="display-4 text-primary mb-3"><i class="fa-solid fa-laptop-code"></i></div>
+                            <h5 class="fw-bold">Scanner Diagnostique</h5>
+                            <p class="text-muted small">Analyse DTC, calculateurs, erreurs moteur et capteurs.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card h-100 shadow-sm border-0 text-center p-4">
+                            <div class="display-4 text-warning mb-3"><i class="fa-solid fa-car-battery"></i></div>
+                            <h5 class="fw-bold">Moteur & Niveaux</h5>
+                            <p class="text-muted small">Contrôle huiles, fuites, bruits et performances.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card h-100 shadow-sm border-0 text-center p-4">
+                            <div class="display-4 text-info mb-3"><i class="fa-solid fa-truck-monster"></i></div>
+                            <h5 class="fw-bold">Suspension & Train</h5>
+                            <p class="text-muted small">Vérification amortisseurs, pneumatiques, direction.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card h-100 shadow-sm border-0 text-center p-4">
+                            <div class="display-4 text-danger mb-3"><i class="fa-solid fa-spray-can"></i></div>
+                            <h5 class="fw-bold">Tôle & Carrosserie (Canvas)</h5>
+                            <p class="text-muted small">Détection peinture, a froid, choc, et dessin interactif.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card h-100 shadow-sm border-0 text-center p-4">
+                            <div class="display-4 text-success mb-3"><i class="fa-solid fa-gauge"></i></div>
+                            <h5 class="fw-bold">Kilométrage & Conformation</h5>
+                            <p class="text-muted small">Relevé d'index et vérification d'authenticité.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. تبويب التقارير النهائية -->
+            <div class="tab-pane fade" id="tab-rapports">
+                <h3 class="fw-bold mb-4">Rapports d'Inspection Générés</h3>
+                <div class="content-card">
+                    <p class="text-muted">Liste des rapports récents prêts pour impression ou validation.</p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        
+        document.querySelectorAll('#sidebarTabs a').forEach(tab => {
+            tab.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelectorAll('#sidebarTabs a').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                
+                const target = document.querySelector(this.getAttribute('data-bs-target'));
+                document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('show', 'active'));
+                target.classList.add('show', 'active');
+            });
+        });
+    </script>
+</body>
+</html>
