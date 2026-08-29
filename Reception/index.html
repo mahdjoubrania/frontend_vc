@@ -322,6 +322,88 @@
     </div>
   </div>
 
+  <!-- Modal Modification Rendez-vous -->
+  <div class="modal fade" id="editRendezVousModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg rounded-4">
+        <div class="modal-header border-bottom p-3 px-4">
+          <h5 class="fw-bold modal-title text-dark fs-6"><i class="bi bi-pencil-square text-primary me-2"></i>Modifier le Rendez-vous</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form id="edit-rdv-form">
+          <input type="hidden" id="edit-rdv-id">
+          <div class="modal-body p-3 p-md-4">
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label small text-muted fw-semibold">Nom du Client</label>
+                <input type="text" id="edit-client-name" class="form-control" required>
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="form-label small text-muted fw-semibold">Téléphone</label>
+                <input type="tel" id="edit-client-phone" class="form-control" required>
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="form-label small text-muted fw-semibold">N° Châssis (VIN)</label>
+                <input type="text" id="edit-car-vin" class="form-control">
+              </div>
+              <div class="col-12">
+                <label class="form-label small text-muted fw-semibold">Type de Prestation</label>
+                <input type="text" id="edit-service-type" class="form-control" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label small text-muted fw-semibold">Prix Total (DZD)</label>
+                <input type="number" id="edit-total-amount" class="form-control" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label small text-muted fw-semibold">Versement (DZD)</label>
+                <input type="number" id="edit-versement" class="form-control" required>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer border-top p-3 px-4 bg-light rounded-bottom-4">
+            <button type="button" class="btn btn-light px-4 fw-semibold" data-bs-dismiss="modal">Annuler</button>
+            <button type="submit" class="btn btn-primary custom-btn px-4 fw-bold">Sauvegarder</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Raison d'Annulation -->
+  <div class="modal fade" id="cancelReasonModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content border-0 shadow-lg rounded-4">
+        <div class="modal-header border-bottom p-3">
+          <h6 class="fw-bold modal-title text-dark"><i class="bi bi-x-circle text-danger me-2"></i>Motif d'annulation</h6>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-3">
+          <input type="hidden" id="cancel-rdv-id">
+          <div class="form-check mb-2">
+            <input class="form-check-input" type="radio" name="cancelReason" id="reason1" value="Client absent" checked>
+            <label class="form-check-label fs-14" for="reason1">Client absent</label>
+          </div>
+          <div class="form-check mb-2">
+            <input class="form-check-input" type="radio" name="cancelReason" id="reason2" value="Client a annulé">
+            <label class="form-check-label fs-14" for="reason2">Client a annulé</label>
+          </div>
+          <div class="form-check mb-2">
+            <input class="form-check-input" type="radio" name="cancelReason" id="reason3" value="Atelier plein">
+            <label class="form-check-label fs-14" for="reason3">Atelier plein</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="cancelReason" id="reason4" value="Autre raison">
+            <label class="form-check-label fs-14" for="reason4">Autre raison</label>
+          </div>
+        </div>
+        <div class="modal-footer border-top p-2 bg-light rounded-bottom-4">
+          <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Fermer</button>
+          <button type="button" class="btn btn-sm btn-danger fw-bold" onclick="confirmCancelWithReason()">Confirmer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="reception.js"></script>
   

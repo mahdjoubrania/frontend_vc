@@ -57,7 +57,8 @@ function checkAuth() {
 // ==========================================
 async function loadDashboardData() {
   try {
-    const res = await fetch(`${API_URL}/admin/appointments`, {
+    // جلب مواعيد اليوم فقط عبر المسار الجديد
+    const res = await fetch(`${API_URL}/admin/appointments/today`, {
       headers: {
         'Authorization': `Bearer ${getAuthToken()}`,
         'Content-Type': 'application/json'
@@ -78,26 +79,38 @@ async function loadDashboardData() {
   }
 }
 
-function getRemainingTime(appointmentDateStr) {
-  if (!appointmentDateStr) return '-';
+// حساب الوقت الحقيقي وإظهار الكرونو أو زر "En cours"
+function getRemainingTime(item) {
+  const currentStatus = item.status || item.extendedProps?.status;
 
-  const startTime = new Date(appointmentDateStr).getTime();
-  const endTime = startTime + (60 * 60 * 1000); // مهلة ساعة واحدة
-  const now = new Date().getTime();
-
-  if (now < startTime) {
-    return `<span class="badge bg-secondary">Pas encore commencé</span>`;
+  if (['PENDING', 'READY_FOR_WORKSHOP'].includes(currentStatus)) {
+    return `<button class="btn btn-sm btn-outline-success py-0 px-2 fs-12" onclick="startChronometer('${item.id}')">
+              <i class="bi bi-play-fill me-1"></i> En cours
+            </button>`;
   }
 
+  if (currentStatus === 'COMPLETED') {
+    return `<span class="badge bg-success"><i class="bi bi-check-all"></i> Terminé</span>`;
+  }
+
+  if (['CANCELLED', 'ABSENT'].includes(currentStatus)) {
+    return `<span class="badge bg-danger">${item.cancel_reason || 'Annulé'}</span>`;
+  }
+
+  // حساب مهلة الكرونو بدءاً من وقت الضغط على En Cours
+  const startTime = item.started_at ? new Date(item.started_at).getTime() : new Date().getTime();
+  const endTime = startTime + (60 * 60 * 1000); // 1 hour
+  const now = new Date().getTime();
+
   if (now >= endTime) {
-    return `<span class="badge bg-danger">Terminé (1h écoulée)</span>`;
+    return `<span class="badge bg-danger">⏱️ Dépassement (+1h)</span>`;
   }
 
   const diff = endTime - now;
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
   const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-  return `<span class="badge bg-primary">⏳ ${minutes}m ${seconds}s</span>`;
+  return `<span class="badge bg-primary fs-12">⏳ ${minutes}m ${seconds}s</span>`;
 }
 
 function renderAppointmentsTable(data) {
@@ -109,7 +122,7 @@ function renderAppointmentsTable(data) {
       <tr>
         <td colspan="9" class="text-center py-4 text-muted">
           <i class="bi bi-inbox fs-3 d-block mb-2"></i>
-          Aucun rendez-vous trouvé
+          Aucun rendez-vous aujourd'hui
         </td>
       </tr>`;
     return;
@@ -122,11 +135,11 @@ function renderAppointmentsTable(data) {
       : 'N/A';
 
     const currentStatus = item.extendedProps?.status || item.status || 'PENDING';
-    const payStatus = item.payment_status || item.paymentStatus || 'UNPAID';
+    const payStatus = item.payment_status || item.paymentStatus || 'PENDING_VERSEMENT';
     const clientName = item.client_name || item.title || item.clientName || 'N/A';
     const phone = item.phone || item.extendedProps?.phone || 'N/A';
     const vehicle = item.vehicle_name || item.extendedProps?.vehicle || item.carModel || 'Véhicule';
-    const vin = item.VIN || item.extendedProps?.vin || item.vin || '';
+    const licensePlate = item.license_plate || item.VIN || item.extendedProps?.vin || item.vin || '';
     const service = item.service_type || item.extendedProps?.serviceType || item.typedeverification || 'Inspection';
 
     return `
@@ -135,14 +148,14 @@ function renderAppointmentsTable(data) {
         <td>${phone}</td>
         <td>
           <div class="fw-semibold">${vehicle}</div>
-          <small class="text-muted">${vin}</small>
+          <small class="text-muted">${licensePlate}</small>
         </td>
         <td><i class="bi bi-clock me-1 text-muted"></i>${timeFormatted}</td>
         <td><span class="badge bg-light text-dark border">${service}</span></td>
-        <td id="chrono-${item.id}">${getRemainingTime(appDate)}</td>
+        <td id="chrono-${item.id}">${getRemainingTime(item)}</td>
         <td>
           <select class="form-select form-select-sm" onchange="updatePaymentStatus('${item.id}', this.value)">
-            <option value="UNPAID" ${payStatus === 'UNPAID' ? 'selected' : ''}>Non payé</option>
+            <option value="PENDING_VERSEMENT" ${payStatus === 'PENDING_VERSEMENT' ? 'selected' : ''}>Non payé</option>
             <option value="ADVANCE_PAID" ${payStatus === 'ADVANCE_PAID' ? 'selected' : ''}>Avance</option>
             <option value="FULLY_PAID" ${payStatus === 'FULLY_PAID' ? 'selected' : ''}>Payé</option>
           </select>
@@ -150,16 +163,19 @@ function renderAppointmentsTable(data) {
         <td>
           <select class="form-select form-select-sm status-select" onchange="changeStatus('${item.id}', this.value)">
             <option value="PENDING" ${['PENDING', 'EN_ATTENTE'].includes(currentStatus) ? 'selected' : ''}>⏳ En Attente</option>
-            <option value="IN_PROGRESS" ${['INCOMPLETE', 'EN_COURS', 'IN_PROGRESS'].includes(currentStatus) ? 'selected' : ''}>⚙️ En Cours</option>
+            <option value="IN_PROGRESS" ${['IN_PROGRESS', 'IN_WORKSHOP', 'INCOMPLETE'].includes(currentStatus) ? 'selected' : ''}>⚙️ En Cours</option>
             <option value="COMPLETED" ${['COMPLETED', 'TERMINE'].includes(currentStatus) ? 'selected' : ''}>✅ Terminé</option>
-            <option value="CANCELLED" ${currentStatus === 'CANCELLED' ? 'selected' : ''}>❌ Annulé</option>
+            <option value="CANCELLED" ${['CANCELLED', 'ABSENT'].includes(currentStatus) ? 'selected' : ''}>❌ Annulé</option>
           </select>
         </td>
         <td class="text-end">
+          <button class="btn btn-sm btn-outline-secondary me-1" title="Modifier" onclick="openEditModal(${JSON.stringify(item).replace(/"/g, '&quot;')})">
+            <i class="bi bi-pencil"></i>
+          </button>
           <button class="btn btn-sm btn-outline-primary me-1" title="Imprimer Fiche" onclick="printAppointment('${item.id}')">
             <i class="bi bi-printer"></i>
           </button>
-          <button class="btn btn-sm btn-outline-danger" title="Annuler" onclick="cancelAppointment('${item.id}')">
+          <button class="btn btn-sm btn-outline-danger" title="Annuler/Supprimer" onclick="openCancelModal('${item.id}')">
             <i class="bi bi-trash"></i>
           </button>
         </td>
@@ -170,9 +186,8 @@ function renderAppointmentsTable(data) {
   if (timerInterval) clearInterval(timerInterval);
   timerInterval = setInterval(() => {
     data.forEach(item => {
-      const appDate = item.appointment_date || item.start || item.appointmentDate;
       const el = document.getElementById(`chrono-${item.id}`);
-      if (el) el.innerHTML = getRemainingTime(appDate);
+      if (el) el.innerHTML = getRemainingTime(item);
     });
   }, 1000);
 }
@@ -180,15 +195,24 @@ function renderAppointmentsTable(data) {
 // ==========================================
 // 3. ACTIONS & API CALLS
 // ==========================================
-async function changeStatus(id, newStatus) {
+
+// بدء التوقيت فور الضغط على زر En cours
+async function startChronometer(id) {
+  await changeStatus(id, 'IN_PROGRESS');
+}
+
+async function changeStatus(id, newStatus, cancelReason = null) {
   try {
+    const payload = { status: newStatus };
+    if (cancelReason) payload.cancel_reason = cancelReason;
+
     const res = await fetch(`${API_URL}/admin/appointments/${id}/status`, {
       method: 'PUT',
       headers: { 
         'Authorization': `Bearer ${getAuthToken()}`,
         'Content-Type': 'application/json' 
       },
-      body: JSON.stringify({ status: newStatus })
+      body: JSON.stringify(payload)
     });
 
     if (res.ok) {
@@ -226,7 +250,7 @@ function updateKPIs(data) {
   }).length;
 
   const pendingCount = data.filter(a => ['PENDING', 'EN_ATTENTE'].includes(a.extendedProps?.status || a.status)).length;
-  const progressCount = data.filter(a => ['INCOMPLETE', 'EN_COURS', 'IN_PROGRESS'].includes(a.extendedProps?.status || a.status)).length;
+  const progressCount = data.filter(a => ['INCOMPLETE', 'EN_COURS', 'IN_PROGRESS', 'IN_WORKSHOP'].includes(a.extendedProps?.status || a.status)).length;
   const completedCount = data.filter(a => ['COMPLETED', 'TERMINE'].includes(a.extendedProps?.status || a.status)).length;
 
   const countTodayEl = document.getElementById('count-today');
@@ -241,7 +265,61 @@ function updateKPIs(data) {
 }
 
 // ==========================================
-// 4. SEARCH & EVENT LISTENERS
+// 4. MODALS MANAGEMENT (EDIT & CANCEL)
+// ==========================================
+
+// فتح النافذة المنبثقة للتعديل
+function openEditModal(item) {
+  document.getElementById('edit-rdv-id').value = item.id;
+  document.getElementById('edit-client-name').value = item.client_name || '';
+  document.getElementById('edit-client-phone').value = item.phone || '';
+  document.getElementById('edit-car-vin').value = item.VIN || '';
+  document.getElementById('edit-service-type').value = item.service_type || '';
+  document.getElementById('edit-total-amount').value = item.total_amount || 0;
+  document.getElementById('edit-versement').value = item.versement || 0;
+
+  const modal = new bootstrap.Modal(document.getElementById('editRendezVousModal'));
+  modal.show();
+}
+
+// فتح نافذة اختيار سبب الإلغاء
+function openCancelModal(id) {
+  document.getElementById('cancel-rdv-id').value = id;
+  const modal = new bootstrap.Modal(document.getElementById('cancelReasonModal'));
+  modal.show();
+}
+
+// تأكيد الإلغاء مع السبب
+async function confirmCancelWithReason() {
+  const id = document.getElementById('cancel-rdv-id').value;
+  const selectedReason = document.querySelector('input[name="cancelReason"]:checked')?.value;
+
+  try {
+    const res = await fetch(`${API_URL}/admin/appointments/${id}/status`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${getAuthToken()}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        status: 'CANCELLED',
+        cancel_reason: selectedReason
+      })
+    });
+
+    if (res.ok) {
+      const modalEl = document.getElementById('cancelReasonModal');
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      if (modal) modal.hide();
+      loadDashboardData();
+    }
+  } catch (err) {
+    console.error('Error cancelling appointment:', err);
+  }
+}
+
+// ==========================================
+// 5. SEARCH & EVENT LISTENERS
 // ==========================================
 function setupEventListeners() {
   const logoutBtn = document.getElementById('logout-btn');
@@ -298,12 +376,50 @@ function setupEventListeners() {
   if (rdvForm) {
     rdvForm.addEventListener('submit', handleNewAppointment);
   }
+
+  // الاستماع لحدث نموذج التعديل
+  const editForm = document.getElementById('edit-rdv-form');
+  if (editForm) {
+    editForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('edit-rdv-id').value;
+
+      const payload = {
+        clientName: document.getElementById('edit-client-name').value,
+        phone: document.getElementById('edit-client-phone').value,
+        vin: document.getElementById('edit-car-vin').value,
+        serviceType: document.getElementById('edit-service-type').value,
+        totalAmount: parseFloat(document.getElementById('edit-total-amount').value),
+        versement: parseFloat(document.getElementById('edit-versement').value)
+      };
+
+      try {
+        const res = await fetch(`${API_URL}/admin/appointments/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${getAuthToken()}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          const modalEl = document.getElementById('editRendezVousModal');
+          const modal = bootstrap.Modal.getInstance(modalEl);
+          if (modal) modal.hide();
+          loadDashboardData();
+        }
+      } catch (err) {
+        console.error('Error modifying appointment:', err);
+      }
+    });
+  }
 }
 
 setInterval(loadDashboardData, 30000);
 
 // ==========================================
-// 5. CREATE APPOINTMENT
+// 6. CREATE APPOINTMENT
 // ==========================================
 async function handleNewAppointment(e) {
   e.preventDefault();
@@ -320,19 +436,18 @@ async function handleNewAppointment(e) {
   const make = carInput[0] || 'Inconnu';
   const model = carInput.slice(1).join(' ') || 'Inconnu';
 
-  // --- حساب مبالغ الدفع وتحديد حالة التسديد تلقائياً ---
   const totalAmount = parseFloat(document.getElementById('total-amount').value) || 0;
   const versement = parseFloat(document.getElementById('versement-amount').value) || 0;
   const rest = totalAmount - versement;
 
-  let calculatedPaymentStatus = 'PENDING_VERSEMENT'; // القيمة الافتراضية إذا لم يدفع شيئاً (أو 'UNPAID')
+  let calculatedPaymentStatus = 'PENDING_VERSEMENT';
 
   if (versement <= 0) {
-    calculatedPaymentStatus = 'PENDING_VERSEMENT'; // لم يدفع بتاتاً
+    calculatedPaymentStatus = 'PENDING_VERSEMENT';
   } else if (rest <= 0) {
-    calculatedPaymentStatus = 'FULLY_PAID'; // دفع تام
+    calculatedPaymentStatus = 'FULLY_PAID';
   } else {
-    calculatedPaymentStatus = 'ADVANCE_PAID'; // دفع جزء والباقي ما زال متبقياً (عربون/تسديد جزئي)
+    calculatedPaymentStatus = 'ADVANCE_PAID';
   }
 
   const payload = {
@@ -347,7 +462,7 @@ async function handleNewAppointment(e) {
     totalAmount: totalAmount,
     versement: versement,
     notes: document.getElementById('vehicle-notes').value.trim(),
-    paymentStatus: calculatedPaymentStatus, // استخدام الحالة المحسوبة ديناميكياً
+    paymentStatus: calculatedPaymentStatus,
     status: 'PENDING'
   };
 
@@ -379,7 +494,7 @@ async function handleNewAppointment(e) {
 }
 
 // ==========================================
-// 6. VIEWS, CALENDAR & UTILS
+// 7. VIEWS, CALENDAR & UTILS
 // ==========================================
 function toggleView(view) {
   const tableContainer = document.getElementById('view-table-container');
@@ -450,34 +565,4 @@ function changeMonth(delta) {
 
 function printAppointment(id) {
   window.open(`prise.de.rendez-vous.html?id=${id}`, '_blank');
-}
-
-async function cancelAppointment(id) {
-  if (confirm('Êtes-vous sûr de vouloir annuler ce rendez-vous ?')) {
-    await changeStatus(id, 'CANCELLED');
-  }
-}
-
-function switchTab(tabName, event) {
-  if (event) event.preventDefault();
-
-  document.querySelectorAll('.tab-section').forEach(section => {
-    section.classList.add('d-none');
-  });
-
-  document.querySelectorAll('.sidebar .nav-link').forEach(link => {
-    link.classList.remove('active');
-    link.classList.add('text-secondary');
-  });
-
-  const targetSection = document.getElementById(`section-${tabName}`);
-  if (targetSection) {
-    targetSection.classList.remove('d-none');
-  }
-
-  const activeTab = document.getElementById(`tab-${tabName}`);
-  if (activeTab) {
-    activeTab.classList.add('active');
-    activeTab.classList.remove('text-secondary');
-  }
 }
