@@ -460,6 +460,14 @@
         }
       });
 
+        const logoutBtn = document.getElementById('logout-btn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+      localStorage.removeItem('verifcar_admin_user');
+      window.location.href = '../Auth/index.html';
+    });
+  }
+
       document.getElementById('rdv-apply-btn')?.addEventListener('click', initAnalytics);
 
       // Overlay Sidebar
