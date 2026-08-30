@@ -322,52 +322,125 @@
     </div>
   </div>
 
-  <!-- Modal Modification Rendez-vous -->
-  <div class="modal fade" id="editRendezVousModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content border-0 shadow-lg rounded-4">
-        <div class="modal-header border-bottom p-3 px-4">
-          <h5 class="fw-bold modal-title text-dark fs-6"><i class="bi bi-pencil-square text-primary me-2"></i>Modifier le Rendez-vous</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <form id="edit-rdv-form">
-          <input type="hidden" id="edit-rdv-id">
-          <div class="modal-body p-3 p-md-4">
-            <div class="row g-3">
-              <div class="col-12">
-                <label class="form-label small text-muted fw-semibold">Nom du Client</label>
-                <input type="text" id="edit-client-name" class="form-control" required>
+ <!-- Modal Modification Rendez-vous Complexe -->
+<div class="modal fade" id="editRendezVousModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <div class="modal-header border-bottom p-3 px-4">
+        <h5 class="fw-bold modal-title text-dark fs-6 fs-md-5"><i class="bi bi-pencil-square text-primary me-2"></i>Modifier le Rendez-vous</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      
+      <form id="edit-rdv-form">
+        <input type="hidden" id="edit-rdv-id">
+        <div class="modal-body p-3 p-md-4">
+          <div class="row g-3">
+            <!-- Client Info -->
+            <div class="col-12"><h6 class="fw-bold text-primary fs-12 text-uppercase mb-0"><i class="bi bi-person me-1"></i> Informations Client</h6></div>
+            <div class="col-12 col-md-6">
+              <label class="form-label small text-muted fw-semibold">Nom & Prénom *</label>
+              <input type="text" id="edit-client-name" class="form-control" required>
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label small text-muted fw-semibold">Numéro de Téléphone *</label>
+              <input type="tel" id="edit-client-phone" class="form-control" required>
+            </div>
+
+            <!-- Car Info -->
+            <div class="col-12 mt-3"><h6 class="fw-bold text-primary fs-12 text-uppercase mb-0"><i class="bi bi-car-front me-1"></i> Informations Véhicule</h6></div>
+            <div class="col-12 col-md-4">
+              <label class="form-label small text-muted fw-semibold">Marque & Modèle *</label>
+              <input type="text" id="edit-car-make-model" class="form-control" required>
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label small text-muted fw-semibold">Immatriculation *</label>
+              <input type="text" id="edit-car-matricule" class="form-control" required>
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label small text-muted fw-semibold">N° Châssis (VIN)</label>
+              <input type="text" id="edit-car-vin" class="form-control">
+            </div>
+
+            <!-- Services -->
+            <div class="col-12 mt-3"><h6 class="fw-bold text-primary fs-12 text-uppercase mb-0"><i class="bi bi-check2-square me-1"></i> Type de Prestation</h6></div>
+            <div class="col-12">
+              <div class="row g-2 bg-light p-3 rounded-3 border mx-0">
+                <div class="col-6 col-sm-4">
+                  <div class="form-check">
+                    <input class="form-check-input edit-service-checkbox" type="checkbox" value="VÉRIFICATION COMPLÈTE" id="edit-srv-1">
+                    <label class="form-check-label fs-12 fw-semibold" for="edit-srv-1">VÉRIFICATION COMPLÈTE</label>
+                  </div>
+                </div>
+                <div class="col-6 col-sm-4">
+                  <div class="form-check">
+                    <input class="form-check-input edit-service-checkbox" type="checkbox" value="KILOMETRAGE" id="edit-srv-2">
+                    <label class="form-check-label fs-12 fw-semibold" for="edit-srv-2">KILOMETRAGE</label>
+                  </div>
+                </div>
+                <div class="col-6 col-sm-4">
+                  <div class="form-check">
+                    <input class="form-check-input edit-service-checkbox" type="checkbox" value="MOTEUR" id="edit-srv-3">
+                    <label class="form-check-label fs-12 fw-semibold" for="edit-srv-3">MOTEUR</label>
+                  </div>
+                </div>
+                <div class="col-6 col-sm-4">
+                  <div class="form-check">
+                    <input class="form-check-input edit-service-checkbox" type="checkbox" value="TOLE" id="edit-srv-4">
+                    <label class="form-check-label fs-12 fw-semibold" for="edit-srv-4">TOLE</label>
+                  </div>
+                </div>
+                <div class="col-6 col-sm-4">
+                  <div class="form-check">
+                    <input class="form-check-input edit-service-checkbox" type="checkbox" value="SUSPENSION" id="edit-srv-5">
+                    <label class="form-check-label fs-12 fw-semibold" for="edit-srv-5">SUSPENSION</label>
+                  </div>
+                </div>
+                <div class="col-6 col-sm-4">
+                  <div class="form-check">
+                    <input class="form-check-input edit-service-checkbox" type="checkbox" value="SCANNER" id="edit-srv-6">
+                    <label class="form-check-label fs-12 fw-semibold" for="edit-srv-6">SCANNER</label>
+                  </div>
+                </div>
               </div>
-              <div class="col-12 col-md-6">
-                <label class="form-label small text-muted fw-semibold">Téléphone</label>
-                <input type="tel" id="edit-client-phone" class="form-control" required>
-              </div>
-              <div class="col-12 col-md-6">
-                <label class="form-label small text-muted fw-semibold">N° Châssis (VIN)</label>
-                <input type="text" id="edit-car-vin" class="form-control">
-              </div>
-              <div class="col-12">
-                <label class="form-label small text-muted fw-semibold">Type de Prestation</label>
-                <input type="text" id="edit-service-type" class="form-control" required>
-              </div>
-              <div class="col-6">
-                <label class="form-label small text-muted fw-semibold">Prix Total (DZD)</label>
-                <input type="number" id="edit-total-amount" class="form-control" required>
-              </div>
-              <div class="col-6">
-                <label class="form-label small text-muted fw-semibold">Versement (DZD)</label>
-                <input type="number" id="edit-versement" class="form-control" required>
-              </div>
+              <input type="text" id="edit-service-autre" class="form-control mt-2" placeholder="Autre prestation spécifique...">
+            </div>
+
+            <!-- Date & Payment -->
+            <div class="col-12 mt-3"><h6 class="fw-bold text-primary fs-12 text-uppercase mb-0"><i class="bi bi-clock me-1"></i> Planning & Règlement</h6></div>
+            <div class="col-6">
+              <label class="form-label small text-muted fw-semibold">Date *</label>
+              <input type="date" id="edit-rdv-date-only" class="form-control" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label small text-muted fw-semibold">Heure *</label>
+              <input type="time" id="edit-rdv-time-only" class="form-control" required>
+            </div>
+
+            <div class="col-6">
+              <label class="form-label small text-muted fw-semibold">Prix Total (DZD) *</label>
+              <input type="number" id="edit-total-amount" class="form-control" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label small text-muted fw-semibold">Versement (DZD) *</label>
+              <input type="number" id="edit-versement-amount" class="form-control" required>
+            </div>
+
+            <!-- Remarks -->
+            <div class="col-12">
+              <label class="form-label small text-muted fw-semibold">Remarques</label>
+              <textarea id="edit-vehicle-notes" class="form-control" rows="2" placeholder="Notes particulières..."></textarea>
             </div>
           </div>
-          <div class="modal-footer border-top p-3 px-4 bg-light rounded-bottom-4">
-            <button type="button" class="btn btn-light px-4 fw-semibold" data-bs-dismiss="modal">Annuler</button>
-            <button type="submit" class="btn btn-primary custom-btn px-4 fw-bold">Sauvegarder</button>
-          </div>
-        </form>
-      </div>
+        </div>
+        
+        <div class="modal-footer border-top p-3 px-4 bg-light rounded-bottom-4">
+          <button type="button" class="btn btn-light px-4 fw-semibold" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-primary custom-btn px-4 fw-bold">Sauvegarder</button>
+        </div>
+      </form>
     </div>
   </div>
+</div>
 
   <!-- Modal Raison d'Annulation -->
   <div class="modal fade" id="cancelReasonModal" tabindex="-1" aria-hidden="true">

@@ -295,10 +295,46 @@ function openEditModal(item) {
   document.getElementById('edit-rdv-id').value = item.id;
   document.getElementById('edit-client-name').value = item.client_name || '';
   document.getElementById('edit-client-phone').value = item.phone || '';
+  document.getElementById('edit-car-make-model').value = item.vehicle_name || '';
+  document.getElementById('edit-car-matricule').value = item.license_plate || '';
   document.getElementById('edit-car-vin').value = item.VIN || '';
-  document.getElementById('edit-service-type').value = item.service_type || '';
+  
+  // Correction de la définition des montants
   document.getElementById('edit-total-amount').value = item.total_amount || 0;
-  document.getElementById('edit-versement').value = item.versement || 0;
+  document.getElementById('edit-versement-amount').value = item.versement || 0;
+  document.getElementById('edit-vehicle-notes').value = item.notes || '';
+
+  // Reglage de la date et de l'heure
+  const appDateRaw = item.appointment_date || item.start || item.appointmentDate;
+  if (appDateRaw) {
+    const d = new Date(appDateRaw);
+    if (!isNaN(d.getTime())) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+
+      document.getElementById('edit-rdv-date-only').value = `${year}-${month}-${day}`;
+      document.getElementById('edit-rdv-time-only').value = `${hours}:${minutes}`;
+    }
+  }
+
+  // Reglage des prestations
+  const existingServices = (item.service_type || '').split(',').map(s => s.trim());
+  const checkboxes = document.querySelectorAll('.edit-service-checkbox');
+  const otherInput = document.getElementById('edit-service-autre');
+  if (otherInput) otherInput.value = '';
+
+  checkboxes.forEach(cb => {
+    cb.checked = existingServices.includes(cb.value);
+  });
+
+  const standardServices = Array.from(checkboxes).map(cb => cb.value);
+  const customServices = existingServices.filter(s => s && !standardServices.includes(s));
+  if (customServices.length > 0 && otherInput) {
+    otherInput.value = customServices.join(', ');
+  }
 
   const modal = new bootstrap.Modal(document.getElementById('editRendezVousModal'));
   modal.show();
@@ -584,4 +620,79 @@ function changeMonth(delta) {
 
 function printAppointment(id) {
   window.open(`prise.de.rendez-vous.html?id=${id}`, '_blank');
+}
+  const editForm = document.getElementById('edit-rdv-form');
+if (editForm) {
+  editForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('edit-rdv-id').value;
+
+    // 1. Récupération et nettoyage des services
+    const selectedServices = Array.from(document.querySelectorAll('.edit-service-checkbox:checked')).map(cb => cb.value);
+    const customService = document.getElementById('edit-service-autre')?.value.trim();
+    if (customService) selectedServices.push(customService);
+
+    // 2. Nettoyage des montants (remplacement des virgules par des points)
+    const rawTotal = document.getElementById('edit-total-amount').value.replace(',', '.');
+    const rawVersement = document.getElementById('edit-versement-amount').value.replace(',', '.');
+    const totalAmount = parseFloat(rawTotal) || 0;
+    const versement = parseFloat(rawVersement) || 0;
+
+    // 3. Formate la date au format ISO valide
+    const dateOnly = document.getElementById('edit-rdv-date-only').value;
+    const timeOnly = document.getElementById('edit-rdv-time-only').value;
+    const appointmentDate = new Date(`${dateOnly}T${timeOnly}:00`).toISOString();
+
+    // 4. Découpage Marque / Modèle
+    const carInput = document.getElementById('edit-car-make-model').value.trim().split(' ');
+    const make = carInput[0] || 'Inconnu';
+    const model = carInput.slice(1).join(' ') || 'Inconnu';
+
+    // 5. Payload hybride (compatible camelCase et snake_case)
+    const payload = {
+      client_name: document.getElementById('edit-client-name').value,
+      clientName: document.getElementById('edit-client-name').value,
+      phone: document.getElementById('edit-client-phone').value,
+      make: make,
+      model: model,
+      vehicle_name: document.getElementById('edit-car-make-model').value,
+      license_plate: document.getElementById('edit-car-matricule').value,
+      licensePlate: document.getElementById('edit-car-matricule').value,
+      vin: document.getElementById('edit-car-vin').value,
+      VIN: document.getElementById('edit-car-vin').value,
+      service_type: selectedServices.join(', '),
+      serviceType: selectedServices.join(', '),
+      appointment_date: appointmentDate,
+      appointmentDate: appointmentDate,
+      total_amount: totalAmount,
+      totalAmount: totalAmount,
+      versement: versement,
+      notes: document.getElementById('edit-vehicle-notes').value
+    };
+
+    try {
+      const res = await fetch(`${API_URL}/admin/appointments/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${getAuthToken()}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        const modalEl = document.getElementById('editRendezVousModal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
+        loadDashboardData();
+      } else {
+        const errData = await res.json();
+        console.error('Erreur Serveur:', errData);
+        alert('Erreur: ' + (errData.message || errData.error || 'Erreur lors de la modification'));
+      }
+    } catch (err) {
+      console.error('Erreur Réseau/Serveur:', err);
+      alert('Erreur de connexion au serveur.');
+    }
+  });
 }
