@@ -10,6 +10,7 @@
 </head>
 <body>
    
+    <!-- Sidebar -->
     <aside class="sidebar">
         <div>
             <div class="brand-logo">
@@ -20,7 +21,6 @@
                 </div>
             </div>
 
-            
             <ul class="nav nav-pills flex-column nav-menu" id="sidebarTabs" role="tablist">
                 <li class="nav-item">
                     <a class="nav-link active" id="tab-inspections-link" data-bs-toggle="tab" data-bs-target="#tab-inspections">
@@ -60,229 +60,149 @@
             <a href="#" class="text-danger"><i class="fa-solid fa-right-from-bracket"></i></a>
         </div>
     </aside>
-
- 
-    <main class="main-content">
-        <div class="tab-content" id="sidebarTabsContent">
-            
+        <!-- Main Content Area -->
+    <main class="main-content flex-grow-1 p-3 p-lg-4">
+      
+      <!-- Section 1: Rendez-vous -->
+      <section id="section-appointments" class="tab-section">
         
-            <div class="tab-pane fade show active" id="tab-inspections">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div>
-                        <h3 class="fw-bold m-0">Planning du jour</h3>
-                        <p class="text-muted m-0">Mouvements et rendez-vous triés par ordre chronologique</p>
-                    </div>
-                </div>
+        <!-- Header Bar -->
+        <header class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+          <div>
+            <h4 class="fw-bold text-dark mb-1 fs-5 fs-lg-4">Accueil & Prise de Rendez-vous</h4>
+            <p class="text-muted small mb-0">Gestion des entrées du jour, suivi des délais (1h) et paiements</p>
+          </div>
+          <button class="btn btn-primary custom-btn custom-btn-primary shadow-sm w-100 w-sm-auto" data-bs-toggle="modal" data-bs-target="#addRendezVousModal">
+            <i class="bi bi-plus-lg me-1"></i> Nouveau Rendez-vous
+          </button>
+        </header>
 
-                <!-- Stat Cards -->
-                <div class="row g-3 mb-4">
-                    <div class="col-md-3">
-                        <div class="stat-card" style="border-left: 4px solid #0d6efd;">
-                            <div>
-                                <small class="text-muted fw-bold">AUJOURD'HUI</small>
-                                <h2 class="fw-bold my-1">6</h2>
-                                <small class="text-muted">Rendez-vous</small>
-                            </div>
-                            <div class="stat-icon bg-primary-subtle text-primary p-3 rounded"><i class="fa-solid fa-calendar-day"></i></div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stat-card" style="border-left: 4px solid #ffc107;">
-                            <div>
-                                <small class="text-muted fw-bold">EN ATTENTE</small>
-                                <h2 class="fw-bold my-1">2</h2>
-                                <small class="text-muted">Au garage</small>
-                            </div>
-                            <div class="stat-icon bg-warning-subtle text-warning p-3 rounded"><i class="fa-solid fa-clock"></i></div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stat-card" style="border-left: 4px solid #0dcaf0;">
-                            <div>
-                                <small class="text-muted fw-bold">EN COURS</small>
-                                <h2 class="fw-bold my-1">1</h2>
-                                <small class="text-muted">Inspection</small>
-                            </div>
-                            <div class="stat-icon bg-info-subtle text-info p-3 rounded"><i class="fa-solid fa-wrench"></i></div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stat-card" style="border-left: 4px solid #198754;">
-                            <div>
-                                <small class="text-muted fw-bold">TERMINÉS</small>
-                                <h2 class="fw-bold my-1">3</h2>
-                                <small class="text-muted">Prêts</small>
-                            </div>
-                            <div class="stat-icon bg-success-subtle text-success p-3 rounded"><i class="fa-solid fa-circle-check"></i></div>
-                        </div>
-                    </div>
+        <!-- KPI Cards Summary -->
+        <div class="row g-2 g-md-3 mb-4">
+          <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm p-3 kpi-card kpi-today bg-white h-100">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="text-muted fs-11 fw-bold text-uppercase">Aujourd'hui</div>
+                  <h3 class="fw-bold text-dark my-1" id="count-today">0</h3>
+                  <span class="text-muted fs-12 d-none d-sm-inline">Rendez-vous</span>
                 </div>
-
-                <!-- Table المواعيد بترتيب الزمني -->
-                <div class="content-card">
-                    <h5 class="fw-bold mb-3">Rendez-vous triés par heure</h5>
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>HEURE</th>
-                                    <th>CLIENT</th>
-                                    <th>TÉLÉPHONE</th>
-                                    <th>VÉHICULE / MATRICULE</th>
-                                    <th>ATELIER</th>
-                                    <th>STATUT</th>
-                                    <th class="text-end">ACTION</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td><span class="badge bg-dark"><i class="fa-regular fa-clock me-1"></i>09:10</span></td>
-                                    <td class="fw-bold">Othmane Ayoub</td>
-                                    <td>0794516925</td>
-                                    <td>Kongo Inconnu <br><small class="text-muted">500061-120-31</small></td>
-                                    <td><span class="badge bg-light text-dark border">VÉRIFICATION COMPLÈTE</span></td>
-                                    <td><span class="badge badge-status bg-warning-subtle text-warning">En Attente</span></td>
-                                    <td class="text-end"><button class="btn btn-primary btn-sm rounded-pill" onclick="location.href='technician-inspection.html?id=1'"><i class="fa-solid fa-play"></i> Commencer</button></td>
-                                </tr>
-                                <tr>
-                                    <td><span class="badge bg-dark"><i class="fa-regular fa-clock me-1"></i>10:15</span></td>
-                                    <td class="fw-bold">Mekki Farouk</td>
-                                    <td>0692908883</td>
-                                    <td>Renault clio5 <br><small class="text-muted">505442-123-31</small></td>
-                                    <td><span class="badge bg-light text-dark border">VÉRIFICATION COMPLÈTE</span></td>
-                                    <td><span class="badge badge-status bg-success-subtle text-success">Terminé</span></td>
-                                    <td class="text-end"><button class="btn btn-outline-secondary btn-sm rounded-pill"><i class="fa-solid fa-eye"></i> Voir</button></td>
-                                </tr>
-                                <tr>
-                                    <td><span class="badge bg-dark"><i class="fa-regular fa-clock me-1"></i>11:00</span></td>
-                                    <td class="fw-bold">touhami houcine</td>
-                                    <td>0697096724</td>
-                                    <td>Ford Fiesta <br><small class="text-muted">504283-115-16</small></td>
-                                    <td><span class="badge bg-light text-dark border">TOLE</span></td>
-                                    <td><span class="badge badge-status bg-info-subtle text-info">En Cours</span></td>
-                                    <td class="text-end"><button class="btn btn-warning btn-sm text-white rounded-pill" onclick="location.href='technician-inspection.html?id=3'"><i class="fa-solid fa-pen-to-square"></i> Reprendre</button></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="kpi-icon bg-primary bg-opacity-10 text-primary">
+                  <i class="bi bi-calendar-event"></i>
                 </div>
+              </div>
             </div>
+          </div>
 
-            <!-- 2. تبويب جدول العملاء وسياراتهم المستقل -->
-            <div class="tab-pane fade" id="tab-clients">
-                <h3 class="fw-bold mb-4">Base Clients & Véhicules</h3>
-                <div class="content-card">
-                    <div class="d-flex justify-content-between mb-3">
-                        <input type="text" class="form-control w-25" placeholder="Rechercher client ou immatriculation...">
-                    </div>
-                    <table class="table table-striped align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>#ID</th>
-                                <th>Nom du Client</th>
-                                <th>Téléphone</th>
-                                <th>Marque & Modèle</th>
-                                <th>Immatriculation</th>
-                                <th>Dernier Passage</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>#C-101</td>
-                                <td class="fw-bold">Othmane Ayoub</td>
-                                <td>0794516925</td>
-                                <td>Renault Kongo</td>
-                                <td>500061-120-31</td>
-                                <td>Aujourd'hui</td>
-                            </tr>
-                            <tr>
-                                <td>#C-102</td>
-                                <td class="fw-bold">Mekki Farouk</td>
-                                <td>0692908883</td>
-                                <td>Renault Clio 5</td>
-                                <td>505442-123-31</td>
-                                <td>Aujourd'hui</td>
-                            </tr>
-                            <tr>
-                                <td>#C-103</td>
-                                <td class="fw-bold">touhami houcine</td>
-                                <td>0697096724</td>
-                                <td>Ford Fiesta</td>
-                                <td>504283-115-16</td>
-                                <td>Aujourd'hui</td>
-                            </tr>
-                        </tbody>
-                    </table>
+          <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm p-3 kpi-card kpi-pending bg-white h-100">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="text-muted fs-11 fw-bold text-uppercase">En Attente</div>
+                  <h3 class="fw-bold text-warning my-1" id="count-pending">0</h3>
+                  <span class="text-muted fs-12 d-none d-sm-inline">Au garage</span>
                 </div>
+                <div class="kpi-icon bg-warning bg-opacity-10 text-warning">
+                  <i class="bi bi-hourglass-split"></i>
+                </div>
+              </div>
             </div>
+          </div>
 
-            <!-- 3. تبويب وحدات الفحص (Scanner, Moteur, Suspension, Tôle, Kilométrage) -->
-            <div class="tab-pane fade" id="tab-modules">
-                <h3 class="fw-bold mb-4">Modules de Contrôle Technique</h3>
-                <div class="row g-4">
-                    <div class="col-md-4">
-                        <div class="card h-100 shadow-sm border-0 text-center p-4">
-                            <div class="display-4 text-primary mb-3"><i class="fa-solid fa-laptop-code"></i></div>
-                            <h5 class="fw-bold">Scanner Diagnostique</h5>
-                            <p class="text-muted small">Analyse DTC, calculateurs, erreurs moteur et capteurs.</p>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card h-100 shadow-sm border-0 text-center p-4">
-                            <div class="display-4 text-warning mb-3"><i class="fa-solid fa-car-battery"></i></div>
-                            <h5 class="fw-bold">Moteur & Niveaux</h5>
-                            <p class="text-muted small">Contrôle huiles, fuites, bruits et performances.</p>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card h-100 shadow-sm border-0 text-center p-4">
-                            <div class="display-4 text-info mb-3"><i class="fa-solid fa-truck-monster"></i></div>
-                            <h5 class="fw-bold">Suspension & Train</h5>
-                            <p class="text-muted small">Vérification amortisseurs, pneumatiques, direction.</p>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card h-100 shadow-sm border-0 text-center p-4">
-                            <div class="display-4 text-danger mb-3"><i class="fa-solid fa-spray-can"></i></div>
-                            <h5 class="fw-bold">Tôle & Carrosserie (Canvas)</h5>
-                            <p class="text-muted small">Détection peinture, a froid, choc, et dessin interactif.</p>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card h-100 shadow-sm border-0 text-center p-4">
-                            <div class="display-4 text-success mb-3"><i class="fa-solid fa-gauge"></i></div>
-                            <h5 class="fw-bold">Kilométrage & Conformation</h5>
-                            <p class="text-muted small">Relevé d'index et vérification d'authenticité.</p>
-                        </div>
-                    </div>
+          <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm p-3 kpi-card kpi-progress bg-white h-100">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="text-muted fs-11 fw-bold text-uppercase">En Cours</div>
+                  <h3 class="fw-bold text-info my-1" id="count-progress">0</h3>
+                  <span class="text-muted fs-12 d-none d-sm-inline">Inspection</span>
                 </div>
+                <div class="kpi-icon bg-info bg-opacity-10 text-info">
+                  <i class="bi bi-tools"></i>
+                </div>
+              </div>
             </div>
+          </div>
 
-            <!-- 4. تبويب التقارير النهائية -->
-            <div class="tab-pane fade" id="tab-rapports">
-                <h3 class="fw-bold mb-4">Rapports d'Inspection Générés</h3>
-                <div class="content-card">
-                    <p class="text-muted">Liste des rapports récents prêts pour impression ou validation.</p>
+          <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm p-3 kpi-card kpi-completed bg-white h-100">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="text-muted fs-11 fw-bold text-uppercase">Terminés</div>
+                  <h3 class="fw-bold text-success my-1" id="count-completed">0</h3>
+                  <span class="text-muted fs-12 d-none d-sm-inline">Prêts</span>
                 </div>
+                <div class="kpi-icon bg-success bg-opacity-10 text-success">
+                  <i class="bi bi-check2-circle"></i>
+                </div>
+              </div>
             </div>
+          </div>
+        </div>
+
+        <!-- Main Data Card -->
+        <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 bg-white">
+          <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
+            <h5 class="fw-bold text-dark mb-0 fs-6 fs-md-5">Rendez-vous & Inspections du jour</h5>
+            
+            <div class="d-flex flex-column flex-sm-row gap-2 align-items-stretch align-items-sm-center">
+              <div class="btn-group btn-group-sm w-100 w-sm-auto" role="group">
+                <button type="button" class="btn btn-outline-primary active px-3" id="btn-view-table" onclick="toggleView('table')">
+                  <i class="bi bi-table me-1"></i> Tableau
+                </button>
+                <button type="button" class="btn btn-outline-primary px-3" id="btn-view-calendar" onclick="toggleView('calendar')">
+                  <i class="bi bi-calendar3 me-1"></i> Calendrier
+                </button>
+              </div>
+
+              <div class="input-group input-group-sm style-search w-100" style="max-width: 300px;">
+                <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                <input type="text" id="search-input" class="form-control bg-light border-start-0" placeholder="Rechercher client, véhicule...">
+              </div>
+            </div>
+          </div>
+
+          <!-- Table View -->
+          <div id="view-table-container" class="table-responsive">
+            <table class="table align-middle custom-table mb-0">
+              <thead>
+                <tr>
+                  <th>CLIENT</th>
+                  <th>TÉLÉPHONE</th>
+                  <th>VÉHICULE / MATRICULE</th>
+                  <th>HEURE</th>
+                  <th>ATELIER</th>
+                  <th>TEMPS RESTANT</th>
+                  <th>PAIEMENT</th>
+                  <th>STATUT</th>
+                  <th class="text-end">ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody id="rdv-table-body">
+                <!-- Dynamic Content -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Calendar View Container -->
+          <div id="view-calendar-container" class="d-none mt-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <button class="btn btn-sm btn-outline-secondary px-3" onclick="changeMonth(-1)"><i class="bi bi-chevron-left me-1"></i> Précédent</button>
+              <h6 class="fw-bold mb-0 text-capitalize text-dark" id="calendar-month-year"></h6>
+              <button class="btn btn-sm btn-outline-secondary px-3" onclick="changeMonth(1)">Suivant <i class="bi bi-chevron-right ms-1"></i></button>
+            </div>
+            <div class="calendar-grid" id="calendar-grid">
+              <!-- Dynamic Calendar -->
+            </div>
+          </div>
 
         </div>
+      </section>
+
     </main>
 
-    <script href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        
-        document.querySelectorAll('#sidebarTabs a').forEach(tab => {
-            tab.addEventListener('click', function (e) {
-                e.preventDefault();
-                document.querySelectorAll('#sidebarTabs a').forEach(t => t.classList.remove('active'));
-                this.classList.add('active');
-                
-                const target = document.querySelector(this.getAttribute('data-bs-target'));
-                document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('show', 'active'));
-                target.classList.add('show', 'active');
-            });
-        });
-    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="technician.js"></script>       
 </body>
 </html>
