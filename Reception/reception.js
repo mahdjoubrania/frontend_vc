@@ -463,6 +463,13 @@ const finalServiceType = selectedServices.length > 0 ? selectedServices.join(', 
     const timeOnly = document.getElementById('edit-rdv-time-only')?.value;
     const formattedDateTime = (dateOnly && timeOnly) ? `${dateOnly} ${timeOnly}:00` : null;
 
+    // تحويل التاريخ والوقت المحددين إلى YYYY-MM-DD HH:mm:ss
+const dateVal = document.getElementById('edit-date').value; // e.g. "2026-08-31"
+const timeVal = document.getElementById('edit-time').value; // e.g. "11:00"
+
+const formattedAppointmentDate = `${dateVal} ${timeVal}:00`;
+
+
     // Vehicle name parts
     const fullCar = document.getElementById('edit-car-make-model')?.value.trim() || '';
     const carParts = fullCar.split(' ');
@@ -471,6 +478,7 @@ const finalServiceType = selectedServices.length > 0 ? selectedServices.join(', 
 
     // Payload المطابق تماماً لـ rnd.controller.js
     const payload = {
+       appointmentDate: formattedAppointmentDate,
       clientName: document.getElementById('edit-client-name')?.value.trim(),
       phone: document.getElementById('edit-client-phone')?.value.trim(),
       make: make,
@@ -478,7 +486,7 @@ const finalServiceType = selectedServices.length > 0 ? selectedServices.join(', 
       licensePlate: document.getElementById('edit-car-matricule')?.value.trim(),
       vin: document.getElementById('edit-car-vin')?.value.trim(),
       serviceType: finalServiceType,
-      appointmentDate: formattedDateTime,
+      
       totalAmount: totalAmount,
       versement: versement,
       paymentStatus: calculatedPaymentStatus,
