@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VerifCar - Espace Réception</title>
+
+  <!-- Google Fonts & Bootstrap -->
+  <link href="../img/IMG_7697.png" rel="icon">
+  <link href="../img/IMG_7697.png" rel="apple-touch-icon">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Mobile Top Navigation Bar -->
+<header class="mobile-navbar justify-content-between align-items-center px-3 py-2 bg-white border-bottom shadow-sm">
+  <div class="d-flex align-items-center gap-2">
+    <button class="btn btn-light border-0" id="sidebar-toggle-btn" type="button">
+      <i class="bi bi-list fs-3 text-dark"></i>
+    </button>
+    <img src="../img/IMG_7697.png" alt="VérifCar Logo" style="max-height: 38px; object-fit: contain;">
+  </div>
+  <div class="avatar bg-primary text-white rounded-circle shadow-sm d-flex align-items-center justify-content-center" style="width: 34px; height: 34px; font-size: 13px;" id="mobile-avatar">RC</div>
+</header>
+
+<!-- Sidebar Overlay -->
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+<div class="d-flex">
+  <!-- Sidebar -->
+   <aside id="sidebar" class="sidebar p-3 d-flex flex-column justify-content-between">
+
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-4 px-2">
+          <img src="../img/IMG_7697.png" alt="VérifCar Logo" style="max-height: 45px; object-fit: contain;">
+          <div><h6 class="fw-bold mb-0 text-dark">VerifCar</h6><small class="text-muted fs-12">v1.0 - Reception</small></div>
+        </div>
+        
+        <button class="btn-close d-lg-none" id="sidebar-close-btn"></button>
+
+        <div class="menu-label">RECEPTION</div>
+        <ul class="nav nav-pills flex-column mb-3">
+          <li class="nav-item"><a href="index.html" class="nav-link text-secondary"><i class="bi bi-grid-1x2 me-2"></i> Tableau de bord</a></li>
+          <li class="nav-item"><a href="clients.html" class="nav-link text-secondary"><i class="bi bi-car-front me-2"></i> Clients & Véhicules</a></li>
+          <li class="nav-item"><a href="rapports.html" class="nav-link text-secondary"><i class="bi bi-file-earmark-bar-graph me-2"></i> Rapports D'Inspection</a></li>
+           <li class="nav-item"><a href="toutsrnd.html" class="nav-link active"><i class="bi bi-file-earmark-bar-graph me-2"></i>les Rendez-vous</a></li>
+        </ul>
+      </div>
+
+      <div class="user-profile p-2 rounded d-flex align-items-center justify-content-between border-top pt-3">
+        <div class="d-flex align-items-center gap-2">
+          <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" id="admin-avatar" style="width: 35px; height: 35px;">--</div>
+          <div>
+            <h6 class="mb-0 fw-bold fs-14" id="admin-name">Chargement...</h6>
+            <small class="text-muted fs-12">Réception</small>
+          </div>
+        </div>
+        <button id="logout-btn" class="btn btn-link text-danger p-0 fs-5" title="Déconnexion"><i class="bi bi-box-arrow-right"></i></button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content flex-grow-1 p-3 p-lg-4">
+      
+      <!-- Section 1: Rendez-vous -->
+      <section id="section-appointments" class="tab-section">
+        
+        <!-- Header Bar -->
+        <header class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+          <div>
+            <h4 class="fw-bold text-dark mb-1 fs-5 fs-lg-4"> Prise de Rendez-vous</h4>
+          </div>
+        </header>
+
+        <!-- Main Data Card -->
+        <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 bg-white">
+          <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
+            <h5 class="fw-bold text-dark mb-0 fs-6 fs-md-5">Rendez-vous</h5>
+            
+            <div class="d-flex flex-column flex-sm-row gap-2 align-items-stretch align-items-sm-center">
+              <div class="btn-group btn-group-sm w-100 w-sm-auto" role="group">
+                <button type="button" class="btn btn-outline-primary active px-3" id="btn-view-table" onclick="toggleView('table')">
+                  <i class="bi bi-table me-1"></i> Tableau
+                </button>
+                <button type="button" class="btn btn-outline-primary px-3" id="btn-view-calendar" onclick="toggleView('calendar')">
+                  <i class="bi bi-calendar3 me-1"></i> Calendrier
+                </button>
+              </div>
+
+              <div class="input-group input-group-sm style-search w-100" style="max-width: 300px;">
+                <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                <input type="text" id="search-input" class="form-control bg-light border-start-0" placeholder="Rechercher client, véhicule...">
+              </div>
+            </div>
+          </div>
+
+          <!-- Table View -->
+          <div id="view-table-container" class="table-responsive">
+            <table class="table align-middle custom-table mb-0">
+              <thead>
+                <tr>
+                  <th>CLIENT</th>
+                  <th>TÉLÉPHONE</th>
+                  <th>VÉHICULE / MATRICULE</th>
+                  <th>HEURE</th>
+                  <th>TYPE</th>
+                  <th class="text-end">ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody id="rdv-table-body">
+                <!-- Dynamic Content -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Calendar View Container -->
+          <div id="view-calendar-container" class="d-none mt-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <button class="btn btn-sm btn-outline-secondary px-3" onclick="changeMonth(-1)"><i class="bi bi-chevron-left me-1"></i> Précédent</button>
+              <h6 class="fw-bold mb-0 text-capitalize text-dark" id="calendar-month-year"></h6>
+              <button class="btn btn-sm btn-outline-secondary px-3" onclick="changeMonth(1)">Suivant <i class="bi bi-chevron-right ms-1"></i></button>
+            </div>
+            <div class="calendar-grid" id="calendar-grid">
+              <!-- Dynamic Calendar -->
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="all_appointments.js"></script>
+  
+  <script>
+    // Sidebar Mobile Management
+    document.addEventListener('DOMContentLoaded', () => {
+      const toggleBtn = document.getElementById('sidebar-toggle-btn');
+      const closeBtn = document.getElementById('sidebar-close-btn');
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('sidebar-overlay');
+
+      if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+          sidebar?.classList.add('show');
+          overlay?.classList.add('show');
+        });
+      }
+
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+          sidebar?.classList.remove('show');
+          overlay?.classList.remove('show');
+        });
+      }
+
+      if (overlay) {
+        overlay.addEventListener('click', () => {
+          sidebar?.classList.remove('show');
+          overlay?.classList.remove('show');
+        });
+      }
+    });
+  </script>
+</body>
+</html>
