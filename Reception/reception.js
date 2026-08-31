@@ -431,7 +431,7 @@ function setupEventListeners() {
   if (rdvForm) {
     rdvForm.addEventListener('submit', handleNewAppointment);
   }
-  const editForm = document.getElementById('edit-rdv-form');
+const editForm = document.getElementById('edit-rdv-form');
 if (editForm) {
   editForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -440,14 +440,14 @@ if (editForm) {
     if (!id) return alert("ID du rendez-vous introuvable.");
 
     // تجميع الخدمات
-const selectedServices = Array.from(document.querySelectorAll('.edit-service-checkbox:checked')).map(cb => cb.value);
-const customServiceInput = document.getElementById('edit-service-autre');
-const customService = customServiceInput ? customServiceInput.value.trim() : '';
+    const selectedServices = Array.from(document.querySelectorAll('.edit-service-checkbox:checked')).map(cb => cb.value);
+    const customServiceInput = document.getElementById('edit-service-autre');
+    const customService = customServiceInput ? customServiceInput.value.trim() : '';
 
-if (customService) selectedServices.push(customService);
+    if (customService) selectedServices.push(customService);
+    const finalServiceType = selectedServices.length > 0 ? selectedServices.join(', ') : 'Inspection';
 
-const finalServiceType = selectedServices.length > 0 ? selectedServices.join(', ') : 'Inspection';
-    // المبالغ المالية وحساب حالة الدفع
+    // الحسابات المالية
     const totalAmount = parseFloat(document.getElementById('edit-total-amount')?.value) || 0;
     const versement = parseFloat(document.getElementById('edit-versement-amount')?.value) || 0;
     
@@ -458,55 +458,31 @@ const finalServiceType = selectedServices.length > 0 ? selectedServices.join(', 
       calculatedPaymentStatus = 'FULLY_PAID';
     }
 
-    // Date/Time
-    const editDate =
-  document.getElementById('edit-rdv-date-only')?.value;
+    // جلب قيم التاريخ والوقت الحالية (بدون إمكانية التعديل)
+    const editDate = document.getElementById('edit-rdv-date-only')?.value;
+    const editTime = document.getElementById('edit-rdv-time-only')?.value;
+    const formattedAppointmentDate = (editDate && editTime) ? `${editDate} ${editTime}:00` : null;
 
-const editTime =
-  document.getElementById('edit-rdv-time-only')?.value;
-
-const formattedAppointmentDate =
-  (editDate && editTime)
-    ? `${editDate} ${editTime}:00`
-    : null;
-
-    // Vehicle name parts
+    // تفكيك اسم السيارة
     const fullCar = document.getElementById('edit-car-make-model')?.value.trim() || '';
     const carParts = fullCar.split(' ');
     const make = carParts[0] || 'Inconnu';
     const model = carParts.slice(1).join(' ') || 'Inconnu';
 
-    // Payload المطابق تماماً لـ rnd.controller.js
     const payload = {
-  appointmentDate: formattedAppointmentDate,
-
-  clientName:
-    document.getElementById('edit-client-name')?.value.trim(),
-
-  phone:
-    document.getElementById('edit-client-phone')?.value.trim(),
-
-  make: make,
-
-  model: model,
-
-  licensePlate:
-    document.getElementById('edit-car-matricule')?.value.trim(),
-
-  vin:
-    document.getElementById('edit-car-vin')?.value.trim(),
-
-  serviceType: finalServiceType,
-
-  totalAmount: totalAmount,
-
-  versement: versement,
-
-  paymentStatus: calculatedPaymentStatus,
-
-  notes:
-    document.getElementById('edit-vehicle-notes')?.value.trim() || ''
-};
+      appointmentDate: formattedAppointmentDate,
+      clientName: document.getElementById('edit-client-name')?.value.trim(),
+      phone: document.getElementById('edit-client-phone')?.value.trim(),
+      make: make,
+      model: model,
+      licensePlate: document.getElementById('edit-car-matricule')?.value.trim(),
+      vin: document.getElementById('edit-car-vin')?.value.trim(),
+      serviceType: finalServiceType,
+      totalAmount: totalAmount,
+      versement: versement,
+      paymentStatus: calculatedPaymentStatus,
+      notes: document.getElementById('edit-vehicle-notes')?.value.trim() || ''
+    };
 
     try {
       const res = await fetch(`${API_URL}/admin/appointments/${id}`, {

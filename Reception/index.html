@@ -405,15 +405,24 @@
 <input type="text" id="edit-service-autre" class="form-control mt-2" placeholder="Autre prestation spécifique...">
 </div>
             <!-- Date & Payment -->
-            <div class="col-12 mt-3"><h6 class="fw-bold text-primary fs-12 text-uppercase mb-0"><i class="bi bi-clock me-1"></i> Planning & Règlement</h6></div>
-            <div class="col-6">
-              <label class="form-label small text-muted fw-semibold">Date *</label>
-              <input type="date" id="edit-rdv-date-only" class="form-control" required>
-            </div>
-            <div class="col-6">
-              <label class="form-label small text-muted fw-semibold">Heure *</label>
-              <input type="time" id="edit-rdv-time-only" class="form-control" required>
-            </div>
+             <!-- Date & Payment dans editRendezVousModal -->
+<div class="col-12 mt-3">
+  <h6 class="fw-bold text-primary fs-12 text-uppercase mb-0">
+    <i class="bi bi-clock me-1"></i> Planning & Règlement
+  </h6>
+</div>
+
+<!-- جعل حقل التاريخ للعرض فقط -->
+<div class="col-6">
+  <label class="form-label small text-muted fw-semibold">Date</label>
+  <input type="date" id="edit-rdv-date-only" class="form-control bg-light" readonly>
+</div>
+
+<!-- جعل حقل الوقت للعرض فقط -->
+<div class="col-6">
+  <label class="form-label small text-muted fw-semibold">Heure</label>
+  <input type="time" id="edit-rdv-time-only" class="form-control bg-light" readonly>
+</div>
 
             <div class="col-6">
               <label class="form-label small text-muted fw-semibold">Prix Total (DZD) *</label>
