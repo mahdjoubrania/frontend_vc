@@ -297,14 +297,13 @@ function openEditModal(item) {
   document.getElementById('edit-client-phone').value = item.phone || '';
   document.getElementById('edit-car-make-model').value = item.vehicle_name || '';
   document.getElementById('edit-car-matricule').value = item.license_plate || '';
-  document.getElementById('edit-car-vin').value = item.VIN || '';
+  document.getElementById('edit-car-vin').value = item.VIN || item.vin || '';
   
-  // Correction de la définition des montants
   document.getElementById('edit-total-amount').value = item.total_amount || 0;
   document.getElementById('edit-versement-amount').value = item.versement || 0;
   document.getElementById('edit-vehicle-notes').value = item.notes || '';
 
-  // Reglage de la date et de l'heure
+  // ضبط التاريخ والوقت
   const appDateRaw = item.appointment_date || item.start || item.appointmentDate;
   if (appDateRaw) {
     const d = new Date(appDateRaw);
@@ -320,7 +319,7 @@ function openEditModal(item) {
     }
   }
 
-  // Reglage des prestations
+  // تحديد الخدمات المختارة
   const existingServices = (item.service_type || '').split(',').map(s => s.trim());
   const checkboxes = document.querySelectorAll('.edit-service-checkbox');
   const otherInput = document.getElementById('edit-service-autre');
@@ -432,43 +431,86 @@ function setupEventListeners() {
   if (rdvForm) {
     rdvForm.addEventListener('submit', handleNewAppointment);
   }
-
   const editForm = document.getElementById('edit-rdv-form');
-  if (editForm) {
-    editForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const id = document.getElementById('edit-rdv-id').value;
+if (editForm) {
+  editForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-      const payload = {
-        clientName: document.getElementById('edit-client-name').value,
-        phone: document.getElementById('edit-client-phone').value,
-        vin: document.getElementById('edit-car-vin').value,
-        serviceType: document.getElementById('edit-service-type').value,
-        totalAmount: parseFloat(document.getElementById('edit-total-amount').value),
-        versement: parseFloat(document.getElementById('edit-versement').value)
-      };
+    const id = document.getElementById('edit-rdv-id')?.value;
+    if (!id) return alert("ID du rendez-vous introuvable.");
 
-      try {
-        const res = await fetch(`${API_URL}/admin/appointments/${id}`, {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${getAuthToken()}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(payload)
-        });
+    // تجميع الخدمات
+    const selectedServices = Array.from(document.querySelectorAll('.edit-service-checkbox:checked')).map(cb => cb.value);
+    const customService = document.getElementById('edit-service-autre')?.value.trim();
+    if (customService) selectedServices.push(customService);
+    
+    const finalServiceType = selectedServices.length > 0 ? selectedServices.join(', ') : 'Inspection';
 
-        if (res.ok) {
-          const modalEl = document.getElementById('editRendezVousModal');
+    // المبالغ المالية وحساب حالة الدفع
+    const totalAmount = parseFloat(document.getElementById('edit-total-amount')?.value) || 0;
+    const versement = parseFloat(document.getElementById('edit-versement-amount')?.value) || 0;
+    
+    let calculatedPaymentStatus = 'PENDING_VERSEMENT';
+    if (versement > 0 && (totalAmount - versement) > 0) {
+      calculatedPaymentStatus = 'ADVANCE_PAID';
+    } else if (versement > 0 && (totalAmount - versement) <= 0) {
+      calculatedPaymentStatus = 'FULLY_PAID';
+    }
+
+    // Date/Time
+    const dateOnly = document.getElementById('edit-rdv-date-only')?.value;
+    const timeOnly = document.getElementById('edit-rdv-time-only')?.value;
+    const formattedDateTime = (dateOnly && timeOnly) ? `${dateOnly} ${timeOnly}:00` : null;
+
+    // Vehicle name parts
+    const fullCar = document.getElementById('edit-car-make-model')?.value.trim() || '';
+    const carParts = fullCar.split(' ');
+    const make = carParts[0] || 'Inconnu';
+    const model = carParts.slice(1).join(' ') || 'Inconnu';
+
+    // Payload المطابق تماماً لـ rnd.controller.js
+    const payload = {
+      clientName: document.getElementById('edit-client-name')?.value.trim(),
+      phone: document.getElementById('edit-client-phone')?.value.trim(),
+      make: make,
+      model: model,
+      licensePlate: document.getElementById('edit-car-matricule')?.value.trim(),
+      vin: document.getElementById('edit-car-vin')?.value.trim(),
+      serviceType: finalServiceType,
+      appointmentDate: formattedDateTime,
+      totalAmount: totalAmount,
+      versement: versement,
+      paymentStatus: calculatedPaymentStatus,
+      notes: document.getElementById('edit-vehicle-notes')?.value.trim() || ''
+    };
+
+    try {
+      const res = await fetch(`${API_URL}/admin/appointments/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${getAuthToken()}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        const modalEl = document.getElementById('editRendezVousModal');
+        if (modalEl) {
           const modal = bootstrap.Modal.getInstance(modalEl);
           if (modal) modal.hide();
-          loadDashboardData();
         }
-      } catch (err) {
-        console.error('Error modifying appointment:', err);
+        loadDashboardData();
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        alert('Erreur: ' + (errData.message || 'Erreur lors de la modification'));
       }
-    });
-  }
+    } catch (err) {
+      console.error('Save error:', err);
+      alert('Erreur de connexion au serveur.');
+    }
+  });
+}
 }
 
 setInterval(loadDashboardData, 30000);
@@ -620,79 +662,4 @@ function changeMonth(delta) {
 
 function printAppointment(id) {
   window.open(`prise.de.rendez-vous.html?id=${id}`, '_blank');
-}
-  const editForm = document.getElementById('edit-rdv-form');
-if (editForm) {
-  editForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const id = document.getElementById('edit-rdv-id').value;
-
-    // 1. Récupération et nettoyage des services
-    const selectedServices = Array.from(document.querySelectorAll('.edit-service-checkbox:checked')).map(cb => cb.value);
-    const customService = document.getElementById('edit-service-autre')?.value.trim();
-    if (customService) selectedServices.push(customService);
-
-    // 2. Nettoyage des montants (remplacement des virgules par des points)
-    const rawTotal = document.getElementById('edit-total-amount').value.replace(',', '.');
-    const rawVersement = document.getElementById('edit-versement-amount').value.replace(',', '.');
-    const totalAmount = parseFloat(rawTotal) || 0;
-    const versement = parseFloat(rawVersement) || 0;
-
-    // 3. Formate la date au format ISO valide
-    const dateOnly = document.getElementById('edit-rdv-date-only').value;
-    const timeOnly = document.getElementById('edit-rdv-time-only').value;
-    const appointmentDate = new Date(`${dateOnly}T${timeOnly}:00`).toISOString();
-
-    // 4. Découpage Marque / Modèle
-    const carInput = document.getElementById('edit-car-make-model').value.trim().split(' ');
-    const make = carInput[0] || 'Inconnu';
-    const model = carInput.slice(1).join(' ') || 'Inconnu';
-
-    // 5. Payload hybride (compatible camelCase et snake_case)
-    const payload = {
-      client_name: document.getElementById('edit-client-name').value,
-      clientName: document.getElementById('edit-client-name').value,
-      phone: document.getElementById('edit-client-phone').value,
-      make: make,
-      model: model,
-      vehicle_name: document.getElementById('edit-car-make-model').value,
-      license_plate: document.getElementById('edit-car-matricule').value,
-      licensePlate: document.getElementById('edit-car-matricule').value,
-      vin: document.getElementById('edit-car-vin').value,
-      VIN: document.getElementById('edit-car-vin').value,
-      service_type: selectedServices.join(', '),
-      serviceType: selectedServices.join(', '),
-      appointment_date: appointmentDate,
-      appointmentDate: appointmentDate,
-      total_amount: totalAmount,
-      totalAmount: totalAmount,
-      versement: versement,
-      notes: document.getElementById('edit-vehicle-notes').value
-    };
-
-    try {
-      const res = await fetch(`${API_URL}/admin/appointments/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${getAuthToken()}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      });
-
-      if (res.ok) {
-        const modalEl = document.getElementById('editRendezVousModal');
-        const modal = bootstrap.Modal.getInstance(modalEl);
-        if (modal) modal.hide();
-        loadDashboardData();
-      } else {
-        const errData = await res.json();
-        console.error('Erreur Serveur:', errData);
-        alert('Erreur: ' + (errData.message || errData.error || 'Erreur lors de la modification'));
-      }
-    } catch (err) {
-      console.error('Erreur Réseau/Serveur:', err);
-      alert('Erreur de connexion au serveur.');
-    }
-  });
 }
