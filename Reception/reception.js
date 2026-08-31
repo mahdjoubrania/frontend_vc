@@ -463,13 +463,12 @@ const finalServiceType = selectedServices.length > 0 ? selectedServices.join(', 
     const timeOnly = document.getElementById('edit-rdv-time-only')?.value;
     const formattedDateTime = (dateOnly && timeOnly) ? `${dateOnly} ${timeOnly}:00` : null;
 
-    // تحويل التاريخ والوقت المحددين إلى YYYY-MM-DD HH:mm:ss
-const dateVal = document.getElementById('edit-date').value; // e.g. "2026-08-31"
-const timeVal = document.getElementById('edit-time').value; // e.g. "11:00"
+    // في حدث editForm submit
+const editDate = document.getElementById('edit-date').value; // يأتي بالشكل "2026-08-31"
+const editTime = document.getElementById('edit-time').value; // يأتي بالشكل "12:00"
 
-const formattedAppointmentDate = `${dateVal} ${timeVal}:00`;
-
-
+// دمج النصين مباشرة بدون استخدام new Date() لتفادي تحويل الساعات
+const formattedAppointmentDate = `${editDate} ${editTime}:00`; 
     // Vehicle name parts
     const fullCar = document.getElementById('edit-car-make-model')?.value.trim() || '';
     const carParts = fullCar.split(' ');
