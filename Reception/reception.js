@@ -459,16 +459,17 @@ const finalServiceType = selectedServices.length > 0 ? selectedServices.join(', 
     }
 
     // Date/Time
-    const dateOnly = document.getElementById('edit-rdv-date-only')?.value;
-    const timeOnly = document.getElementById('edit-rdv-time-only')?.value;
-    const formattedDateTime = (dateOnly && timeOnly) ? `${dateOnly} ${timeOnly}:00` : null;
+    const editDate =
+  document.getElementById('edit-rdv-date-only')?.value;
 
-    // في حدث editForm submit
-const editDate = document.getElementById('edit-date').value; // يأتي بالشكل "2026-08-31"
-const editTime = document.getElementById('edit-time').value; // يأتي بالشكل "12:00"
+const editTime =
+  document.getElementById('edit-rdv-time-only')?.value;
 
-// دمج النصين مباشرة بدون استخدام new Date() لتفادي تحويل الساعات
-const formattedAppointmentDate = `${editDate} ${editTime}:00`; 
+const formattedAppointmentDate =
+  (editDate && editTime)
+    ? `${editDate} ${editTime}:00`
+    : null;
+
     // Vehicle name parts
     const fullCar = document.getElementById('edit-car-make-model')?.value.trim() || '';
     const carParts = fullCar.split(' ');
@@ -477,20 +478,35 @@ const formattedAppointmentDate = `${editDate} ${editTime}:00`;
 
     // Payload المطابق تماماً لـ rnd.controller.js
     const payload = {
-       appointmentDate: formattedAppointmentDate,
-      clientName: document.getElementById('edit-client-name')?.value.trim(),
-      phone: document.getElementById('edit-client-phone')?.value.trim(),
-      make: make,
-      model: model,
-      licensePlate: document.getElementById('edit-car-matricule')?.value.trim(),
-      vin: document.getElementById('edit-car-vin')?.value.trim(),
-      serviceType: finalServiceType,
-      
-      totalAmount: totalAmount,
-      versement: versement,
-      paymentStatus: calculatedPaymentStatus,
-      notes: document.getElementById('edit-vehicle-notes')?.value.trim() || ''
-    };
+  appointmentDate: formattedAppointmentDate,
+
+  clientName:
+    document.getElementById('edit-client-name')?.value.trim(),
+
+  phone:
+    document.getElementById('edit-client-phone')?.value.trim(),
+
+  make: make,
+
+  model: model,
+
+  licensePlate:
+    document.getElementById('edit-car-matricule')?.value.trim(),
+
+  vin:
+    document.getElementById('edit-car-vin')?.value.trim(),
+
+  serviceType: finalServiceType,
+
+  totalAmount: totalAmount,
+
+  versement: versement,
+
+  paymentStatus: calculatedPaymentStatus,
+
+  notes:
+    document.getElementById('edit-vehicle-notes')?.value.trim() || ''
+};
 
     try {
       const res = await fetch(`${API_URL}/admin/appointments/${id}`, {
