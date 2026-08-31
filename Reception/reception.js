@@ -440,12 +440,13 @@ if (editForm) {
     if (!id) return alert("ID du rendez-vous introuvable.");
 
     // تجميع الخدمات
-    const selectedServices = Array.from(document.querySelectorAll('.edit-service-checkbox:checked')).map(cb => cb.value);
-    const customService = document.getElementById('edit-service-autre')?.value.trim();
-    if (customService) selectedServices.push(customService);
-    
-    const finalServiceType = selectedServices.length > 0 ? selectedServices.join(', ') : 'Inspection';
+const selectedServices = Array.from(document.querySelectorAll('.edit-service-checkbox:checked')).map(cb => cb.value);
+const customServiceInput = document.getElementById('edit-service-autre');
+const customService = customServiceInput ? customServiceInput.value.trim() : '';
 
+if (customService) selectedServices.push(customService);
+
+const finalServiceType = selectedServices.length > 0 ? selectedServices.join(', ') : 'Inspection';
     // المبالغ المالية وحساب حالة الدفع
     const totalAmount = parseFloat(document.getElementById('edit-total-amount')?.value) || 0;
     const versement = parseFloat(document.getElementById('edit-versement-amount')?.value) || 0;
