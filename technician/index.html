@@ -1,208 +1,186 @@
 <!DOCTYPE html>
-<html lang="fr" dir="ltr">
+<html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VérifCar - Espace Technicien</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VerifCar - Admin Dashboard</title>
+  <link href="../img/IMG_7697.png" rel="icon">
+  <link href="../img/IMG_7697.png" rel="apple-touch-icon">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="style.css">
 </head>
-<body>
-   
+<body class="bg-light">
+  <div id="dashboard-section" class="d-flex">    
     <!-- Sidebar -->
-    <aside class="sidebar">
-        <div>
-            <div class="brand-logo">
-                <i class="fa-solid fa-shield-halved fa-lg"></i>
-                <div>
-                    <div>VérifCar</div>
-                    <small class="text-muted font-monospace" style="font-size: 11px;">v1.0 - Technicien</small>
-                </div>
+   <aside class="sidebar p-3 d-flex flex-column justify-content-between" id="sidebar">
+      <div>
+        <div class="d-flex align-items-center justify-content-between mb-4 px-2">
+          <div class="d-flex align-items-center gap-2">
+            <img src="../img/IMG_7697.png" alt="VérifCar Logo" style="max-height: 45px; object-fit: contain;">
+            <div>
+              <h6 class="fw-bold mb-0 text-dark">VerifCar</h6>
+              <small class="text-muted fs-12">v1.0 - Technicien</small>
             </div>
-
-            <ul class="nav nav-pills flex-column nav-menu" id="sidebarTabs" role="tablist">
-                <li class="nav-item">
-                    <a class="nav-link active" id="tab-inspections-link" data-bs-toggle="tab" data-bs-target="#tab-inspections">
-                        <i class="fa-solid fa-gauge-high"></i>
-                        <span>Mes Inspections</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" id="tab-clients-link" data-bs-toggle="tab" data-bs-target="#tab-clients">
-                        <i class="fa-solid fa-car-side"></i>
-                        <span>Clients & Véhicules</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" id="tab-modules-link" data-bs-toggle="tab" data-bs-target="#tab-modules">
-                        <i class="fa-solid fa-microchip"></i>
-                        <span>Modules d'Inspection</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" id="tab-rapports-link" data-bs-toggle="tab" data-bs-target="#tab-rapports">
-                        <i class="fa-solid fa-file-lines"></i>
-                        <span>Rapports Validés</span>
-                    </a>
-                </li>
-            </ul>
+          </div>
+          <button class="btn-close d-lg-none" id="sidebar-close-btn"></button>
         </div>
 
-        <div class="user-profile">
-            <div class="d-flex align-items-center gap-2">
-                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 35px; height: 35px; font-weight: bold;">T</div>
-                <div>
-                    <div class="fw-bold" style="font-size: 14px;">Technicien</div>
-                    <small class="text-muted" style="font-size: 11px;">Atelier Général</small>
-                </div>
-            </div>
-            <a href="#" class="text-danger"><i class="fa-solid fa-right-from-bracket"></i></a>
-        </div>
-    </aside>
-        <!-- Main Content Area -->
-    <main class="main-content flex-grow-1 p-3 p-lg-4">
-      
-      <!-- Section 1: Rendez-vous -->
-      <section id="section-appointments" class="tab-section">
-        
-        <!-- Header Bar -->
-        <header class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+        <div class="menu-label">WORKSPACE</div>
+        <ul class="nav nav-pills flex-column mb-3">
+          <li class="nav-item">
+            <a href="index.html" class="nav-link active">
+              <i class="bi bi-grid-1x2 me-2"></i> Tableau de bord
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="calendar.html" class="nav-link text-secondary">
+              <i class="bi bi-calendar-week me-2"></i> Planning & RDV
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="clients.html" class="nav-link text-secondary">
+              <i class="bi bi-car-front me-2"></i> Clients & Véhicules
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="toutsrnd.html" class="nav-link text-secondary">
+              <i class="bi bi-list-check me-2"></i> Les Rendez-vous
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="verification.html" class="nav-link text-secondary">
+              <i class="bi bi-tools me-2"></i> Vérification
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="reports.html" class="nav-link text-secondary">
+              <i class="bi bi-file-earmark-bar-graph me-2"></i> Rapports 
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="user-profile p-2 rounded d-flex align-items-center justify-content-between border-top pt-3">
+        <div class="d-flex align-items-center gap-2">
+          <div class="avatar bg-primary text-white rounded-circle shadow-sm" id="admin-avatar">--</div>
           <div>
-            <h4 class="fw-bold text-dark mb-1 fs-5 fs-lg-4">Accueil & Prise de Rendez-vous</h4>
-            <p class="text-muted small mb-0">Gestion des entrées du jour, suivi des délais (1h) et paiements</p>
+            <h6 class="mb-0 fw-bold fs-14" id="admin-name">Chargement...</h6>
+            <small class="text-muted fs-12">Technicien</small>
           </div>
-          <button class="btn btn-primary custom-btn custom-btn-primary shadow-sm w-100 w-sm-auto" data-bs-toggle="modal" data-bs-target="#addRendezVousModal">
-            <i class="bi bi-plus-lg me-1"></i> Nouveau Rendez-vous
+        </div>
+        <button id="logout-btn" class="btn btn-link text-danger p-0 fs-5" title="Déconnexion"><i class="bi bi-box-arrow-right"></i></button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content flex-grow-1 p-4">
+      <header class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center gap-2">
+          <!-- زر القائمة الجانبية للهاتف -->
+          <button class="btn btn-white border shadow-sm btn-sm d-lg-none" id="mobile-sidebar-toggle">
+            <i class="bi bi-list fs-5"></i>
           </button>
-        </header>
-
-        <!-- KPI Cards Summary -->
-        <div class="row g-2 g-md-3 mb-4">
-          <div class="col-6 col-md-3">
-            <div class="card border-0 shadow-sm p-3 kpi-card kpi-today bg-white h-100">
-              <div class="d-flex justify-content-between align-items-center">
-                <div>
-                  <div class="text-muted fs-11 fw-bold text-uppercase">Aujourd'hui</div>
-                  <h3 class="fw-bold text-dark my-1" id="count-today">0</h3>
-                  <span class="text-muted fs-12 d-none d-sm-inline">Rendez-vous</span>
-                </div>
-                <div class="kpi-icon bg-primary bg-opacity-10 text-primary">
-                  <i class="bi bi-calendar-event"></i>
-                </div>
-              </div>
-            </div>
+          <div class="text-muted fs-14">
+            Workspace > <span class="fw-bold text-dark">Tableau de bord</span>
           </div>
+        </div>
+      </header>
 
-          <div class="col-6 col-md-3">
-            <div class="card border-0 shadow-sm p-3 kpi-card kpi-pending bg-white h-100">
-              <div class="d-flex justify-content-between align-items-center">
-                <div>
-                  <div class="text-muted fs-11 fw-bold text-uppercase">En Attente</div>
-                  <h3 class="fw-bold text-warning my-1" id="count-pending">0</h3>
-                  <span class="text-muted fs-12 d-none d-sm-inline">Au garage</span>
-                </div>
-                <div class="kpi-icon bg-warning bg-opacity-10 text-warning">
-                  <i class="bi bi-hourglass-split"></i>
-                </div>
+      <div class="mb-4">
+        <p class="text-uppercase text-muted fw-bold mb-1 fs-12">VERIFCAR 2026</p>
+        <h2 class="fw-bold text-dark">Welcome back, <span class="text-primary" id="admin-welcome">...</span></h2>
+        <p class="text-muted">Aperçu rapide de l'activité du système, des revenus et des opérations en cours.</p>
+      </div>
+
+<!-- KPI Cards (خاصة بالتقني فقط - 3 بطاقات دون مبالغ مالية) -->
+      <div class="row g-3 mb-4">
+        <div class="col-12 col-md-4">
+          <div class="card card-kpi p-3 border-0 shadow-sm rounded-4">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <span class="text-muted fs-12 fw-semibold">RDV Aujourd'hui</span>
+                <h3 class="fw-bold my-1 text-dark" id="stat-today-count">0</h3>
+                <small class="text-muted fs-12">À traiter aujourd'hui</small>
               </div>
-            </div>
-          </div>
-
-          <div class="col-6 col-md-3">
-            <div class="card border-0 shadow-sm p-3 kpi-card kpi-progress bg-white h-100">
-              <div class="d-flex justify-content-between align-items-center">
-                <div>
-                  <div class="text-muted fs-11 fw-bold text-uppercase">En Cours</div>
-                  <h3 class="fw-bold text-info my-1" id="count-progress">0</h3>
-                  <span class="text-muted fs-12 d-none d-sm-inline">Inspection</span>
-                </div>
-                <div class="kpi-icon bg-info bg-opacity-10 text-info">
-                  <i class="bi bi-tools"></i>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-6 col-md-3">
-            <div class="card border-0 shadow-sm p-3 kpi-card kpi-completed bg-white h-100">
-              <div class="d-flex justify-content-between align-items-center">
-                <div>
-                  <div class="text-muted fs-11 fw-bold text-uppercase">Terminés</div>
-                  <h3 class="fw-bold text-success my-1" id="count-completed">0</h3>
-                  <span class="text-muted fs-12 d-none d-sm-inline">Prêts</span>
-                </div>
-                <div class="kpi-icon bg-success bg-opacity-10 text-success">
-                  <i class="bi bi-check2-circle"></i>
-                </div>
+              <div class="kpi-icon bg-primary-subtle text-primary rounded-4 d-flex align-items-center justify-content-center">
+                <i class="bi bi-calendar-check fs-3"></i>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Main Data Card -->
-        <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 bg-white">
-          <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
-            <h5 class="fw-bold text-dark mb-0 fs-6 fs-md-5">Rendez-vous & Inspections du jour</h5>
-            
-            <div class="d-flex flex-column flex-sm-row gap-2 align-items-stretch align-items-sm-center">
-              <div class="btn-group btn-group-sm w-100 w-sm-auto" role="group">
-                <button type="button" class="btn btn-outline-primary active px-3" id="btn-view-table" onclick="toggleView('table')">
-                  <i class="bi bi-table me-1"></i> Tableau
-                </button>
-                <button type="button" class="btn btn-outline-primary px-3" id="btn-view-calendar" onclick="toggleView('calendar')">
-                  <i class="bi bi-calendar3 me-1"></i> Calendrier
-                </button>
+        <div class="col-12 col-md-4">
+          <div class="card card-kpi p-3 border-0 shadow-sm rounded-4">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <span class="text-muted fs-12 fw-semibold">En Atelier</span>
+                <h3 class="fw-bold my-1 text-dark" id="stat-in-workshop">0</h3>
+                <small class="text-warning fw-bold fs-12"><i class="bi bi-clock-history me-1"></i>Inspection en cours</small>
               </div>
-
-              <div class="input-group input-group-sm style-search w-100" style="max-width: 300px;">
-                <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-search"></i></span>
-                <input type="text" id="search-input" class="form-control bg-light border-start-0" placeholder="Rechercher client, véhicule...">
+              <div class="kpi-icon bg-warning-subtle text-warning rounded-4 d-flex align-items-center justify-content-center">
+                <i class="bi bi-tools fs-3"></i>
               </div>
             </div>
           </div>
-
-          <!-- Table View -->
-          <div id="view-table-container" class="table-responsive">
-            <table class="table align-middle custom-table mb-0">
-              <thead>
-                <tr>
-                  <th>CLIENT</th>
-                  <th>TÉLÉPHONE</th>
-                  <th>VÉHICULE / MATRICULE</th>
-                  <th>HEURE</th>
-                  <th>ATELIER</th>
-                  <th>TEMPS RESTANT</th>
-                  <th>PAIEMENT</th>
-                  <th>STATUT</th>
-                  <th class="text-end">ACTIONS</th>
-                </tr>
-              </thead>
-              <tbody id="rdv-table-body">
-                <!-- Dynamic Content -->
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Calendar View Container -->
-          <div id="view-calendar-container" class="d-none mt-3">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <button class="btn btn-sm btn-outline-secondary px-3" onclick="changeMonth(-1)"><i class="bi bi-chevron-left me-1"></i> Précédent</button>
-              <h6 class="fw-bold mb-0 text-capitalize text-dark" id="calendar-month-year"></h6>
-              <button class="btn btn-sm btn-outline-secondary px-3" onclick="changeMonth(1)">Suivant <i class="bi bi-chevron-right ms-1"></i></button>
-            </div>
-            <div class="calendar-grid" id="calendar-grid">
-              <!-- Dynamic Calendar -->
-            </div>
-          </div>
-
         </div>
-      </section>
+
+        <div class="col-12 col-md-4">
+          <div class="card card-kpi p-3 border-0 shadow-sm rounded-4">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <span class="text-muted fs-12 fw-semibold">Inspections Terminées</span>
+                <h3 class="fw-bold my-1 text-dark" id="stat-completed">0</h3>
+                <small class="text-success fw-bold fs-12"><i class="bi bi-check-circle me-1"></i>Terminées ce mois</small>
+              </div>
+              <div class="kpi-icon bg-success-subtle text-success rounded-4 d-flex align-items-center justify-content-center">
+                <i class="bi bi-file-earmark-check fs-3"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+  
+      <!-- قسم جدول مواعيد اليوم -->
+<div class="card border-0 shadow-sm rounded-4 p-4 mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+      <h5 class="fw-bold text-dark m-0">Rendez-vous d'aujourd'hui</h5>
+      <small class="text-muted">Liste des rendez-vous prévus pour aujourd'hui</small>
+    </div>
+    <a href="calendar.html" class="btn btn-outline-primary btn-sm rounded-pill px-3">Voir tout</a>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>N° RDV</th>
+          <th>CLIENT</th>
+          <th>VÉHICULE</th>
+          <th>DATE & HEURE</th>
+          <th>STATUT</th>
+          <th>MONTANT</th>
+        </tr>
+      </thead>
+      <tbody id="recent-tickets-body">
+        
+      </tbody>
+    </table>
+  </div>
+</div>
 
     </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="technician.js"></script>
 
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="technician.js"></script>       
+
+ 
 </body>
 </html>

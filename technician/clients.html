@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VerifCar - Clients & Véhicules</title>
+  <link href="../img/IMG_7697.png" rel="icon">
+  <link href="../img/IMG_7697.png" rel="apple-touch-icon">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-light">
+
+  <div id="dashboard-section" class="d-flex">
+    <!-- Sidebar -->
+       <aside class="sidebar p-3 d-flex flex-column justify-content-between" id="sidebar">
+      <div>
+        <div class="d-flex align-items-center justify-content-between mb-4 px-2">
+          <div class="d-flex align-items-center gap-2">
+            <img src="../img/IMG_7697.png" alt="VérifCar Logo" style="max-height: 45px; object-fit: contain;">
+            <div>
+              <h6 class="fw-bold mb-0 text-dark">VerifCar</h6>
+              <small class="text-muted fs-12">v1.0 - Administration</small>
+            </div>
+          </div>
+          <button class="btn-close d-lg-none" id="sidebar-close-btn"></button>
+        </div>
+
+        <div class="menu-label">WORKSPACE</div>
+        <ul class="nav nav-pills flex-column mb-3">
+          <li class="nav-item">
+            <a href="index.html" class="nav-link text-secondary">
+              <i class="bi bi-grid-1x2 me-2"></i> Tableau de bord
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="calendar.html" class="nav-link text-secondary">
+              <i class="bi bi-calendar-week me-2"></i> Planning & RDV
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="clients.html" class="nav-link active">
+              <i class="bi bi-car-front me-2"></i> Clients & Véhicules
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="toutsrnd.html" class="nav-link text-secondary">
+              <i class="bi bi-list-check me-2"></i> Les Rendez-vous
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="verification.html" class="nav-link text-secondary">
+              <i class="bi bi-tools me-2"></i> Vérification
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="reports.html" class="nav-link text-secondary">
+              <i class="bi bi-file-earmark-bar-graph me-2"></i> Rapports 
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="user-profile p-2 rounded d-flex align-items-center justify-content-between border-top pt-3">
+        <div class="d-flex align-items-center gap-2">
+          <div class="avatar bg-primary text-white rounded-circle shadow-sm" id="admin-avatar">--</div>
+          <div>
+            <h6 class="mb-0 fw-bold fs-14" id="admin-name">Chargement...</h6>
+            <small class="text-muted fs-12">Technicien</small>
+          </div>
+        </div>
+        <button id="logout-btn" class="btn btn-link text-danger p-0 fs-5" title="Déconnexion"><i class="bi bi-box-arrow-right"></i></button>
+      </div>
+    </aside>
+
+   <!-- Clients Page Main Structure -->
+<main class="main-content flex-grow-1 p-4">
+  <!-- Top Navigation / Breadcrumb -->
+  <div class="text-muted fs-14 mb-3">Workspace > <span class="fw-bold text-dark">Clients & Véhicules</span></div>
+
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <span class="badge bg-light text-primary fw-semibold px-2 py-1 mb-1">VERIFCAR 2026</span>
+      <h2 class="fw-bold text-dark mb-1">Base Clients & Véhicules</h2>
+      <p class="text-muted mb-0">Consultez et recherchez les fiches clients et leurs véhicules associés.</p>
+    </div>
+
+    <!-- Search Box Styled like Image -->
+    <div class="input-group search-box border-0 shadow-sm rounded-3 overflow-hidden" style="max-width: 350px;">
+      <span class="input-group-text bg-white border-0 ps-3"><i class="bi bi-search text-muted"></i></span>
+      <input type="text" id="search-input" class="form-control bg-white border-0 py-2" placeholder="Rechercher nom, tél, VIN, immatriculation...">
+    </div>
+  </div>
+
+  <!-- Table Container Card -->
+  <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0 custom-table">
+        <thead class="bg-light-subtle border-bottom">
+          <tr class="text-secondary fs-12 fw-bold text-uppercase">
+            <th class="ps-4 py-3">CLIENT</th>
+            <th class="py-3">TÉLÉPHONE</th>
+            <th class="py-3">VÉHICULES ASSOCIÉS</th>
+            <th class="pe-4 py-3 text-end">TOTAL RDV</th>
+          </tr>
+        </thead>
+        <tbody id="clients-table-body">
+          <!-- Rendered content with new badges -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    const API_URL = 'https://romantic-enjoyment-production-f458.up.railway.app/api';
+    let allClientsCache = [];
+
+    function getAuthHeaders() {
+      const userSessionRaw = localStorage.getItem('verifcar_admin_user');
+      const userSession = userSessionRaw ? JSON.parse(userSessionRaw) : null;
+      const token = userSession ? (userSession.token || userSession.accessToken) : '';
+      
+      return {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      };
+    }
+
+    function loadAdminProfile() {
+      const userSessionRaw = localStorage.getItem('verifcar_admin_user');
+      const userSession = userSessionRaw ? JSON.parse(userSessionRaw) : null;
+
+      if (userSession) {
+        const adminFullName = userSession.fullName || userSession.full_name || 'Admin';
+        if (document.getElementById('admin-name')) {
+          document.getElementById('admin-name').innerText = adminFullName;
+        }
+        if (document.getElementById('admin-avatar')) {
+          document.getElementById('admin-avatar').innerText = adminFullName.charAt(0).toUpperCase();
+        }
+      } else {
+        if (document.getElementById('admin-name')) document.getElementById('admin-name').innerText = 'Administrateur';
+        if (document.getElementById('admin-avatar')) document.getElementById('admin-avatar').innerText = 'AD';
+      }
+    }
+
+    // عرض البيانات بدون أزرار التعديل والحذف والإضافة
+    function renderClientsTable(clients) {
+      const body = document.getElementById('clients-table-body');
+      if (!body) return;
+
+      body.innerHTML = '';
+
+      if (!clients || clients.length === 0) {
+        body.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-4">Aucun client trouvé</td></tr>`;
+        return;
+      }
+
+      clients.forEach(c => {
+        const initials = c.full_name ? c.full_name.substring(0, 2).toUpperCase() : 'CL';
+        
+            
+let vehiclesHtml = '<span class="text-muted fs-13">Aucun véhicule</span>';
+if (c.vehicles && c.vehicles.length > 0) {
+
+  const uniqueVehicles = Array.from(
+    new Map(c.vehicles.map(v => [v.vin_number || v.id, v])).values()
+  );
+
+  vehiclesHtml = uniqueVehicles.map(v => `
+    <div class="mb-1 p-2 bg-light rounded border">
+      <div>
+        <span class="fw-semibold text-dark">${v.make} ${v.model || ''}</span>
+        <span class="badge bg-white text-dark border px-2 py-1 fs-12 ms-1">${v.license_plate || 'Sans Immatriculation'}</span>
+      </div>
+      ${v.vin_number ? `<small class="text-muted d-block mt-1"><i class="bi bi-barcode me-1"></i>VIN: ${v.vin_number}</small>` : ''}
+    </div>
+  `).join('');
+}
+
+        const row = `
+          <tr>
+            <td class="ps-4">
+              <div class="d-flex align-items-center gap-3">
+                <div class="avatar bg-primary-subtle text-primary fw-bold rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; font-size: 14px;">
+                  ${initials}
+                </div>
+                <div>
+                  <div class="fw-semibold text-dark">${c.full_name || 'Client Inconnu'}</div>
+                  <small class="text-muted">ID: #${c.id}</small>
+                </div>
+              </div>
+            </td>
+            <td>
+              <a href="tel:${c.phone}" class="text-decoration-none text-secondary fw-medium">
+                <i class="bi bi-telephone text-muted me-1"></i> ${c.phone || 'N/A'}
+              </a>
+            </td>
+            <td>${vehiclesHtml}</td>
+            <td class="pe-4 text-end">
+              <span class="badge bg-info-subtle text-info rounded-pill px-3 py-2 fs-13">${c.rdv_count || 0} RDV</span>
+            </td>
+          </tr>
+        `;
+        body.insertAdjacentHTML('beforeend', row);
+      });
+    }
+
+    async function loadClientsData() {
+      try {
+        const res = await fetch(`${API_URL}/admin/clients`, {
+          headers: getAuthHeaders()
+        });
+        if (res.ok) {
+          allClientsCache = await res.json();
+          renderClientsTable(allClientsCache);
+        } else {
+          throw new Error('Erreur API');
+        }
+      } catch (err) {
+        console.warn('Erreur chargement API:', err);
+        document.getElementById('clients-table-body').innerHTML = `
+          <tr><td colspan="4" class="text-center text-muted py-4">Impossible de charger les données. Vérifiez le serveur backend.</td></tr>
+        `;
+      }
+    }
+
+    // تصفية البحث بالاسم، الهاتف، المركبة، Matricule، أو رقم الشاسي (VIN)
+    function filterClients(query) {
+      const searchTerm = query.toLowerCase().trim();
+
+      if (!searchTerm) {
+        renderClientsTable(allClientsCache);
+        return;
+      }
+
+      const filtered = allClientsCache.filter(client => {
+        const nameMatch = client.full_name && client.full_name.toLowerCase().includes(searchTerm);
+        const phoneMatch = client.phone && client.phone.toLowerCase().includes(searchTerm);
+
+        const vehicleMatch = client.vehicles && client.vehicles.some(v => {
+          const makeMatch = v.make && v.make.toLowerCase().includes(searchTerm);
+          const modelMatch = v.model && v.model.toLowerCase().includes(searchTerm);
+          const plateMatch = v.license_plate && v.license_plate.toLowerCase().includes(searchTerm);
+          const vinMatch = v.vin_number && v.vin_number.toLowerCase().includes(searchTerm);
+          return makeMatch || modelMatch || plateMatch || vinMatch;
+        });
+
+        return nameMatch || phoneMatch || vehicleMatch;
+      });
+
+      renderClientsTable(filtered);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadAdminProfile();
+      loadClientsData();
+
+      const searchInput = document.getElementById('search-input');
+      searchInput?.addEventListener('input', (e) => {
+        filterClients(e.target.value);
+      });
+
+      // Sidebar Mobile Controls
+      let overlay = document.querySelector('.sidebar-overlay');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.className = 'sidebar-overlay';
+        document.body.appendChild(overlay);
+      }
+
+      const sidebar = document.querySelector('.sidebar');
+      const toggleBtn = document.getElementById('mobile-sidebar-toggle');
+      const closeBtn = document.getElementById('sidebar-close-btn');
+
+      toggleBtn?.addEventListener('click', () => {
+        sidebar?.classList.add('show');
+        overlay?.classList.add('show');
+      });
+
+      closeBtn?.addEventListener('click', () => {
+        sidebar?.classList.remove('show');
+        overlay?.classList.remove('show');
+      });
+
+      overlay?.addEventListener('click', () => {
+        sidebar?.classList.remove('show');
+        overlay?.classList.remove('show');
+      });
+    });
+
+  </script>
+</body>
+</html>

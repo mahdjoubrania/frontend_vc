@@ -1,587 +1,379 @@
 const API_URL = 'https://romantic-enjoyment-production-f458.up.railway.app/api';
 
-let appointmentsData = [];
-let currentCalendarDate = new Date();
-let timerInterval = null;
-
-// ==========================================
-// 1. INITIALIZATION & AUTH CHECK
-// ==========================================
-document.addEventListener('DOMContentLoaded', () => {
-  checkAuth();
-  loadDashboardData();
-  setupEventListeners();
-});
+let revenueChartInstance = null;
+let typeChartInstance = null;
+let rawRevenueData = []; 
 
 function getAuthToken() {
-  return localStorage.getItem('token') || '';
-}
-
-function checkAuth() {
-  const rawUser = localStorage.getItem('verifcar_reception_user') 
-               || localStorage.getItem('verifcar_user') 
-               || localStorage.getItem('verifcar_admin_user');
-  
-  const token = getAuthToken();
-  const allowedRoles = ['ADMIN', 'RECEPTION'];
-
-  if (!rawUser || !token) {
-    alert('Accès non autorisé.');
-    window.location.href = '../Auth/index.html';
-    return;
-  }
-
-  const userSession = JSON.parse(rawUser);
-  const userRole = (userSession.role || '').toUpperCase();
-
-  if (!allowedRoles.includes(userRole)) {
-    alert('Accès non autorisé.');
-    window.location.href = '../Auth/index.html';
-    return;
-  }
-
-  const nameEl = document.getElementById('admin-name') || document.getElementById('receptionist-name');
-  if (nameEl && (userSession.fullName || userSession.full_name)) {
-    nameEl.innerText = userSession.fullName || userSession.full_name;
-  }
-
-  const avatarEl = document.getElementById('admin-avatar');
-  if (avatarEl && (userSession.fullName || userSession.full_name)) {
-    const name = userSession.fullName || userSession.full_name;
-    avatarEl.innerText = name.charAt(0).toUpperCase();
+  const userSessionRaw = localStorage.getItem('verifcar_admin_user');
+  if (!userSessionRaw) return localStorage.getItem('token') || '';
+  try {
+    const userSession = JSON.parse(userSessionRaw);
+    return userSession.token || userSession.accessToken || localStorage.getItem('token') || '';
+  } catch (e) {
+    return localStorage.getItem('token') || '';
   }
 }
 
-// ==========================================
-// 2. FETCH & RENDER DATA
-// ==========================================
-async function loadDashboardData() {
+document.addEventListener('DOMContentLoaded', () => {
+  const userSessionRaw = localStorage.getItem('verifcar_admin_user');
+  const userSession = userSessionRaw ? JSON.parse(userSessionRaw) : null;
+
+  if (userSession) {
+    const adminFullName = userSession.fullName || userSession.full_name || 'Admin';
+    if (document.getElementById('admin-name')) document.getElementById('admin-name').innerText = adminFullName;
+    if (document.getElementById('admin-welcome')) document.getElementById('admin-welcome').innerText = adminFullName.split(' ')[0];
+    if (document.getElementById('admin-avatar')) document.getElementById('admin-avatar').innerText = adminFullName.charAt(0).toUpperCase();
+  }
+
+  initMobileSidebar();
+  setupFilterEvents();
+  loadDashboardSummary();
+});
+
+function initMobileSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const toggleBtn = document.getElementById('mobile-sidebar-toggle');
+  const closeBtn = document.getElementById('sidebar-close-btn');
+
+  let overlay = document.querySelector('.sidebar-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.className = 'sidebar-overlay';
+    document.body.appendChild(overlay);
+  }
+
+  toggleBtn?.addEventListener('click', () => {
+    sidebar?.classList.add('show');
+    overlay?.classList.add('show');
+  });
+
+  closeBtn?.addEventListener('click', () => {
+    sidebar?.classList.remove('show');
+    overlay?.classList.remove('show');
+  });
+
+  overlay?.addEventListener('click', () => {
+    sidebar?.classList.remove('show');
+    overlay?.classList.remove('show');
+  });
+}
+
+async function loadDashboardSummary() {
+  try {
+    const res = await fetch(`${API_URL}/admin/dashboard-summary`, {
+      headers: { 
+        'Authorization': `Bearer ${getAuthToken()}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (res.ok) {
+      const data = await res.json();
+      
+      if (data.users) {
+        const totalUsersElem = document.getElementById('total-users-count') || document.getElementById('total-users');
+        if (totalUsersElem) totalUsersElem.innerText = data.users.totalUsers || 0;
+        
+        if (document.getElementById('reception-count')) 
+          document.getElementById('reception-count').innerText = data.users.receptionCount || 0;
+        if (document.getElementById('tech-count')) 
+          document.getElementById('tech-count').innerText = data.users.techCount || 0;
+        if (document.getElementById('admin-count')) 
+          document.getElementById('admin-count').innerText = data.users.adminCount || 0;
+      }
+
+      if (data.revenue) {
+        rawRevenueData = data.revenue;
+        filterAndRenderRevenue();
+      }
+
+      if (data.inspectionTypes) {
+        initTypeChart(data.inspectionTypes);
+      }
+    }
+
+    loadRecentAppointments();
+
+  } catch (error) {
+    console.error("Erreur lors du chargement des statistiques:", error);
+  }
+}
+
+async function loadRecentAppointments() {
   try {
     const res = await fetch(`${API_URL}/admin/appointments/today`, {
-      headers: {
+      headers: { 
         'Authorization': `Bearer ${getAuthToken()}`,
         'Content-Type': 'application/json'
       }
     });
-
+    
     if (res.ok) {
-      appointmentsData = await res.json();
-      renderAppointmentsTable(appointmentsData);
-      updateKPIs(appointmentsData);
-      renderCalendarView();
-    } else if (res.status === 401 || res.status === 403) {
-      alert('Session expirée. Veuillez vous reconnecter.');
-      window.location.href = '../Auth/index.html';
+      const todayAppointments = await res.json();
+      const rawArray = Array.isArray(todayAppointments) ? todayAppointments : (todayAppointments.data || []);
+      
+      renderRecentTickets(rawArray);
+      updateTechnicianKPIs(rawArray); // <-- أضف هذا السطر هنا لتحديث العدادات
+    } else {
+      console.error("Erreur HTTP lors du chargement des RDV du jour:", res.status);
     }
   } catch (error) {
-    console.error('Erreur lors du chargement des rendez-vous:', error);
+    console.error("Erreur lors du chargement des rendez-vous du jour:", error);
   }
 }
 
-// دالة تحويل التاريخ إلى وقت محلي دقيق
-function parseLocalAppointmentDate(dateStr) {
-  if (!dateStr) return null;
-  const parts = dateStr.split(/[- : T]/);
-  if (parts.length < 5) return null;
+function setupFilterEvents() {
+  const periodSelect = document.getElementById('revenue-period-select');
+  const applyBtn = document.getElementById('apply-date-btn');
 
-  const year = parseInt(parts[0], 10);
-  const month = parseInt(parts[1], 10) - 1;
-  const day = parseInt(parts[2], 10);
-  const hours = parseInt(parts[3], 10);
-  const minutes = parseInt(parts[4], 10);
+  periodSelect?.addEventListener('change', () => {
+    const customInputs = document.getElementById('custom-date-inputs');
+    if (periodSelect.value === 'custom') {
+      customInputs?.classList.remove('d-none');
+    } else {
+      customInputs?.classList.add('d-none');
+      filterAndRenderRevenue();
+    }
+  });
 
-  return new Date(year, month, day, hours, minutes, 0);
+  applyBtn?.addEventListener('click', filterAndRenderRevenue);
 }
 
-// حساب الوقت والتوقيت التنازلي التلقائي عند حلول الوقت
-function getRemainingTime(item) {
-  const currentStatus = item.status || item.extendedProps?.status;
+function filterAndRenderRevenue() {
+  const period = document.getElementById('revenue-period-select')?.value || 'year';
+  const now = new Date();
 
-  if (currentStatus === 'COMPLETED') {
-    return `<span class="badge bg-success"><i class="bi bi-check-all"></i> Terminé</span>`;
-  }
+  if (period === 'year') {
+    const monthLabels = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
+    const totalPrixMonthly = new Array(12).fill(0);
+    const versementMonthly = new Array(12).fill(0);
 
-  if (['CANCELLED', 'ABSENT'].includes(currentStatus)) {
-    return `<span class="badge bg-danger">${item.cancel_reason || 'Annulé'}</span>`;
-  }
+    rawRevenueData.forEach(item => {
+      const monthIndex = Number(item.month) - 1;
+      if (monthIndex >= 0 && monthIndex < 12) {
+        totalPrixMonthly[monthIndex] += Number(item.total_prix) || 0;
+        versementMonthly[monthIndex] += Number(item.total_versement) || 0;
+      }
+    });
 
-  const dateStr = item.appointment_date || item.start || item.appointmentDate;
-  const appDate = parseLocalAppointmentDate(dateStr);
-
-  if (!appDate) return `<span class="badge bg-secondary">--</span>`;
-
-  const appTime = appDate.getTime();
-  const now = new Date().getTime();
-
-  // 1. الموعد لم يحن وقته بعد
-  if (now < appTime) {
-    const timeUntilApp = Math.ceil((appTime - now) / (1000 * 60));
-    return `<span class="badge bg-light text-muted border">Pas encore (${timeUntilApp}m)</span>`;
-  }
-
-  // 2. الموعد حان وقته أو تجاوزه: يبدأ العد التنازلي لـ 60 دقيقة
-  const durationMs = 60 * 60 * 1000;
-  const elapsedTime = now - appTime;
-  const remainingTimeMs = durationMs - elapsedTime;
-
-  if (remainingTimeMs <= 0) {
-    return `<span class="badge bg-danger">⏱️ Dépassement (+1h)</span>`;
-  }
-
-  const minutesLeft = Math.floor(remainingTimeMs / (1000 * 60));
-  const secondsLeft = Math.floor((remainingTimeMs % (1000 * 60)) / 1000);
-
-  return `<span class="badge bg-primary fs-12">⏳ ${minutesLeft}m ${secondsLeft}s</span>`;
-}
-
-function renderAppointmentsTable(data) {
-  const tbody = document.getElementById('rdv-table-body');
-  if (!tbody) return;
-
-  if (data.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="9" class="text-center py-4 text-muted">
-          <i class="bi bi-inbox fs-3 d-block mb-2"></i>
-          Aucun rendez-vous aujourd'hui
-        </td>
-      </tr>`;
+    renderRevenueChart(monthLabels, totalPrixMonthly, versementMonthly);
     return;
   }
 
-  tbody.innerHTML = data.map(item => {
-    const appDateRaw = item.appointment_date || item.start || item.appointmentDate;
-    const appDate = parseLocalAppointmentDate(appDateRaw);
-    
-    // تنسيق عرض الساعة المكتوبة
-    const timeFormatted = appDate 
-      ? appDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      : 'N/A';
+  let datesList = [];
 
-    const currentStatus = item.extendedProps?.status || item.status || 'PENDING';
-    const payStatus = item.payment_status || item.paymentStatus || 'PENDING_VERSEMENT';
-    const clientName = item.client_name || item.title || item.clientName || 'N/A';
-    const phone = item.phone || item.extendedProps?.phone || 'N/A';
-    const vehicle = item.vehicle_name || item.extendedProps?.vehicle || item.carModel || 'Véhicule';
-    const licensePlate = item.license_plate || item.VIN || item.extendedProps?.vin || item.vin || '';
-    const service = item.service_type || item.extendedProps?.serviceType || item.typedeverification || 'Inspection';
+  if (period === 'month') {
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-    return `
+    for (let day = 1; day <= daysInMonth; day++) {
+      const d = new Date(Date.UTC(year, month, day));
+      datesList.push(d.toISOString().split('T')[0]);
+    }
+  } else if (period === '15days') {
+    for (let i = 14; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(now.getDate() - i);
+      datesList.push(d.toISOString().split('T')[0]);
+    }
+  } else if (period === 'custom') {
+    const startVal = document.getElementById('start-date')?.value;
+    const endVal = document.getElementById('end-date')?.value;
+
+    if (startVal && endVal) {
+      let current = new Date(startVal);
+      const end = new Date(endVal);
+      while (current <= end) {
+        datesList.push(current.toISOString().split('T')[0]);
+        current.setDate(current.getDate() + 1);
+      }
+    }
+  }
+
+  const totalsMap = {};
+  const versementsMap = {};
+
+  datesList.forEach(d => {
+    totalsMap[d] = 0;
+    versementsMap[d] = 0;
+  });
+
+  rawRevenueData.forEach(item => {
+    const itemDate = item.date ? item.date.split('T')[0] : null;
+    if (itemDate && totalsMap.hasOwnProperty(itemDate)) {
+      totalsMap[itemDate] += Number(item.total_prix) || 0;
+      versementsMap[itemDate] += Number(item.total_versement) || 0;
+    }
+  });
+
+  const displayLabels = datesList.map(d => {
+    const parts = d.split('-');
+    return `${parts[2]}/${parts[1]}`;
+  });
+
+  const totalsData = datesList.map(d => totalsMap[d]);
+  const versementsData = datesList.map(d => versementsMap[d]);
+
+  renderRevenueChart(displayLabels, totalsData, versementsData);
+}
+
+function renderRevenueChart(labels, totalPrixData, versementData) {
+  const ctx = document.getElementById('revenueChart');
+  if (!ctx) return;
+
+  if (revenueChartInstance) revenueChartInstance.destroy();
+
+  revenueChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Total Prix (DZD)',
+          data: totalPrixData,
+          borderColor: '#de61f1',
+          backgroundColor: 'rgba(222, 97, 241, 0.08)',
+          fill: true,
+          tension: 0.4,
+          borderWidth: 3,
+          pointRadius: 4
+        },
+        {
+          label: 'Versement (DZD)',
+          data: versementData,
+          borderColor: '#56c8e8',
+          backgroundColor: 'rgba(86, 200, 232, 0.08)',
+          fill: true,
+          tension: 0.4,
+          borderWidth: 3,
+          pointRadius: 4
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top' },
+        tooltip: {
+          callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw.toLocaleString()} DZD` }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { callback: val => val.toLocaleString() + ' DZD' }
+        }
+      }
+    }
+  });
+}
+
+function initTypeChart(inspectionTypes) {
+  const typeCtx = document.getElementById('typeChart');
+  if (!typeCtx) return;
+
+  if (typeChartInstance) typeChartInstance.destroy();
+
+  const labels = (inspectionTypes && inspectionTypes.length > 0) ? inspectionTypes.map(i => i.label) : ['Aucune donnée'];
+  const counts = (inspectionTypes && inspectionTypes.length > 0) ? inspectionTypes.map(i => i.count) : [1];
+
+  typeChartInstance = new Chart(typeCtx, {
+    type: 'doughnut',
+    data: {
+      labels: labels,
+      datasets: [{
+        data: counts,
+        backgroundColor: ['#2563eb', '#f59e0b', '#10b981', '#8b5cf6', '#ef4444'],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom' } },
+      cutout: '70%'
+    }
+  });
+}
+
+function renderRecentTickets(tickets) {
+  const tableBody = document.getElementById('recent-tickets-body');
+  if (!tableBody) return;
+
+  if (!tickets || tickets.length === 0) {
+    tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-3">Aucun rendez-vous récent</td></tr>`;
+    return;
+  }
+
+  tableBody.innerHTML = '';
+  tickets.forEach(ticket => {
+    const ticketNum = ticket.ticket_number || ticket.id || '-';
+    const clientName = ticket.client_name || ticket.client_full_name || 'N/A';
+    const vehicleName = ticket.vehicle_name || (ticket.brand ? `${ticket.brand} ${ticket.model || ''}` : 'N/A');
+
+    const row = `
       <tr>
-        <td class="fw-bold text-dark">${clientName}</td>
-        <td>${phone}</td>
-        <td>
-          <div class="fw-semibold">${vehicle}</div>
-          <small class="text-muted">${licensePlate}</small>
-        </td>
-        <td><i class="bi bi-clock me-1 text-muted"></i>${timeFormatted}</td>
-        <td><span class="badge bg-light text-dark border">${service}</span></td>
-        <td id="chrono-${item.id}">${getRemainingTime(item)}</td>
-        <td>
-          <select class="form-select form-select-sm" onchange="updatePaymentStatus('${item.id}', this.value)">
-            <option value="PENDING_VERSEMENT" ${payStatus === 'PENDING_VERSEMENT' ? 'selected' : ''}>Non payé</option>
-            <option value="ADVANCE_PAID" ${payStatus === 'ADVANCE_PAID' ? 'selected' : ''}>Avance</option>
-            <option value="FULLY_PAID" ${payStatus === 'FULLY_PAID' ? 'selected' : ''}>Payé</option>
-          </select>
-        </td>
-        <td>
-          <select class="form-select form-select-sm status-select" onchange="changeStatus('${item.id}', this.value)">
-            <option value="PENDING" ${['PENDING', 'EN_ATTENTE'].includes(currentStatus) ? 'selected' : ''}>⏳ En Attente</option>
-            <option value="IN_PROGRESS" ${['IN_PROGRESS', 'IN_WORKSHOP', 'INCOMPLETE'].includes(currentStatus) ? 'selected' : ''}>⚙️ En Cours</option>
-            <option value="COMPLETED" ${['COMPLETED', 'TERMINE'].includes(currentStatus) ? 'selected' : ''}>✅ Terminé</option>
-            <option value="CANCELLED" ${['CANCELLED', 'ABSENT'].includes(currentStatus) ? 'selected' : ''}>❌ Annulé</option>
-          </select>
-        </td>
-        <td class="text-end">
-          <button class="btn btn-sm btn-outline-secondary me-1" title="Modifier" onclick="openEditModal(${JSON.stringify(item).replace(/"/g, '&quot;')})">
-            <i class="bi bi-pencil"></i>
-          </button>
-          <button class="btn btn-sm btn-outline-primary me-1" title="Imprimer Fiche" onclick="printAppointment('${item.id}')">
-            <i class="bi bi-printer"></i>
-          </button>
-          <button class="btn btn-sm btn-outline-danger" title="Annuler/Supprimer" onclick="openCancelModal('${item.id}')">
-            <i class="bi bi-trash"></i>
-          </button>
-        </td>
+        <td class="fw-bold text-primary">#RDV-${ticketNum}</td>
+        <td><div class="fw-semibold text-dark">${clientName}</div></td>
+        <td>${vehicleName}</td>
+        <td>${formatDateTime(ticket.appointment_date || ticket.start)}</td>
+        <td><span class="badge ${getStatusBadgeClass(ticket.status)} px-2 py-1">${ticket.status || 'PENDING'}</span></td>
+        <td class="fw-bold text-dark">${ticket.total_amount ? Number(ticket.total_amount).toLocaleString() + ' DZD' : '-'}</td>
       </tr>
     `;
-  }).join('');
-
-  if (timerInterval) clearInterval(timerInterval);
-  timerInterval = setInterval(() => {
-    data.forEach(item => {
-      const el = document.getElementById(`chrono-${item.id}`);
-      if (el) el.innerHTML = getRemainingTime(item);
-    });
-  }, 1000);
+    tableBody.insertAdjacentHTML('beforeend', row);
+  });
 }
 
-// ==========================================
-// 3. ACTIONS & API CALLS
-// ==========================================
-
-async function startChronometer(id) {
-  await changeStatus(id, 'IN_PROGRESS');
-}
-
-async function changeStatus(id, newStatus, cancelReason = null) {
-  try {
-    const payload = { status: newStatus };
-    if (cancelReason) payload.cancel_reason = cancelReason;
-
-    const res = await fetch(`${API_URL}/admin/appointments/${id}/status`, {
-      method: 'PUT',
-      headers: { 
-        'Authorization': `Bearer ${getAuthToken()}`,
-        'Content-Type': 'application/json' 
-      },
-      body: JSON.stringify(payload)
-    });
-
-    if (res.ok) {
-      loadDashboardData();
-    } else {
-      alert('Erreur lors de la mise à jour du statut.');
-    }
-  } catch (error) {
-    console.error('Error changing status:', error);
+function getStatusBadgeClass(status) {
+  switch (status?.toUpperCase()) {
+    case 'COMPLETED': return 'bg-success-subtle text-success';
+    case 'PENDING': return 'bg-warning-subtle text-warning';
+    case 'CANCELLED':
+    case 'CANCELED':
+    case 'NO_SHOW': return 'bg-danger-subtle text-danger';
+    default: return 'bg-primary-subtle text-primary';
   }
 }
 
-async function updatePaymentStatus(id, newStatus) {
-  try {
-    const res = await fetch(`${API_URL}/admin/appointments/${id}/payment-status`, {
-      method: 'PUT',
-      headers: { 
-        'Authorization': `Bearer ${getAuthToken()}`,
-        'Content-Type': 'application/json' 
-      },
-      body: JSON.stringify({ payment_status: newStatus })
-    });
-    if (!res.ok) throw new Error();
-  } catch (err) {
-    alert('Erreur lors de la mise à jour du paiement');
-  }
+function formatDateTime(dateTimeStr) {
+  if (!dateTimeStr) return '-';
+  const cleanStr = dateTimeStr.replace('T', ' ').replace('Z', '');
+  const parts = cleanStr.split(' ');
+  const dateParts = parts[0].split('-');
+  const timeParts = parts[1] ? parts[1].split(':') : ['00', '00'];
+
+  const formattedDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+  const formattedTime = `${timeParts[0]}:${timeParts[1]}`;
+
+  return `${formattedDate} ${formattedTime}`;
 }
 
-function updateKPIs(data) {
-  const todayStr = new Date().toISOString().split('T')[0];
-  const todayCount = data.filter(a => {
-    const dateVal = a.appointment_date || a.start || a.appointmentDate;
-    if (!dateVal) return false;
-    return dateVal.startsWith(todayStr);
-  }).length;
+function updateTechnicianKPIs(tickets) {
+  if (!Array.isArray(tickets)) return;
 
-  const pendingCount = data.filter(a => ['PENDING', 'EN_ATTENTE'].includes(a.extendedProps?.status || a.status)).length;
-  const progressCount = data.filter(a => ['INCOMPLETE', 'EN_COURS', 'IN_PROGRESS', 'IN_WORKSHOP'].includes(a.extendedProps?.status || a.status)).length;
-  const completedCount = data.filter(a => ['COMPLETED', 'TERMINE'].includes(a.extendedProps?.status || a.status)).length;
+  // 1. عدد مواعيد اليوم الإجمالي
+  const todayCount = tickets.length;
 
-  const countTodayEl = document.getElementById('count-today');
-  const countPendingEl = document.getElementById('count-pending');
-  const countProgressEl = document.getElementById('count-progress');
-  const countCompletedEl = document.getElementById('count-completed');
+  // 2. عدد السيارات قيد الفحص في الورشة
+  const inWorkshopCount = tickets.filter(t => 
+    ['IN_PROGRESS', 'IN_WORKSHOP', 'EN_COURS'].includes(t.status?.toUpperCase())
+  ).length;
 
-  if (countTodayEl) countTodayEl.innerText = todayCount;
-  if (countPendingEl) countPendingEl.innerText = pendingCount;
-  if (countProgressEl) countProgressEl.innerText = progressCount;
-  if (countCompletedEl) countCompletedEl.innerText = completedCount;
-}
+  // 3. عدد الفحوصات المكتملة
+  const completedCount = tickets.filter(t => 
+    ['COMPLETED', 'TERMINE'].includes(t.status?.toUpperCase())
+  ).length;
 
-// ==========================================
-// 4. MODALS MANAGEMENT (EDIT & CANCEL)
-// ==========================================
+  // ربط القيم مع عناصر الـ HTML
+  const todayElem = document.getElementById('stat-today-count');
+  const workshopElem = document.getElementById('stat-in-workshop');
+  const completedElem = document.getElementById('stat-completed');
 
-function openEditModal(item) {
-  document.getElementById('edit-rdv-id').value = item.id;
-  document.getElementById('edit-client-name').value = item.client_name || '';
-  document.getElementById('edit-client-phone').value = item.phone || '';
-  document.getElementById('edit-car-vin').value = item.VIN || '';
-  document.getElementById('edit-service-type').value = item.service_type || '';
-  document.getElementById('edit-total-amount').value = item.total_amount || 0;
-  document.getElementById('edit-versement').value = item.versement || 0;
-
-  const modal = new bootstrap.Modal(document.getElementById('editRendezVousModal'));
-  modal.show();
-}
-
-function openCancelModal(id) {
-  document.getElementById('cancel-rdv-id').value = id;
-  const modal = new bootstrap.Modal(document.getElementById('cancelReasonModal'));
-  modal.show();
-}
-
-async function confirmCancelWithReason() {
-  const id = document.getElementById('cancel-rdv-id').value;
-  const selectedReason = document.querySelector('input[name="cancelReason"]:checked')?.value;
-
-  try {
-    const res = await fetch(`${API_URL}/admin/appointments/${id}/status`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${getAuthToken()}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        status: 'CANCELLED',
-        cancel_reason: selectedReason
-      })
-    });
-
-    if (res.ok) {
-      const modalEl = document.getElementById('cancelReasonModal');
-      const modal = bootstrap.Modal.getInstance(modalEl);
-      if (modal) modal.hide();
-      loadDashboardData();
-    }
-  } catch (err) {
-    console.error('Error cancelling appointment:', err);
-  }
-}
-
-// ==========================================
-// 5. SEARCH & EVENT LISTENERS
-// ==========================================
-function setupEventListeners() {
-  const logoutBtn = document.getElementById('logout-btn');
-  if (logoutBtn) {
-    logoutBtn.addEventListener('click', () => {
-      localStorage.removeItem('token');
-      localStorage.removeItem('verifcar_reception_user');
-      localStorage.removeItem('verifcar_user');
-      localStorage.removeItem('verifcar_admin_user');
-      window.location.href = '../Auth/index.html';
-    });
-  }
-
-  const searchInput = document.getElementById('search-input');
-  if (searchInput) {
-    searchInput.addEventListener('input', (e) => {
-      const term = e.target.value.toLowerCase().trim();
-      const filtered = appointmentsData.filter(item => {
-        const client = (item.client_name || item.title || item.clientName || '').toLowerCase();
-        const phone = (item.phone || item.extendedProps?.phone || '');
-        const car = (item.vehicle_name || item.extendedProps?.vehicle || item.carModel || '').toLowerCase();
-        return client.includes(term) || phone.includes(term) || car.includes(term);
-      });
-      renderAppointmentsTable(filtered);
-    });
-  }
-
-  const phoneInput = document.getElementById('client-phone');
-  if (phoneInput) {
-    phoneInput.addEventListener('input', async (e) => {
-      const phone = e.target.value.trim();
-      if (phone.length >= 8) {
-        try {
-          const res = await fetch(`${API_URL}/clients/search?query=${encodeURIComponent(phone)}`, {
-            headers: { 'Authorization': `Bearer ${getAuthToken()}` }
-          });
-          if (res.ok) {
-            const clients = await res.json();
-            if (clients.length > 0) {
-              document.getElementById('client-name').value = clients[0].full_name;
-              phoneInput.classList.add('is-valid');
-            } else {
-              phoneInput.classList.remove('is-valid');
-            }
-          }
-        } catch (err) {
-          console.error('Autofill error:', err);
-        }
-      }
-    });
-  }
-
-  const rdvForm = document.getElementById('rdv-form');
-  if (rdvForm) {
-    rdvForm.addEventListener('submit', handleNewAppointment);
-  }
-
-  const editForm = document.getElementById('edit-rdv-form');
-  if (editForm) {
-    editForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const id = document.getElementById('edit-rdv-id').value;
-
-      const payload = {
-        clientName: document.getElementById('edit-client-name').value,
-        phone: document.getElementById('edit-client-phone').value,
-        vin: document.getElementById('edit-car-vin').value,
-        serviceType: document.getElementById('edit-service-type').value,
-        totalAmount: parseFloat(document.getElementById('edit-total-amount').value),
-        versement: parseFloat(document.getElementById('edit-versement').value)
-      };
-
-      try {
-        const res = await fetch(`${API_URL}/admin/appointments/${id}`, {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${getAuthToken()}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(payload)
-        });
-
-        if (res.ok) {
-          const modalEl = document.getElementById('editRendezVousModal');
-          const modal = bootstrap.Modal.getInstance(modalEl);
-          if (modal) modal.hide();
-          loadDashboardData();
-        }
-      } catch (err) {
-        console.error('Error modifying appointment:', err);
-      }
-    });
-  }
-}
-
-setInterval(loadDashboardData, 30000);
-
-// ==========================================
-// 6. CREATE APPOINTMENT
-// ==========================================
-async function handleNewAppointment(e) {
-  e.preventDefault();
-
-  const selectedServices = Array.from(document.querySelectorAll('.service-checkbox:checked')).map(cb => cb.value);
-  const customService = document.getElementById('service-autre').value.trim();
-  if (customService) selectedServices.push(customService);
-
-  const dateOnly = document.getElementById('rdv-date-only').value;
-  const timeOnly = document.getElementById('rdv-time-only').value;
-  const fullDateTime = `${dateOnly} ${timeOnly}:00`;
-
-  const carInput = document.getElementById('car-make-model').value.trim().split(' ');
-  const make = carInput[0] || 'Inconnu';
-  const model = carInput.slice(1).join(' ') || 'Inconnu';
-
-  const totalAmount = parseFloat(document.getElementById('total-amount').value) || 0;
-  const versement = parseFloat(document.getElementById('versement-amount').value) || 0;
-  const rest = totalAmount - versement;
-
-  let calculatedPaymentStatus = 'PENDING_VERSEMENT';
-
-  if (versement <= 0) {
-    calculatedPaymentStatus = 'PENDING_VERSEMENT';
-  } else if (rest <= 0) {
-    calculatedPaymentStatus = 'FULLY_PAID';
-  } else {
-    calculatedPaymentStatus = 'ADVANCE_PAID';
-  }
-
-  const payload = {
-    clientName: document.getElementById('client-name').value.trim(),
-    phone: document.getElementById('client-phone').value.trim(),
-    make: make,
-    model: model,
-    licensePlate: document.getElementById('car-matricule').value.trim(),
-    vin: document.getElementById('car-vin').value.trim(),
-    typedeverification: selectedServices.join(', '),
-    appointmentDate: fullDateTime,
-    totalAmount: totalAmount,
-    versement: versement,
-    notes: document.getElementById('vehicle-notes').value.trim(),
-    paymentStatus: calculatedPaymentStatus,
-    status: 'PENDING'
-  };
-
-  try {
-    const res = await fetch(`${API_URL}/admin/appointments`, {
-      method: 'POST',
-      headers: { 
-        'Authorization': `Bearer ${getAuthToken()}`,
-        'Content-Type': 'application/json' 
-      },
-      body: JSON.stringify(payload)
-    });
-
-    if (res.ok) {
-      const modalEl = document.getElementById('addRendezVousModal');
-      const modal = bootstrap.Modal.getInstance(modalEl);
-      if (modal) modal.hide();
-
-      document.getElementById('rdv-form').reset();
-      loadDashboardData();
-    } else {
-      const errData = await res.json();
-      alert('Erreur: ' + (errData.message || 'Impossible d\'enregistrer le rendez-vous'));
-    }
-  } catch (error) {
-    console.error('Error creating appointment:', error);
-    alert('Erreur de connexion avec le serveur.');
-  }
-}
-
-// ==========================================
-// 7. VIEWS, CALENDAR & UTILS
-// ==========================================
-function toggleView(view) {
-  const tableContainer = document.getElementById('view-table-container');
-  const calendarContainer = document.getElementById('view-calendar-container');
-  const btnTable = document.getElementById('btn-view-table');
-  const btnCalendar = document.getElementById('btn-view-calendar');
-
-  if (view === 'table') {
-    tableContainer.classList.remove('d-none');
-    calendarContainer.classList.add('d-none');
-    btnTable.classList.add('active');
-    btnCalendar.classList.remove('active');
-  } else {
-    tableContainer.classList.add('d-none');
-    calendarContainer.classList.remove('d-none');
-    btnCalendar.classList.add('active');
-    btnTable.classList.remove('active');
-    renderCalendarView();
-  }
-}
-
-function renderCalendarView() {
-  const monthYearEl = document.getElementById('calendar-month-year');
-  const gridEl = document.getElementById('calendar-grid');
-  if (!gridEl) return;
-
-  const year = currentCalendarDate.getFullYear();
-  const month = currentCalendarDate.getMonth();
-
-  if (monthYearEl) {
-    monthYearEl.innerText = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(currentCalendarDate);
-  }
-  gridEl.innerHTML = '';
-
-  const firstDay = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  for (let i = 0; i < (firstDay === 0 ? 6 : firstDay - 1); i++) {
-    gridEl.innerHTML += `<div class="calendar-day bg-light opacity-50"></div>`;
-  }
-
-  for (let day = 1; day <= daysInMonth; day++) {
-    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    const dayAppointments = appointmentsData.filter(a => {
-      const d = a.appointment_date || a.start || a.appointmentDate;
-      return d && d.startsWith(dateStr);
-    });
-
-    let appListHtml = dayAppointments.map(a => `
-      <div class="bg-primary text-white fs-11 p-1 rounded mb-1 text-truncate" title="${a.client_name || a.title || a.clientName}">
-        ${a.client_name || a.title || a.clientName}
-      </div>
-    `).join('');
-
-    gridEl.innerHTML += `
-      <div class="calendar-day">
-        <div class="fw-bold text-secondary mb-1">${day}</div>
-        ${appListHtml}
-      </div>
-    `;
-  }
-}
-
-function changeMonth(delta) {
-  currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
-  renderCalendarView();
-}
-
-function printAppointment(id) {
-  window.open(`prise.de.rendez-vous.html?id=${id}`, '_blank');
+  if (todayElem) todayElem.innerText = todayCount;
+  if (workshopElem) workshopElem.innerText = inWorkshopCount;
+  if (completedElem) completedElem.innerText = completedCount;
 }

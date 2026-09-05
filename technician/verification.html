@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VerifCar - Espace Réception & Inspection</title>
+
+  <link href="../img/IMG_7697.png" rel="icon">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+  
+  <style>
+    .module-card {
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      cursor: pointer;
+    }
+    .module-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+    }
+    .canvas-container {
+      position: relative;
+      display: inline-block;
+      width: 100%;
+      max-width: 700px;
+    }
+    #car-canvas {
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      cursor: crosshair;
+      width: 100%;
+      height: auto;
+      background-color: #f8f9fa;
+    }
+  </style>
+</head>
+<body>
+
+<header class="mobile-navbar justify-content-between align-items-center px-3 py-2 bg-white border-bottom shadow-sm">
+  <div class="d-flex align-items-center gap-2">
+    <button class="btn btn-light border-0" id="sidebar-toggle-btn" type="button">
+      <i class="bi bi-list fs-3 text-dark"></i>
+    </button>
+    <img src="../img/IMG_7697.png" alt="VérifCar Logo" style="max-height: 38px; object-fit: contain;">
+  </div>
+  <div class="avatar bg-primary text-white rounded-circle shadow-sm d-flex align-items-center justify-content-center" style="width: 34px; height: 34px; font-size: 13px;" id="mobile-avatar">RC</div>
+</header>
+
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+<div class="d-flex">
+  <!-- Sidebar -->
+    <aside class="sidebar p-3 d-flex flex-column justify-content-between" id="sidebar">
+      <div>
+        <div class="d-flex align-items-center justify-content-between mb-4 px-2">
+          <div class="d-flex align-items-center gap-2">
+            <img src="../img/IMG_7697.png" alt="VérifCar Logo" style="max-height: 45px; object-fit: contain;">
+            <div>
+              <h6 class="fw-bold mb-0 text-dark">VerifCar</h6>
+              <small class="text-muted fs-12">v1.0 - Administration</small>
+            </div>
+          </div>
+          <button class="btn-close d-lg-none" id="sidebar-close-btn"></button>
+        </div>
+
+        <div class="menu-label">WORKSPACE</div>
+        <ul class="nav nav-pills flex-column mb-3">
+          <li class="nav-item">
+            <a href="index.html" class="nav-link text-secondary">
+              <i class="bi bi-grid-1x2 me-2"></i> Tableau de bord
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="calendar.html" class="nav-link text-secondary">
+              <i class="bi bi-calendar-week me-2"></i> Planning & RDV
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="clients.html" class="nav-link text-secondary">
+              <i class="bi bi-car-front me-2"></i> Clients & Véhicules
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="toutsrnd.html" class="nav-link text-secondary">
+              <i class="bi bi-list-check me-2"></i> Les Rendez-vous
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="verification.html" class="nav-link active">
+              <i class="bi bi-tools me-2"></i> Vérification
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="reports.html" class="nav-link text-secondary">
+              <i class="bi bi-file-earmark-bar-graph me-2"></i> Rapports 
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="user-profile p-2 rounded d-flex align-items-center justify-content-between border-top pt-3">
+        <div class="d-flex align-items-center gap-2">
+          <div class="avatar bg-primary text-white rounded-circle shadow-sm" id="admin-avatar">--</div>
+          <div>
+            <h6 class="mb-0 fw-bold fs-14" id="admin-name">Chargement...</h6>
+            <small class="text-muted fs-12">Technicien</small>
+          </div>
+        </div>
+        <button id="logout-btn" class="btn btn-link text-danger p-0 fs-5" title="Déconnexion"><i class="bi bi-box-arrow-right"></i></button>
+      </div>
+    </aside>
+
+  <!-- Main Content Area -->
+  <main class="main-content flex-grow-1 p-3 p-lg-4">
+    
+    
+    <!-- اختيار موعد الفحص (جدول appointments + clients + vehicules) -->
+    <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
+      <div class="row align-items-center">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Sélectionner un rendez-vous (Appointment ID) :</label>
+          <select id="select-rdv" class="form-select" onchange="onAppointmentSelect(this.value)">
+            <option value="">-- Choisir un RDV (READY_FOR_WORKSHOP / IN_PROGRESS) --</option>
+          </select>
+        </div>
+        <div class="col-md-6" id="selected-rdv-info">
+          <div class="p-2 border rounded bg-light">
+            <small class="text-muted d-block">Client: <b id="info-client-name">--</b> | Tél: <span id="info-client-phone">--</span></small>
+            <small class="text-muted d-block">Véhicule: <b id="info-vehicle-name">--</b> | Matricule: <span id="info-vehicle-plate">--</span> | VIN: <span id="info-vehicle-vin">--</span></small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- شبكة وحدات الفحص -->
+    <div id="modules-selection-view">
+      <h3 class="fw-bold mb-4">Modules de Contrôle Technique</h3>
+      <div class="row g-4">
+        <!-- Scanner -->
+        <div class="col-md-4">
+          <div class="card h-100 shadow-sm border-0 text-center p-4 module-card" onclick="openModule('scanner')">
+            <div class="display-4 text-primary mb-3"><i class="fa-solid fa-laptop-code"></i></div>
+            <h5 class="fw-bold">Scanner Diagnostique</h5>
+            <p class="text-muted small mb-0">Codes DTC, calculateur, voyants allumés.</p>
+          </div>
+        </div>
+        <!-- Moteur -->
+        <div class="col-md-4">
+          <div class="card h-100 shadow-sm border-0 text-center p-4 module-card" onclick="openModule('moteur')">
+            <div class="display-4 text-warning mb-3"><i class="fa-solid fa-car-battery"></i></div>
+            <h5 class="fw-bold">Moteur & Niveaux</h5>
+            <p class="text-muted small mb-0">Niveaux d'huile, fuites, bruits, fumée d'échappement.</p>
+          </div>
+        </div>
+        <!-- Suspension -->
+        <div class="col-md-4">
+          <div class="card h-100 shadow-sm border-0 text-center p-4 module-card" onclick="openModule('suspension')">
+            <div class="display-4 text-info mb-3"><i class="fa-solid fa-truck-monster"></i></div>
+            <h5 class="fw-bold">Suspension & Train</h5>
+            <p class="text-muted small mb-0">Amortisseurs, rotules, pneumatiques, corrosion.</p>
+          </div>
+        </div>
+        <!-- Tôle (Elements & Drawing) -->
+        <div class="col-md-6">
+          <div class="card h-100 shadow-sm border-0 text-center p-4 module-card" onclick="openModule('tole')">
+            <div class="display-4 text-danger mb-3"><i class="fa-solid fa-spray-can"></i></div>
+            <h5 class="fw-bold">Tôle & Carrosserie</h5>
+            <p class="text-muted small mb-0">Éléments de carrosserie et schéma interactif (Canvas).</p>
+          </div>
+        </div>
+        <!-- Kilométrage -->
+        <div class="col-md-6">
+          <div class="card h-100 shadow-sm border-0 text-center p-4 module-card" onclick="openModule('kilometrage')">
+            <div class="display-4 text-success mb-3"><i class="fa-solid fa-gauge"></i></div>
+            <h5 class="fw-bold">Kilométrage & Conformation</h5>
+            <p class="text-muted small mb-0">Relevé de kilométrage affiché et conformité.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dynamic Workspace Area -->
+    <div id="active-module-view" class="d-none">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <button class="btn btn-outline-secondary rounded-3" onclick="closeModule()">
+          <i class="bi bi-arrow-left me-2"></i>Retour aux modules
+        </button>
+        <h4 id="active-module-title" class="fw-bold text-dark mb-0">--</h4>
+      </div>
+
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white" id="module-content-body">
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="verif.js"></script>
+
+</body>
+</html>
