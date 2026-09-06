@@ -1,4 +1,3 @@
-
 const API_URL = 'https://romantic-enjoyment-production-f458.up.railway.app/api';
 let currentInspectionId = null; 
 let activeDrawingColor = '#RED';
@@ -6,13 +5,61 @@ let activeMarkType = 'choc';
 let cachedDetails = null;
 let appointmentsList = [];
 
-// تحميل البيانات والتهيئة عند تحميل الصفحة
+// 1. استخراج التوكن بشكل دقيق وقراءة المفاتيح المحتملة كافة
+function getAuthToken() {
+  const sessionKeys = [
+    'verifcar_technician_user',
+    'verifcar_admin_user',
+    'verifcar_reception_user',
+    'verifcar_user'
+  ];
+
+  for (const key of sessionKeys) {
+    const sessionData = localStorage.getItem(key);
+    if (sessionData) {
+      try {
+        const parsed = JSON.parse(sessionData);
+        if (parsed.token) return parsed.token;
+        if (parsed.accessToken) return parsed.accessToken;
+      } catch (e) {
+        // في حال كان المحتوى نصياً وليس JSON
+        if (sessionData.length > 20) return sessionData;
+      }
+    }
+  }
+
+  return localStorage.getItem('token') || '';
+}
+
+// 2. جلب بيانات المستخدم المسجل
+function getAuthUser() {
+  const sessionKeys = [
+    'verifcar_technician_user',
+    'verifcar_admin_user',
+    'verifcar_reception_user',
+    'verifcar_user',
+    'user'
+  ];
+
+  for (const key of sessionKeys) {
+    const rawUser = localStorage.getItem(key);
+    if (rawUser) {
+      try {
+        return JSON.parse(rawUser);
+      } catch (e) {
+        return {};
+      }
+    }
+  }
+  return {};
+}
+
+// تهيئة الواجهة عند تحميل الصفحة
 document.addEventListener('DOMContentLoaded', () => {
   initUIComponents();
   loadAppointments();
 });
 
-// 1. تهيئة القائمة الجانبية، تسجيل الخروج، واستبدال البيانات
 function initUIComponents() {
   const sidebar = document.getElementById('sidebar');
   const toggleBtn = document.getElementById('sidebar-toggle-btn');
@@ -38,52 +85,50 @@ function initUIComponents() {
   if (logoutBtn) {
     logoutBtn.addEventListener('click', () => {
       if (confirm('Voulez-vous vraiment vous déconnecter ?')) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.href = 'login.html';
+        localStorage.clear();
+        window.location.href = '../Auth/index.html';
       }
     });
   }
 
-  // عرض اسم المستخدم المخزن في localStorage
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const user = getAuthUser();
   const adminName = document.getElementById('admin-name');
   const adminAvatar = document.getElementById('admin-avatar');
   const mobileAvatar = document.getElementById('mobile-avatar');
 
-  const fullName = user.full_name || user.username || 'YACINE';
+  const fullName = user.fullName || user.full_name || user.username || 'Technicien';
   if (adminName) adminName.textContent = fullName;
   const initials = fullName.substring(0, 2).toUpperCase();
   if (adminAvatar) adminAvatar.textContent = initials;
   if (mobileAvatar) mobileAvatar.textContent = initials;
 }
 
-// 2. جلب وتعبئة قائمة المواعيد المتاحة
+// جلب قائمة المواعيد المتاحة
 async function loadAppointments() {
   const select = document.getElementById('select-rdv');
   if (!select) return;
 
+  const token = getAuthToken();
+  if (!token) {
+    select.innerHTML = '<option value="">Erreur: Session expirée</option>';
+    return;
+  }
+
   try {
-    // تعديل المسار إلى /admin/appointments بدلاً من /appointments
     const response = await fetch(`${API_URL}/admin/appointments`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+        'Authorization': `Bearer ${token}`
       }
     });
 
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     
     const res = await response.json();
-    
-    // استخراج المصفوفة
     let rawList = Array.isArray(res) ? res : (res.data || res.appointments || []);
-
-    // حفظ القائمة الكاملة
     appointmentsList = rawList;
 
-    // إعادة تفريغ وبناء القائمة المنسدلة
     select.innerHTML = '<option value="">-- Choisir un RDV --</option>';
 
     if (rawList.length > 0) {
@@ -107,7 +152,6 @@ async function loadAppointments() {
   }
 }
 
-// 3. عند تغيير الاختيار في المواعيد
 function onAppointmentSelect(appointmentId) {
   currentInspectionId = appointmentId ? parseInt(appointmentId) : null;
   const selected = appointmentsList.find(a => a.id == appointmentId);
@@ -127,21 +171,20 @@ function onAppointmentSelect(appointmentId) {
   }
 }
 
-// 4. جلب تفاصيل الفحص للموعد المباشر
-// التعديل المطلوب في دالة loadInspectionData
 async function loadInspectionData(inspectionId) {
+  const token = getAuthToken();
   try {
-    const token = localStorage.getItem('token');
     const response = await fetch(`${API_URL}/inspection/details/${inspectionId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token || ''}`
+        'Authorization': `Bearer ${token}`
       }
     });
 
     if (response.status === 401) {
-      handleAuthError();
+      alert('Session expirée. Veuillez vous reconnecter.');
+      window.location.href = '../Auth/index.html';
       return;
     }
 
@@ -153,7 +196,6 @@ async function loadInspectionData(inspectionId) {
   }
 }
 
-// 5. فتح الموديولات المختلفة
 async function openModule(moduleType) {
   if (!currentInspectionId) {
     alert("Veuillez d'abord sélectionner un rendez-vous dans la liste.");
@@ -200,7 +242,6 @@ function closeModule() {
   document.getElementById('modules-selection-view').classList.remove('d-none');
 }
 
-// 6. واجهات العرض الخاصة بالنماذج (UI Renderers)
 function renderScannerModule(data = {}) {
   return `
     <form id="form-scanner" onsubmit="saveScannerModule(event)">
@@ -277,48 +318,143 @@ function renderMoteurModule(data = {}) {
 
 function renderSuspensionModule(data = {}) {
   return `
-    <form id="form-suspension" onsubmit="saveSuspensionModule(event)">
-      <div class="row g-3">
-        <div class="col-md-6">
-          <label class="form-label fw-semibold">Amortisseurs Avant / المساعدين الأماميين</label>
-          <select class="form-select" id="amortisseurs_avant">
-            <option value="OK" ${data.amortisseurs_avant === 'OK' ? 'selected' : ''}>OK / سليم</option>
-            <option value="DEFAUT" ${data.amortisseurs_avant === 'DEFAUT' ? 'selected' : ''}>DÉFAUT / تالف</option>
-          </select>
-        </div>
-        <div class="col-md-6">
-          <label class="form-label fw-semibold">Amortisseurs Arrière / المساعدين الخلفيين</label>
-          <select class="form-select" id="amortisseurs_arriere">
-            <option value="OK" ${data.amortisseurs_arriere === 'OK' ? 'selected' : ''}>OK / سليم</option>
-            <option value="DEFAUT" ${data.amortisseurs_arriere === 'DEFAUT' ? 'selected' : ''}>DÉFAUT / تالف</option>
-          </select>
-        </div>
-        <div class="col-md-6">
-          <label class="form-label fw-semibold">Pneumatiques (Usure) / الإطارات (التآكل)</label>
-          <select class="form-select" id="pneus_usure">
-            <option value="OK" ${data.pneus_usure === 'OK' ? 'selected' : ''}>OK / سليمة</option>
-            <option value="DEFAUT" ${data.pneus_usure === 'DEFAUT' ? 'selected' : ''}>DÉFAUT / متآكلة</option>
-          </select>
-        </div>
-        <div class="col-md-6">
-          <label class="form-label fw-semibold">Rotules & Crémaillère / الركب وعلبة الدريكسيون</label>
-          <select class="form-select" id="rotules_cremaillere">
-            <option value="OK" ${data.rotules_cremaillere === 'OK' ? 'selected' : ''}>OK / سليم</option>
-            <option value="DEFAUT" ${data.rotules_cremaillere === 'DEFAUT' ? 'selected' : ''}>DÉFAUT / تالف</option>
-          </select>
-        </div>
-        <div class="col-12">
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="corrosion_soubassement" ${data.corrosion_soubassement ? 'checked' : ''}>
-            <label class="form-check-label fw-semibold" for="corrosion_soubassement">Corrosion Soubassement / صدأ الهيكل السفلي</label>
+    <form id="suspensionForm" onsubmit="saveSuspensionModule(event)">
+      <div class="card shadow-sm border-0 mb-4 rounded-3">
+        <div class="card-body p-4">
+          
+          <!-- Section 1: Usure Pneus -->
+          <h6 class="fw-bold text-secondary mb-3 border-bottom pb-2">
+            <i class="bi bi-circle-square me-1"></i> Usure des Pneus / تآكل العجلات
+          </h6>
+          <div class="row g-3 mb-4">
+            <!-- AVG -->
+            <div class="col-md-6 col-lg-3">
+              <div class="p-3 border rounded bg-light">
+                <label class="form-label fw-bold d-block text-center">Pneu AVG (أمامي أيسر)</label>
+                <div class="btn-group w-100 mb-2" role="group">
+                  <input type="radio" class="btn-check" name="usure_pneu_avg" id="avg_ok" value="Conforme" ${data.usure_pneu_avg !== 'Défaut' ? 'checked' : ''}>
+                  <label class="btn btn-outline-success border-2" for="avg_ok">Conforme / سليم</label>
+                  
+                  <input type="radio" class="btn-check" name="usure_pneu_avg" id="avg_defaut" value="Défaut" ${data.usure_pneu_avg === 'Défaut' ? 'checked' : ''}>
+                  <label class="btn btn-outline-danger border-2" for="avg_defaut">Défaut / خلل</label>
+                </div>
+                <input type="text" class="form-control form-control-sm" name="obs_pneu_avg" value="${data.obs_pneu_avg || ''}" placeholder="Observation / ملاحظة">
+              </div>
+            </div>
+
+            <!-- AVD -->
+            <div class="col-md-6 col-lg-3">
+              <div class="p-3 border rounded bg-light">
+                <label class="form-label fw-bold d-block text-center">Pneu AVD (أمامي أيمن)</label>
+                <div class="btn-group w-100 mb-2" role="group">
+                  <input type="radio" class="btn-check" name="usure_pneu_avd" id="avd_ok" value="Conforme" ${data.usure_pneu_avd !== 'Défaut' ? 'checked' : ''}>
+                  <label class="btn btn-outline-success border-2" for="avd_ok">Conforme / سليم</label>
+                  
+                  <input type="radio" class="btn-check" name="usure_pneu_avd" id="avd_defaut" value="Défaut" ${data.usure_pneu_avd === 'Défaut' ? 'checked' : ''}>
+                  <label class="btn btn-outline-danger border-2" for="avd_defaut">Défaut / خلل</label>
+                </div>
+                <input type="text" class="form-control form-control-sm" name="obs_pneu_avd" value="${data.obs_pneu_avd || ''}" placeholder="Observation / ملاحظة">
+              </div>
+            </div>
+
+            <!-- ARG -->
+            <div class="col-md-6 col-lg-3">
+              <div class="p-3 border rounded bg-light border-warning">
+                <label class="form-label fw-bold d-block text-center text-dark">Pneu ARG (خلفي أيسر)</label>
+                <div class="btn-group w-100 mb-2" role="group">
+                  <input type="radio" class="btn-check" name="usure_pneu_arg" id="arg_ok" value="Conforme" ${data.usure_pneu_arg === 'Conforme' ? 'checked' : ''}>
+                  <label class="btn btn-outline-success border-2" for="arg_ok">Conforme / سليم</label>
+                  
+                  <input type="radio" class="btn-check" name="usure_pneu_arg" id="arg_defaut" value="Défaut" ${data.usure_pneu_arg !== 'Conforme' ? 'checked' : ''}>
+                  <label class="btn btn-outline-danger border-2" for="arg_defaut">Défaut / خلل</label>
+                </div>
+                <input type="text" class="form-control form-control-sm border-warning" name="obs_pneu_arg" value="${data.obs_pneu_arg || 'à changer'}" placeholder="Observation / ملاحظة">
+              </div>
+            </div>
+
+            <!-- ARD -->
+            <div class="col-md-6 col-lg-3">
+              <div class="p-3 border rounded bg-light border-warning">
+                <label class="form-label fw-bold d-block text-center text-dark">Pneu ARD (خلفي أيمن)</label>
+                <div class="btn-group w-100 mb-2" role="group">
+                  <input type="radio" class="btn-check" name="usure_pneu_ard" id="ard_ok" value="Conforme" ${data.usure_pneu_ard === 'Conforme' ? 'checked' : ''}>
+                  <label class="btn btn-outline-success border-2" for="ard_ok">Conforme / سليم</label>
+                  
+                  <input type="radio" class="btn-check" name="usure_pneu_ard" id="ard_defaut" value="Défaut" ${data.usure_pneu_ard !== 'Conforme' ? 'checked' : ''}>
+                  <label class="btn btn-outline-danger border-2" for="ard_defaut">Défaut / خلل</label>
+                </div>
+                <input type="text" class="form-control form-control-sm border-warning" name="obs_pneu_ard" value="${data.obs_pneu_ard || 'à changer'}" placeholder="Observation / ملاحظة">
+              </div>
+            </div>
           </div>
+
+          <!-- Section 2: État Jantes -->
+          <h6 class="fw-bold text-secondary mb-3 border-bottom pb-2">
+            <i class="bi bi-gear-wide-connected me-1"></i> État des Jantes / حالة الجنوط
+          </h6>
+          <div class="row g-3 mb-4">
+            <div class="col-6 col-md-3">
+              <label class="form-label text-muted small mb-1">Jante AVG (أمامي أيسر)</label>
+              <select class="form-select" name="jante_avg">
+                <option value="Conforme" ${data.jante_avg !== 'Défaut' ? 'selected' : ''}>Conforme / سليم</option>
+                <option value="Défaut" ${data.jante_avg === 'Défaut' ? 'selected' : ''}>Défaut / خلل</option>
+              </select>
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label text-muted small mb-1">Jante AVD (أمامي أيمن)</label>
+              <select class="form-select" name="jante_avd">
+                <option value="Conforme" ${data.jante_avd !== 'Défaut' ? 'selected' : ''}>Conforme / سليم</option>
+                <option value="Défaut" ${data.jante_avd === 'Défaut' ? 'selected' : ''}>Défaut / خلل</option>
+              </select>
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label text-muted small mb-1">Jante ARG (خلفي أيسر)</label>
+              <select class="form-select" name="jante_arg">
+                <option value="Conforme" ${data.jante_arg !== 'Défaut' ? 'selected' : ''}>Conforme / سليم</option>
+                <option value="Défaut" ${data.jante_arg === 'Défaut' ? 'selected' : ''}>Défaut / خلل</option>
+              </select>
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label text-muted small mb-1">Jante ARD (خلفي أيمن)</label>
+              <select class="form-select" name="jante_ard">
+                <option value="Conforme" ${data.jante_ard !== 'Défaut' ? 'selected' : ''}>Conforme / سليم</option>
+                <option value="Défaut" ${data.jante_ard === 'Défaut' ? 'selected' : ''}>Défaut / خلل</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Section 3: Soubassement -->
+          <h6 class="fw-bold text-secondary mb-3 border-bottom pb-2">
+            <i class="bi bi-shield-shaded me-1"></i> Soubassement / الهيكل السفلي
+          </h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <div class="p-3 border rounded">
+                <div class="form-check form-switch d-flex justify-content-between align-items-center ps-0">
+                  <label class="form-check-label fw-bold" for="corrosion">Corrosion soubassement / صدى الهيكل السفلي</label>
+                  <input class="form-check-input ms-0" type="checkbox" role="switch" id="corrosion" name="corrosion_soubassement" ${data.corrosion_soubassement ? 'checked' : ''}>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="p-3 border rounded">
+                <div class="form-check form-switch d-flex justify-content-between align-items-center ps-0">
+                  <label class="form-check-label fw-bold" for="traces_choc">Traces de choc dessous véhicule / آثار صدمات أسفل المركبة</label>
+                  <input class="form-check-input ms-0" type="checkbox" role="switch" id="traces_choc" name="traces_choc" ${data.traces_choc ? 'checked' : ''}>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="text-end pt-2">
+            <button type="submit" class="btn btn-primary px-4 py-2 fw-bold shadow-sm">
+              <i class="bi bi-save me-1"></i> Sauvegarder / حفظ البيانات
+            </button>
+          </div>
+
         </div>
-        <div class="col-12">
-          <label class="form-label fw-semibold">Notes Suspension / ملاحظات نظام التعليق</label>
-          <textarea class="form-control" id="suspension_notes" rows="2">${data.notes || ''}</textarea>
-        </div>
-      </div>
-      <button type="submit" class="btn btn-primary px-4 mt-3 rounded-3"><i class="bi bi-save me-1"></i> Sauvegarder Suspension / حفظ التعليق</button>
+      </div>   
     </form>`;
 }
 
@@ -347,42 +483,158 @@ function renderKilometrageModule(data = {}) {
 }
 
 function renderToleModule() {
+  const elements = [
+    { fr: "Capot", ar: "غطاء المحرك (كابو)" },
+    { fr: "Pare-chocs avant", ar: "الواقي الأمامي (بارشوك أمام)" },
+    { fr: "Aile AVG", ar: "الجناح الأمامي أيسر (أتال يسار)" },
+    { fr: "Porte AVG", ar: "الباب الأمامي أيسر" },
+    { fr: "Porte ARG", ar: "الباب الخلفي أيسر" },
+    { fr: "Aile ARG", ar: "الجناح الخلفي أيسر" },
+    { fr: "Coffre", ar: "الصندوق الخلفي (مال)" },
+    { fr: "Toit", ar: "سقف السيارة" },
+    { fr: "Pare-chocs arrière", ar: "الواقي الخلفي (بارشوك خلف)" },
+    { fr: "Aile AVD", ar: "الجناح الأمامي أيمن (أتال يمين)" },
+    { fr: "Porte AVD", ar: "الباب الأمامي أيمن" },
+    { fr: "Porte ARD", ar: "الباب الخلفي أيمن" },
+    { fr: "Aile ARD", ar: "الجناح الخلفي أيمن" },
+    { fr: "Montant", ar: "العارضة (المونطون)" },
+    { fr: "Bas de caisse", ar: "أسفل الهيكل (با دو كيس)" }
+  ];
+
+  const columns = [
+    { fr: "Peinture", ar: "طلاء" },
+    { fr: "A froid", ar: "ع البارد" },
+    { fr: "Rayures", ar: "خدوش" },
+    { fr: "Choque", ar: "صدمة" },
+    { fr: "Corrosion", ar: "صدأ" },
+    { fr: "Jeu", ar: "فراغ" },
+    { fr: "Mastique", ar: "معجون" },
+    { fr: "Visse", ar: "براغي" },
+    { fr: "Raccord", ar: "تعديل" },
+    { fr: "Change", ar: "تغيير" },
+    { fr: "Soudure", ar: "لحام" }
+  ];
+
+  const structControls = [
+    { name: "longerons", fr: "Longerons", ar: "العوارض الطولية (لونجرون)" },
+    { name: "traverses", fr: "Traverses", ar: "العوارض العرضية (ترافيرس)" },
+    { name: "passage_roues", fr: "Passage de roues", ar: "ممر العجلات (باساج)" },
+    { name: "fond_coffre", fr: "Fond coffre", ar: "أرضية الصندوق" },
+    { name: "chassis", fr: "Châssis", ar: "الهيكل الأساسي (شاسي)" },
+    { name: "optique", fr: "Optique", ar: "الأضواء (الأوبتيك)" },
+    { name: "vitre", fr: "Vitre", ar: "الزجاج" }
+  ];
+
   return `
-    <div class="row g-4">
-      <div class="col-lg-7">
-        <h6 class="fw-bold mb-3">Schéma Carrosserie (Canvas & Marks) / مخطط الهيكل</h6>
-        <div class="mb-2 d-flex gap-2 flex-wrap">
-          <button type="button" class="btn btn-sm btn-outline-danger active" onclick="setMarkStyle('choc', 'red')">Choc / صدمة (أحمر)</button>
-          <button type="button" class="btn btn-sm btn-outline-warning" onclick="setMarkStyle('peinture', 'gold')">Peinture / طلاء (أصفر)</button>
-          <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setMarkStyle('a_froid', 'purple')">À Froid / تعديل عالبارد (بنفسجي)</button>
+    <form id="form-tole" onsubmit="saveToleModule(event)" dir="rtl" class="p-2">
+      
+      <!-- 1. الفحص الخارجي -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-primary text-white py-2">
+          <h5 class="m-0 fw-bold"><i class="bi bi-car-front me-2"></i>1. الفحص الخارجي للسيارة (Inspection Extérieure)</h5>
         </div>
-        <div class="canvas-container">
-          <canvas id="car-canvas" width="600" height="350"></canvas>
+        <div class="card-body p-0">
+          <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
+            <table class="table table-hover table-striped table-bordered text-center align-middle mb-0" style="font-size:0.88rem;">
+              <thead class="table-light sticky-top shadow-sm">
+                <tr>
+                  <th class="bg-light text-start ps-3" style="min-width:180px; position: sticky; right: 0; z-index: 10;">القطعة / Élément</th>
+                  ${columns.map(c => `
+                    <th style="min-width:75px;">
+                      <div class="fw-bold">${c.ar}</div>
+                      <small class="text-muted" style="font-size:0.7rem;">${c.fr}</small>
+                    </th>
+                  `).join('')}
+                </tr>
+              </thead>
+              <tbody>
+                ${elements.map((el, idx) => `
+                  <tr>
+                    <td class="fw-bold text-start ps-3 bg-white" style="position: sticky; right: 0; z-index: 5;">
+                      <div>${el.ar}</div>
+                      <small class="text-muted fw-normal">${el.fr}</small>
+                    </td>
+                    ${columns.map(c => `
+                      <td>
+                        <input class="form-check-input border-2" type="checkbox" name="ext_${idx}_${c.fr}" value="${el.fr}" style="width: 1.3em; height: 1.3em; cursor: pointer;">
+                      </td>
+                    `).join('')}
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
         </div>
-        <button type="button" class="btn btn-sm btn-light border mt-2" onclick="clearCanvas()"><i class="bi bi-trash me-1"></i> Effacer dessin / مسح الرسم</button>
       </div>
 
-      <div class="col-lg-5">
-        <h6 class="fw-bold mb-3">Éléments de Carrosserie / أجزاء الهيكل</h6>
-        <div class="table-responsive" style="max-height: 350px;">
-          <table class="table table-sm align-middle">
-            <thead>
-              <tr>
-                <th>Élément / الجزء</th>
-                <th>Peinture / طلاء</th>
-                <th>À Froid / بارد</th>
-                <th>Choc / صدمة</th>
-              </tr>
-            </thead>
-            <tbody id="tole-elements-list"></tbody>
-          </table>
+      <!-- 2. فحص الهيكل والتصادم -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-dark text-white py-2">
+          <h5 class="m-0 fw-bold"><i class="bi bi-shield-exclamation me-2"></i>2. فحص الهيكل والتصادم (Contrôle Structurel)</h5>
+        </div>
+        <div class="card-body p-2">
+          <div class="table-responsive">
+            <table class="table table-bordered align-middle mb-0">
+              <thead class="table-light text-center">
+                <tr>
+                  <th class="text-start ps-3">عنصر الهيكل</th>
+                  <th style="width: 160px;">الحالة</th>
+                  <th>ملاحظات / Observations</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${structControls.map(sc => `
+                  <tr>
+                    <td class="fw-bold ps-3">
+                      <div>${sc.ar}</div>
+                      <small class="text-muted fw-normal">${sc.fr}</small>
+                    </td>
+                    <td class="text-center">
+                      <div class="btn-group w-100" role="group">
+                        <input type="radio" class="btn-check" name="${sc.name}_status" id="${sc.name}_ok" value="Conforme" checked>
+                        <label class="btn btn-outline-success fw-bold btn-sm" for="${sc.name}_ok">سليم</label>
+
+                        <input type="radio" class="btn-check" name="${sc.name}_status" id="${sc.name}_nok" value="Défaut">
+                        <label class="btn btn-outline-danger fw-bold btn-sm" for="${sc.name}_nok">خلل</label>
+                      </div>
+                    </td>
+                    <td>
+                      <input type="text" class="form-control form-control-sm" name="${sc.name}_obs" placeholder="أدخل الملاحظة إن وجدت...">
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-    </div>
-    <button type="button" class="btn btn-primary px-4 mt-3 rounded-3" onclick="saveToleModule()"><i class="bi bi-save me-1"></i> Sauvegarder Carrosserie / حفظ الهيكل</button>`;
+
+      <!-- 3. النتيجة العامة -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col-md-7">
+              <label class="form-label fw-bold h6">النتيجة النهائية للهيكل (Conclusion Structure) :</label>
+              <select class="form-select form-select-lg fw-bold text-primary" name="conclusion_structure">
+                <option value="Aucun accident détecté">لم يتم كشف أي حادث (Aucun accident détecté)</option>
+                <option value="Accident léger">حادث بسيط (Accident léger)</option>
+                <option value="Accident réparé">حادث تم إصلحه (Accident réparé)</option>
+                <option value="Véhicule accidenté structurellement">متضررة في الهيكل الأساسي (Accidenté structurellement)</option>
+              </select>
+            </div>
+            <div class="col-md-5 text-end mt-3 mt-md-0">
+              <button type="submit" class="btn btn-success btn-lg px-5 fw-bold w-100 shadow">
+                <i class="bi bi-check-circle-fill me-2"></i> حفظ الفحص الكامل
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </form>
+  `;
 }
 
-// 7. إدارة الرسم والإشارات
 function setMarkStyle(type, color) {
   activeMarkType = type;
   activeDrawingColor = color;
@@ -454,7 +706,6 @@ function loadToleElements(savedElements = []) {
   }).join('');
 }
 
-// 8. إرسال وحفظ البيانات
 async function saveScannerModule(e) {
   e.preventDefault();
   const payload = {
@@ -483,15 +734,27 @@ async function saveMoteurModule(e) {
 
 async function saveSuspensionModule(e) {
   e.preventDefault();
+  const form = e.target;
+  const formData = new FormData(form);
   const payload = {
     inspection_id: currentInspectionId,
-    amortisseurs_avant: document.getElementById('amortisseurs_avant').value,
-    amortisseurs_arriere: document.getElementById('amortisseurs_arriere').value,
-    pneus_usure: document.getElementById('pneus_usure').value,
-    rotules_cremaillere: document.getElementById('rotules_cremaillere').value,
-    corrosion_soubassement: document.getElementById('corrosion_soubassement').checked,
-    notes: document.getElementById('suspension_notes').value
+    usure_pneu_avg: formData.get('usure_pneu_avg') || 'Conforme',
+    obs_pneu_avg: formData.get('obs_pneu_avg') || '',
+    usure_pneu_avd: formData.get('usure_pneu_avd') || 'Conforme',
+    obs_pneu_avd: formData.get('obs_pneu_avd') || '',
+    usure_pneu_arg: formData.get('usure_pneu_arg') || 'Conforme',
+    obs_pneu_arg: formData.get('obs_pneu_arg') || '',
+    usure_pneu_ard: formData.get('usure_pneu_ard') || 'Conforme',
+    obs_pneu_ard: formData.get('obs_pneu_ard') || '',
+    jante_avg: formData.get('jante_avg') || 'Conforme',
+    jante_avd: formData.get('jante_avd') || 'Conforme',
+    jante_arg: formData.get('jante_arg') || 'Conforme',
+    jante_ard: formData.get('jante_ard') || 'Conforme',
+    corrosion_soubassement: form.querySelector('#corrosion')?.checked || false,
+    traces_choc: form.querySelector('#traces_choc')?.checked || false,
+    notes: ''
   };
+
   await sendData('/inspection/suspension', payload);
 }
 
@@ -500,54 +763,75 @@ async function saveKilometrageModule(e) {
   const payload = {
     inspection_id: currentInspectionId,
     kilometrage_affiche: document.getElementById('kilometrage_affiche').value,
-    conforme: document.getElementById('conforme').value === "1",
+    conformite: document.getElementById('conforme').value === "1", 
     notes: document.getElementById('km_notes').value
   };
   await sendData('/inspection/kilometrage', payload);
 }
 
-async function saveToleModule() {
-  const canvas = document.getElementById('car-canvas');
-  const drawingData = canvas ? canvas.toDataURL() : null;
-  const elements = [];
 
-  const listRows = document.querySelectorAll('#tole-elements-list tr');
-  listRows.forEach(row => {
-    // استخراج اسم العنصر الأصلي (السطر الأول فقط قبل الترجمة العربية)
-    const nameCell = row.querySelector('.fw-semibold');
-    const name = nameCell.childNodes[0].textContent.trim();
+async function saveToleModule(e) {
+  e.preventDefault();
+  const form = e.target;
+  const formData = new FormData(form);
 
-    const peinture = row.querySelector(`input[name="peinture_${name}"]`)?.checked || false;
-    const a_froid = row.querySelector(`input[name="afroid_${name}"]`)?.checked || false;
-    const choque = row.querySelector(`input[name="choque_${name}"]`)?.checked || false;
-
-    elements.push({ element_name: name, peinture, a_froid, choque });
-  });
+  const elements_ext = {};
+  for (let [key, val] of formData.entries()) {
+    if (key.startsWith('ext_')) {
+      const parts = key.split('_');
+      const colName = parts.slice(2).join('_');
+      if (!elements_ext[val]) elements_ext[val] = [];
+      elements_ext[val].push(colName);
+    }
+  }
 
   const payload = {
     inspection_id: currentInspectionId,
-    drawing_data: drawingData,
-    elements: elements
+    elements_ext_json: elements_ext,
+    longerons_status: formData.get('longerons_status'),
+    longerons_obs: formData.get('longerons_obs'),
+    traverses_status: formData.get('traverses_status'),
+    traverses_obs: formData.get('traverses_obs'),
+    passage_roues_status: formData.get('passage_roues_status'),
+    passage_roues_obs: formData.get('passage_roues_obs'),
+    fond_coffre_status: formData.get('fond_coffre_status'),
+    fond_coffre_obs: formData.get('fond_coffre_obs'),
+    chassis_status: formData.get('chassis_status'),
+    chassis_obs: formData.get('chassis_obs'),
+    optique_status: formData.get('optique_status'),
+    optique_obs: formData.get('optique_obs'),
+    vitre_status: formData.get('vitre_status'),
+    vitre_obs: formData.get('vitre_obs'),
+    conclusion_structure: formData.get('conclusion_structure'),
+    notes: ''
   };
+
   await sendData('/inspection/tole', payload);
 }
 
+// 3. التحقق من وجود التوكن وإرسال البيانات للسيرفر
 async function sendData(endpoint, payload) {
-  try {
-    const token = localStorage.getItem('token'); // جلب التوكن
+  const token = getAuthToken();
 
+  if (!token) {
+    alert("Erreur: Utilisateur non authentifié. Veuillez vous re-connecter.");
+    window.location.href = '../Auth/index.html';
+    return;
+  }
+
+  try {
     const response = await fetch(`${API_URL}${endpoint}`, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token || ''}` // إرسال التوكن مع الطلب
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify(payload)
     });
 
     const result = await response.json();
 
-    if (response.ok && result.success) {
+    if (response.ok && (result.success || result.message)) {
       alert(result.message || 'Données enregistrées avec succès !');
     } else {
       alert('Erreur: ' + (result.error || result.message || 'Erreur lors de l\'enregistrement'));

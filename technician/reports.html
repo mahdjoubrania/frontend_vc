@@ -1,27 +1,29 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VerifCar - Rapports D'Inspection</title>
-      <link href="../img/IMG_7697.png" rel="icon">
+  <link href="../img/IMG_7697.png" rel="icon">
   <link href="../img/IMG_7697.png" rel="apple-touch-icon">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body class="bg-light">
 
   <div id="dashboard-section" class="d-flex">
-       <aside class="sidebar p-3 d-flex flex-column justify-content-between" id="sidebar">
+    <aside class="sidebar p-3 d-flex flex-column justify-content-between" id="sidebar">
       <div>
         <div class="d-flex align-items-center justify-content-between mb-4 px-2">
           <div class="d-flex align-items-center gap-2">
             <img src="../img/IMG_7697.png" alt="VérifCar Logo" style="max-height: 45px; object-fit: contain;">
             <div>
               <h6 class="fw-bold mb-0 text-dark">VerifCar</h6>
-              <small class="text-muted fs-12">v1.0 - Administration</small>
+              <small class="text-muted fs-12">v1.0 - Technicien</small>
             </div>
           </div>
           <button class="btn-close d-lg-none" id="sidebar-close-btn"></button>
@@ -56,7 +58,7 @@
           </li>
           <li class="nav-item">
             <a href="reports.html" class="nav-link active">
-              <i class="bi bi-file-earmark-bar-graph me-2"></i> Rapports 
+              <i class="bi bi-file-earmark-bar-graph me-2"></i> Rapports
             </a>
           </li>
         </ul>
@@ -70,21 +72,25 @@
             <small class="text-muted fs-12">Technicien</small>
           </div>
         </div>
-        <button id="logout-btn" class="btn btn-link text-danger p-0 fs-5" title="Déconnexion"><i class="bi bi-box-arrow-right"></i></button>
+        <button id="logout-btn" class="btn btn-link text-danger p-0 fs-5" title="Déconnexion"><i
+            class="bi bi-box-arrow-right"></i></button>
       </div>
     </aside>
 
     <main class="main-content flex-grow-1 p-4">
 
-<header class="mobile-navbar d-lg-none d-flex justify-content-between align-items-center px-3 py-2 bg-white border-bottom shadow-sm">
-  <div class="d-flex align-items-center gap-2">
-    <button class="btn btn-light border-0" id="mobile-sidebar-toggle" type="button">
-      <i class="bi bi-list fs-3 text-dark"></i>
-    </button>
-    <img src="../img/IMG_7697.png" alt="VerifCar Logo" style="max-height: 38px;">
-  </div>
-  <div class="avatar bg-primary text-white rounded-circle shadow-sm d-flex align-items-center justify-content-center" style="width: 34px; height: 34px; font-size: 13px;">RC</div>
-</header>
+      <header
+        class="mobile-navbar d-lg-none d-flex justify-content-between align-items-center px-3 py-2 bg-white border-bottom shadow-sm">
+        <div class="d-flex align-items-center gap-2">
+          <button class="btn btn-light border-0" id="mobile-sidebar-toggle" type="button">
+            <i class="bi bi-list fs-3 text-dark"></i>
+          </button>
+          <img src="../img/IMG_7697.png" alt="VerifCar Logo" style="max-height: 38px;">
+        </div>
+        <div
+          class="avatar bg-primary text-white rounded-circle shadow-sm d-flex align-items-center justify-content-center"
+          style="width: 34px; height: 34px; font-size: 13px;">RC</div>
+      </header>
 
       <div class="mb-4">
         <h2 class="fw-bold text-dark">Rapports d'Inspections</h2>
@@ -100,10 +106,13 @@
               <th>VÉHICULE</th>
               <th>TECHNICIEN</th>
               <th>DATE</th>
+              <th class="text-end">ACTIONS</th>
             </tr>
           </thead>
           <tbody id="reports-table-body">
-            <tr><td colspan="5" class="text-center text-muted py-4">Aucun rapport trouvé</td></tr>
+            <tr>
+              <td colspan="6" class="text-center text-muted py-4">Chargement des rapports...</td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -111,57 +120,217 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="admin.js"></script>
-<script>
-   function loadAdminProfile() {
-    const userSessionRaw = localStorage.getItem('verifcar_admin_user');
-    const userSession = userSessionRaw ? JSON.parse(userSessionRaw) : null;
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
-    if (userSession) {
-      const adminFullName = userSession.fullName || userSession.full_name || 'Admin';
-      if (document.getElementById('admin-name')) {
-        document.getElementById('admin-name').innerText = adminFullName;
+  <script>
+    const API_URL = 'https://romantic-enjoyment-production-f458.up.railway.app/api';
+
+    // 1. جلب التوكن بدقة بنفس طريقة verif.js
+    function getAuthToken() {
+      const sessionKeys = [
+        'verifcar_technician_user',
+        'verifcar_admin_user',
+        'verifcar_reception_user',
+        'verifcar_user'
+      ];
+
+      for (const key of sessionKeys) {
+        const sessionData = localStorage.getItem(key);
+        if (sessionData) {
+          try {
+            const parsed = JSON.parse(sessionData);
+            if (parsed.token) return parsed.token;
+            if (parsed.accessToken) return parsed.accessToken;
+          } catch (e) {
+            if (sessionData.length > 20) return sessionData;
+          }
+        }
       }
-      if (document.getElementById('admin-avatar')) {
-        document.getElementById('admin-avatar').innerText = adminFullName.charAt(0).toUpperCase();
-      }
-    } else {
-      if (document.getElementById('admin-name')) document.getElementById('admin-name').innerText = 'Administrateur';
-      if (document.getElementById('admin-avatar')) document.getElementById('admin-avatar').innerText = 'AD';
+      return localStorage.getItem('token') || sessionStorage.getItem('token') || '';
     }
+
+    function loadUserProfile() {
+      try {
+        if (typeof getUserSession === 'function') {
+          const session = getUserSession();
+          if (session) {
+            const fullName = session.fullName || session.full_name || 'Technicien';
+            const initial = fullName.charAt(0).toUpperCase();
+
+            const nameElement = document.getElementById('admin-name');
+            const avatarElement = document.getElementById('admin-avatar');
+
+            if (nameElement) nameElement.innerText = fullName;
+            if (avatarElement) avatarElement.innerText = initial;
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn("Session check skipped:", e);
+      }
+
+      const nameElement = document.getElementById('admin-name');
+      const avatarElement = document.getElementById('admin-avatar');
+
+      if (nameElement) nameElement.innerText = 'Technicien';
+      if (avatarElement) avatarElement.innerText = 'TC';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadUserProfile();
+      fetchAndRenderReports();
+
+      let overlay = document.querySelector('.sidebar-overlay');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.className = 'sidebar-overlay';
+        document.body.appendChild(overlay);
+      }
+
+      const sidebar = document.querySelector('.sidebar');
+      const toggleBtn = document.getElementById('mobile-sidebar-toggle');
+      const closeBtn = document.getElementById('sidebar-close-btn');
+
+      function openSidebar() {
+        sidebar?.classList.add('show');
+        overlay?.classList.add('show');
+      }
+
+      function closeSidebar() {
+        sidebar?.classList.remove('show');
+        overlay?.classList.remove('show');
+      }
+
+      toggleBtn?.addEventListener('click', openSidebar);
+      closeBtn?.addEventListener('click', closeSidebar);
+      overlay?.addEventListener('click', closeSidebar);
+    });
+
+    async function fetchAndRenderReports() {
+      const tableBody = document.getElementById('reports-table-body');
+      if (!tableBody) return;
+
+      try {
+        const token = getAuthToken();
+
+        if (!token) {
+          tableBody.innerHTML = `
+            <tr>
+              <td colspan="6" class="text-center text-warning py-4">
+                <i class="bi bi-shield-lock fs-4 d-block mb-2"></i>
+                Accès non autorisé.<br>Veuillez vous connecter.
+              </td>
+            </tr>`;
+          return;
+        }
+
+        const headers = {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        };
+
+        const response = await fetch(`${API_URL}/inspection/all`, { method: 'GET', headers });
+        let result = {};
+
+        try { result = await response.json(); } catch (jsonError) {}
+
+        if (response.status === 401) {
+          tableBody.innerHTML = `
+            <tr>
+              <td colspan="6" class="text-center text-warning py-4">
+                <i class="bi bi-shield-lock fs-4 d-block mb-2"></i>
+                Session expirée.<br>Veuillez vous reconnecter.
+              </td>
+            </tr>`;
+          return;
+        }
+
+        if (response.status === 403) {
+          tableBody.innerHTML = `
+            <tr>
+              <td colspan="6" class="text-center text-danger py-4">
+                <i class="bi bi-ban fs-4 d-block mb-2"></i>
+                Accès interdit.<br>${result.error || result.message || 'Vous n’avez pas les permissions nécessaires.'}
+              </td>
+            </tr>`;
+          return;
+        }
+
+        if (!response.ok) {
+          tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">Erreur serveur (${response.status})</td></tr>`;
+          return;
+        }
+
+        const reportsList = Array.isArray(result) ? result : (result.data || []);
+
+        if (reportsList.length > 0) {
+          tableBody.innerHTML = '';
+
+          reportsList.forEach(report => {
+            const reportDate = new Date(report.created_at || Date.now()).toLocaleDateString('fr-FR');
+
+            const row = `
+              <tr>
+                <td class="fw-bold text-primary">#REP-${report.id}</td>
+                <td>
+                  <div class="fw-bold">${report.client_name || 'Non spécifié'}</div>
+                  <small class="text-muted">${report.client_phone || ''}</small>
+                </td>
+                <td>
+                  <div class="fw-bold">${report.brand || ''} ${report.model || ''}</div>
+                  <small class="text-muted">${report.plate || 'Sans immatriculation'}</small>
+                </td>
+                <td>
+                  <span class="badge bg-light text-dark border">${report.technician_name || 'Technicien'}</span>
+                </td>
+                <td>${reportDate}</td>
+                <td class="text-end">
+                  <button onclick="printReport(${report.id})" class="btn btn-sm btn-outline-danger shadow-sm">
+                    <i class="bi bi-printer-fill me-1"></i> Imprimer
+                  </button>
+                </td>
+              </tr>`;
+
+            tableBody.insertAdjacentHTML('beforeend', row);
+          });
+        } else {
+          tableBody.innerHTML = `
+            <tr>
+              <td colspan="6" class="text-center text-muted py-4">
+                <i class="bi bi-file-earmark-x fs-4 d-block mb-2"></i>
+                Aucun rapport trouvé dans la base de données.
+              </td>
+            </tr>`;
+        }
+      } catch (error) {
+        console.error('❌ Erreur lors du chargement des rapports:', error);
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="6" class="text-center text-danger py-4">
+              <i class="bi bi-wifi-off fs-4 d-block mb-2"></i> Erreur de connexion au serveur.
+            </td>
+          </tr>`;
+      }
+    }
+
+// =========================================================
+// فتح قالب التقرير الشامل (4 صفحات) للطباعة والتنزيل
+// =========================================================
+function printReport(reportId) {
+  if (!reportId) {
+    alert("رقم التقرير غير صالحة.");
+    return;
   }
-
-  document.addEventListener('DOMContentLoaded', () => {
-
-    loadAdminProfile();
-  // إنشاء الطبقة الخلفية (Overlay) عند فتح القائمة في الهاتف
-  let overlay = document.querySelector('.sidebar-overlay');
-  if (!overlay) {
-    overlay = document.createElement('div');
-    overlay.className = 'sidebar-overlay';
-    document.body.appendChild(overlay);
+  const printWindow = window.open(`carrosserie-report.html?id=${reportId}`, '_blank');
+  
+  if (printWindow) {
+    printWindow.focus();
+  } else {
+    alert("يرجى السماح بالنوافذ المنبثقة (Pop-ups) لفتح التقرير للطباعة.");
   }
-
-  const sidebar = document.querySelector('.sidebar');
-  const toggleBtn = document.getElementById('mobile-sidebar-toggle');
-  const closeBtn = document.getElementById('sidebar-close-btn');
-
-  function openSidebar() {
-    sidebar?.classList.add('show');
-    overlay?.classList.add('show');
-  }
-
-  function closeSidebar() {
-    sidebar?.classList.remove('show');
-    overlay?.classList.remove('show');
-  }
-
-  toggleBtn?.addEventListener('click', openSidebar);
-  closeBtn?.addEventListener('click', closeSidebar);
-  overlay?.addEventListener('click', closeSidebar);
-});
-</script>
-
-
+}
+  </script>
 </body>
+
 </html>

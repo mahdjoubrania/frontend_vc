@@ -14,7 +14,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function getAuthToken() {
-  const userSessionRaw = localStorage.getItem('verifcar_admin_user') 
+  const userSessionRaw = localStorage.getItem('verifcar_technician_user')
+                      || localStorage.getItem('verifcar_admin_user') 
                       || localStorage.getItem('verifcar_reception_user') 
                       || localStorage.getItem('verifcar_user');
   if (userSessionRaw) {
@@ -29,12 +30,13 @@ function getAuthToken() {
 }
 
 function checkAuth() {
-  const rawUser = localStorage.getItem('verifcar_admin_user') 
+  const rawUser = localStorage.getItem('verifcar_technician_user')
+               || localStorage.getItem('verifcar_admin_user') 
                || localStorage.getItem('verifcar_reception_user') 
                || localStorage.getItem('verifcar_user');
   
   const token = getAuthToken();
-  const allowedRoles = ['ADMIN', 'RECEPTION'];
+  const allowedRoles = ['ADMIN', 'RECEPTION', 'TECHNICIAN'];
 
   if (!rawUser || !token) {
     alert('Accès non autorisé.');

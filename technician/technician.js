@@ -377,3 +377,37 @@ function updateTechnicianKPIs(tickets) {
   if (workshopElem) workshopElem.innerText = inWorkshopCount;
   if (completedElem) completedElem.innerText = completedCount;
 }
+
+function getTechnicianSession() {
+  const sessionRaw = localStorage.getItem('verifcar_technician_user') || localStorage.getItem('verifcar_user');
+  if (!sessionRaw) return null;
+  try {
+    return JSON.parse(sessionRaw);
+  } catch (e) {
+    return null;
+  }
+}
+
+function getAuthToken() {
+  const userSession = getTechnicianSession();
+  return userSession?.token || userSession?.accessToken || localStorage.getItem('token') || '';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const userSession = getTechnicianSession();
+
+  if (userSession) {
+    const fullName = userSession.fullName || userSession.full_name || 'Technicien';
+    const firstName = fullName.split(' ')[0];
+    const initial = fullName.charAt(0).toUpperCase();
+
+    // تحديث اسم التقني والأحرف الأولى
+    if (document.getElementById('admin-name')) document.getElementById('admin-name').innerText = fullName;
+    if (document.getElementById('admin-welcome')) document.getElementById('admin-welcome').innerText = firstName;
+    if (document.getElementById('admin-avatar')) document.getElementById('admin-avatar').innerText = initial;
+  }
+
+  initMobileSidebar();
+  setupFilterEvents();
+  loadDashboardSummary();
+});

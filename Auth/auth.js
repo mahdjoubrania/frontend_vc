@@ -10,7 +10,6 @@ const btnSubmit = document.getElementById('btn-submit');
 const btnText = document.getElementById('btn-text');
 const btnSpinner = document.getElementById('btn-spinner');
 
-// إظهار وإخفاء كلمة المرور
 if (togglePasswordBtn && passwordInput && toggleIcon) {
   togglePasswordBtn.addEventListener('click', () => {
     const isPassword = passwordInput.type === 'password';
@@ -53,21 +52,36 @@ if (loginForm) {
 
         showAlert('Connexion réussie, redirection...', 'success');
 
-        // التوجيه والتخزين بحسب الدور المرجع من قاعدة البيانات
         setTimeout(() => {
-          const userRole = (userData.role || '').toUpperCase();
+  const userRole = (userData.role || '').toUpperCase();
 
-          if (userRole === 'ADMIN') {
-            localStorage.setItem('verifcar_admin_user', JSON.stringify(userData));
-            window.location.href = '../Admin/index.html'; 
-          } else if (userRole === 'RECEPTION') {
-            localStorage.setItem('verifcar_reception_user', JSON.stringify(userData));
-            window.location.href = '../Reception/index.html'; 
-          } else {
-            localStorage.setItem('verifcar_user', JSON.stringify(userData));
-            window.location.href = '../Admin/index.html';
-          }
-        }, 800);
+  // تخزين بيانات المستخدم العامة
+  localStorage.setItem('verifcar_user', JSON.stringify(userData));
+
+  // التوجيه بناءً على دور المستخدم
+  switch (userRole) {
+    case 'ADMIN':
+      localStorage.setItem('verifcar_admin_user', JSON.stringify(userData));
+      window.location.href = '../Admin/index.html';
+      break;
+
+    case 'RECEPTION':
+      localStorage.setItem('verifcar_reception_user', JSON.stringify(userData));
+      window.location.href = '../Reception/index.html';
+      break;
+
+    case 'TECHNICIAN':
+    case 'TECHNICIEN': // لتفادي أي اختلاف في مسمى الرتبة من الـ Backend
+      localStorage.setItem('verifcar_technician_user', JSON.stringify(userData));
+      window.location.href = '../technician/index.html';
+      break;
+
+    default:
+      showAlert('Rôle utilisateur non reconnu.', 'danger');
+      setLoading(false);
+      break;
+  }
+}, 800);
 
       } else {
         showAlert(data.message || 'Identifiants incorrects', 'danger');
