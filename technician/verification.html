@@ -13,6 +13,70 @@
   <link rel="stylesheet" href="style.css">
   
   <style>
+    /* التنسيق الجمالي والتفاعلي للواجهة */
+:root {
+  --primary-gradient: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+  --card-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+}
+
+.bg-gradient-primary {
+  background: var(--primary-gradient) !important;
+}
+
+.module-card {
+  border: none !important;
+  border-radius: 16px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  background: #ffffff;
+}
+
+.module-card:hover {
+  transform: translateY(-8px) scale(1.01);
+  box-shadow: 0 15px 35px rgba(13, 110, 253, 0.15) !important;
+}
+
+.module-card .display-4 {
+  transition: transform 0.3s ease;
+}
+
+.module-card:hover .display-4 {
+  transform: scale(1.15);
+}
+
+/* تحسين شكل جدول الفحص الخارجي */
+.custom-table th {
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.custom-chk {
+  width: 1.35em !important;
+  height: 1.35em !important;
+  cursor: pointer;
+  border-radius: 6px !important;
+  border: 2px solid #adb5bd;
+  transition: all 0.2s ease;
+}
+
+.custom-chk:checked {
+  background-color: #dc3545 !important;
+  border-color: #dc3545 !important;
+  box-shadow: 0 0 8px rgba(220, 53, 69, 0.4);
+}
+
+.hover-scale {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-scale:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(25, 135, 84, 0.3) !important;
+}
+
+.fs-11 { font-size: 0.72rem; }
+.fs-12 { font-size: 0.8rem; }
+.fs-13 { font-size: 0.85rem; }
+.fs-14 { font-size: 0.92rem; }
     .module-card {
       transition: transform 0.2s ease, box-shadow 0.2s ease;
       cursor: pointer;

@@ -63,40 +63,41 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 function renderFullReport(data) {
     // 1. Page 1: Client & Vehicle Overview
-    const reportId = data.id || data.inspection_id || '--';
+    const reportId = data.inspection_id || data.id || '--';
     document.getElementById('rep-code').innerText = `REF: REP-2026-${reportId}`;
     
-    document.getElementById('client-name').innerText = data.client_name || data.client || data.owner_name || 'Non spécifié';
-    document.getElementById('client-phone').innerText = data.client_phone || data.phone || 'Non renseigné';
+    document.getElementById('client-name').innerText = data.client_name || 'Non spécifié';
+    document.getElementById('client-phone').innerText = data.client_phone || 'Non renseigné';
     
     const formattedDate = data.created_at ? new Date(data.created_at).toLocaleDateString('fr-FR') : new Date().toLocaleDateString('fr-FR');
     document.getElementById('rep-date').innerText = formattedDate;
 
-    const brand = data.brand || data.make || '';
+    const brand = data.brand || '';
     const model = data.model || '';
     document.getElementById('car-brand-model').innerText = `${brand} ${model}`.trim() || 'Non spécifié';
-    document.getElementById('car-plate').innerText = data.plate || data.license_plate || data.immatriculation || 'Sans immatriculation';
-    document.getElementById('car-color').innerText = data.color || data.couleur || 'Non spécifiée';
+    document.getElementById('car-plate').innerText = data.plate || 'Sans immatriculation';
+    document.getElementById('car-color').innerText = data.color || 'Non spécifiée';
     
-    const kmVal = data.kilometrage_affiche || data.mileage || data.kilometrage || data.km;
-    document.getElementById('car-km').innerText = kmVal ? `${kmVal} KM` : 'Non renseigné';
+    // Kilométrage Mapping
+    const kmVal = data.kilometrage_affiche;
+    document.getElementById('car-km').innerText = (kmVal !== null && kmVal !== undefined) ? `${kmVal} KM` : 'Non renseigné';
     
     const kmStatusElem = document.getElementById('car-km-status');
     if (kmStatusElem) {
-        const conf = data.conformite || data.km_conformite || 'Conforme';
+        const conf = data.km_conformite || 'CONFORME';
         kmStatusElem.innerText = conf;
-        kmStatusElem.className = conf === 'Conforme' ? 'badge bg-success' : 'badge bg-danger';
+        kmStatusElem.className = (conf === 'CONFORME' || conf === 'Conforme') ? 'badge bg-success' : 'badge bg-danger';
     }
 
-    // Moteur & Scanner Summaries (Page 1)
+    // 2. Moteur & Scanner Summaries
     const moteurSummary = document.getElementById('moteur-summary-body');
     if (moteurSummary) {
-        const moteurStatus = data.moteur_status || 'Non contrôlé';
-        const isOk = moteurStatus.toLowerCase() === 'conforme' || moteurStatus.toLowerCase() === 'ok';
+        const niveauHuile = data.niveau_huile || 'Non contrôlé';
+        const isMoteurOk = niveauHuile !== 'NON_CONFORME' && niveauHuile !== 'Non contrôlé';
         moteurSummary.innerHTML = `
             <div class="d-flex justify-content-between align-items-center mb-1">
                 <span class="small fw-bold">Niveau & État Huile:</span>
-                <span class="badge ${isOk ? 'bg-success' : 'bg-danger'}">${moteurStatus}</span>
+                <span class="badge ${isMoteurOk ? 'bg-success' : 'bg-danger'}">${niveauHuile}</span>
             </div>
             <small class="text-muted d-block">Contrôle visuel et étanchéité effectués.</small>
         `;
@@ -104,7 +105,7 @@ function renderFullReport(data) {
 
     const scannerSummary = document.getElementById('scanner-summary-body');
     if (scannerSummary) {
-        const scannerCode = data.scanner_result || 'Aucun code défaut';
+        const scannerCode = data.dtc_codes || data.calculateur_status || 'Aucun code défaut';
         scannerSummary.innerHTML = `
             <div class="d-flex justify-content-between align-items-center mb-1">
                 <span class="small fw-bold">Diagnostic OBD:</span>
@@ -114,7 +115,7 @@ function renderFullReport(data) {
         `;
     }
 
-    // 2. Page 2: Full Carrosserie Inspection Matrix Table (15 Elements x 11 Defects)
+    // 3. Page 2: Carrosserie Matrix Table (15 Elements)
     const extBody = document.getElementById('ext-defects-body');
     if (extBody) {
         extBody.innerHTML = '';
@@ -179,11 +180,10 @@ function renderFullReport(data) {
             extBody.innerHTML += rowHtml;
         });
 
-        // Render Markers on Page 4
         renderMarkersAndLegend(markersList);
     }
 
-    // 3. Page 3: Structure & Chassis Detailed Inspection
+    // 4. Page 3: Structure Checklist
     const structBody = document.getElementById('struct-defects-body');
     if (structBody) {
         structBody.innerHTML = '';
@@ -219,7 +219,7 @@ function renderFullReport(data) {
 
     const generalConclusion = document.getElementById('general-conclusion');
     if (generalConclusion) {
-        generalConclusion.innerText = data.conclusion_structure || data.conclusion || 'Véhicule en bon état général selon les contrôles effectués.';
+        generalConclusion.innerText = data.conclusion_structure || 'Véhicule en bon état général selon les contrôles effectués.';
     }
 }
 

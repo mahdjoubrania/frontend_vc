@@ -482,17 +482,18 @@ function renderKilometrageModule(data = {}) {
     </form>`;
 }
 
+// تعديل دالة renderToleModule لتعطي مظهر أسلوبي عصري وتسهل الاختيار
 function renderToleModule() {
   const elements = [
     { fr: "Capot", ar: "غطاء المحرك (كابو)" },
-    { fr: "Pare-chocs avant", ar: "الواقي الأمامي (بارشوك أمام)" },
+    { fr: "Pare-chocs Avant", ar: "الواقي الأمامي (بارشوك أمام)" },
     { fr: "Aile AVG", ar: "الجناح الأمامي أيسر (أتال يسار)" },
     { fr: "Porte AVG", ar: "الباب الأمامي أيسر" },
     { fr: "Porte ARG", ar: "الباب الخلفي أيسر" },
     { fr: "Aile ARG", ar: "الجناح الخلفي أيسر" },
     { fr: "Coffre", ar: "الصندوق الخلفي (مال)" },
     { fr: "Toit", ar: "سقف السيارة" },
-    { fr: "Pare-chocs arrière", ar: "الواقي الخلفي (بارشوك خلف)" },
+    { fr: "Pare-chocs Arrière", ar: "الواقي الخلفي (بارشوك خلف)" },
     { fr: "Aile AVD", ar: "الجناح الأمامي أيمن (أتال يمين)" },
     { fr: "Porte AVD", ar: "الباب الأمامي أيمن" },
     { fr: "Porte ARD", ar: "الباب الخلفي أيمن" },
@@ -526,37 +527,40 @@ function renderToleModule() {
   ];
 
   return `
-    <form id="form-tole" onsubmit="saveToleModule(event)" dir="rtl" class="p-2">
+    <form id="form-tole" onsubmit="saveToleModule(event)" dir="rtl" class="p-1">
       
-      <!-- 1. الفحص الخارجي -->
-      <div class="card border-0 shadow-sm mb-4">
-        <div class="card-header bg-primary text-white py-2">
-          <h5 class="m-0 fw-bold"><i class="bi bi-car-front me-2"></i>1. الفحص الخارجي للسيارة (Inspection Extérieure)</h5>
+      <!-- 1. الفحص الخارجي للسيارة -->
+      <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
+        <div class="card-header bg-gradient-primary text-white py-3 d-flex justify-content-between align-items-center">
+          <h5 class="m-0 fw-bold"><i class="bi bi-car-front-fill me-2"></i>1. الفحص الخارجي للسيارة (Inspection Extérieure)</h5>
+          <span class="badge bg-white text-primary rounded-pill fs-12 px-3">تحديد العيوب</span>
         </div>
         <div class="card-body p-0">
           <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
-            <table class="table table-hover table-striped table-bordered text-center align-middle mb-0" style="font-size:0.88rem;">
-              <thead class="table-light sticky-top shadow-sm">
+            <table class="table table-hover align-middle mb-0 custom-table text-center">
+              <thead class="sticky-top bg-light shadow-sm">
                 <tr>
-                  <th class="bg-light text-start ps-3" style="min-width:180px; position: sticky; right: 0; z-index: 10;">القطعة / Élément</th>
+                  <th class="text-start ps-3 bg-light" style="min-width:190px; position: sticky; right: 0; z-index: 10;">القطعة / Élément</th>
                   ${columns.map(c => `
-                    <th style="min-width:75px;">
-                      <div class="fw-bold">${c.ar}</div>
-                      <small class="text-muted" style="font-size:0.7rem;">${c.fr}</small>
+                    <th style="min-width:70px;">
+                      <div class="fw-bold text-dark fs-13">${c.ar}</div>
+                      <small class="text-muted d-block fs-11" style="font-size:0.68rem;">${c.fr}</small>
                     </th>
                   `).join('')}
                 </tr>
               </thead>
               <tbody>
-                ${elements.map((el, idx) => `
+                ${elements.map((el) => `
                   <tr>
-                    <td class="fw-bold text-start ps-3 bg-white" style="position: sticky; right: 0; z-index: 5;">
-                      <div>${el.ar}</div>
-                      <small class="text-muted fw-normal">${el.fr}</small>
+                    <td class="fw-bold text-start ps-3 bg-white border-end" style="position: sticky; right: 0; z-index: 5;">
+                      <div class="text-dark fs-14">${el.ar}</div>
+                      <small class="text-muted fw-normal fs-11">${el.fr}</small>
                     </td>
                     ${columns.map(c => `
                       <td>
-                        <input class="form-check-input border-2" type="checkbox" name="ext_${idx}_${c.fr}" value="${el.fr}" style="width: 1.3em; height: 1.3em; cursor: pointer;">
+                        <div class="custom-checkbox-wrapper d-flex justify-content-center">
+                          <input class="form-check-input custom-chk" type="checkbox" name="ext_${el.fr}" value="${c.fr}">
+                        </div>
                       </td>
                     `).join('')}
                   </tr>
@@ -568,38 +572,38 @@ function renderToleModule() {
       </div>
 
       <!-- 2. فحص الهيكل والتصادم -->
-      <div class="card border-0 shadow-sm mb-4">
-        <div class="card-header bg-dark text-white py-2">
+      <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
+        <div class="card-header bg-dark text-white py-3">
           <h5 class="m-0 fw-bold"><i class="bi bi-shield-exclamation me-2"></i>2. فحص الهيكل والتصادم (Contrôle Structurel)</h5>
         </div>
-        <div class="card-body p-2">
+        <div class="card-body p-3">
           <div class="table-responsive">
-            <table class="table table-bordered align-middle mb-0">
-              <thead class="table-light text-center">
+            <table class="table table-borderless align-middle mb-0">
+              <thead class="table-light text-center rounded-3">
                 <tr>
                   <th class="text-start ps-3">عنصر الهيكل</th>
-                  <th style="width: 160px;">الحالة</th>
+                  <th style="width: 180px;">الحالة</th>
                   <th>ملاحظات / Observations</th>
                 </tr>
               </thead>
               <tbody>
                 ${structControls.map(sc => `
-                  <tr>
+                  <tr class="border-bottom">
                     <td class="fw-bold ps-3">
-                      <div>${sc.ar}</div>
+                      <div class="fs-14 text-dark">${sc.ar}</div>
                       <small class="text-muted fw-normal">${sc.fr}</small>
                     </td>
                     <td class="text-center">
-                      <div class="btn-group w-100" role="group">
+                      <div class="btn-group w-100 shadow-sm" role="group">
                         <input type="radio" class="btn-check" name="${sc.name}_status" id="${sc.name}_ok" value="Conforme" checked>
-                        <label class="btn btn-outline-success fw-bold btn-sm" for="${sc.name}_ok">سليم</label>
+                        <label class="btn btn-outline-success fw-bold btn-sm py-2" for="${sc.name}_ok">سليم</label>
 
                         <input type="radio" class="btn-check" name="${sc.name}_status" id="${sc.name}_nok" value="Défaut">
-                        <label class="btn btn-outline-danger fw-bold btn-sm" for="${sc.name}_nok">خلل</label>
+                        <label class="btn btn-outline-danger fw-bold btn-sm py-2" for="${sc.name}_nok">خلل</label>
                       </div>
                     </td>
                     <td>
-                      <input type="text" class="form-control form-control-sm" name="${sc.name}_obs" placeholder="أدخل الملاحظة إن وجدت...">
+                      <input type="text" class="form-control form-control-sm rounded-3 shadow-none border" name="${sc.name}_obs" placeholder="أدخل الملاحظة إن وجدت...">
                     </td>
                   </tr>
                 `).join('')}
@@ -609,21 +613,21 @@ function renderToleModule() {
         </div>
       </div>
 
-      <!-- 3. النتيجة العامة -->
-      <div class="card border-0 shadow-sm mb-4">
-        <div class="card-body">
-          <div class="row align-items-center">
+      <!-- 3. النتيجة العامة وحفظ الفحص -->
+      <div class="card border-0 shadow-sm rounded-4 mb-4 bg-light">
+        <div class="card-body p-4">
+          <div class="row align-items-center g-3">
             <div class="col-md-7">
-              <label class="form-label fw-bold h6">النتيجة النهائية للهيكل (Conclusion Structure) :</label>
-              <select class="form-select form-select-lg fw-bold text-primary" name="conclusion_structure">
+              <label class="form-label fw-bold h6 text-dark mb-2">النتيجة النهائية للهيكل (Conclusion Structure) :</label>
+              <select class="form-select form-select-lg fw-bold text-primary rounded-3 border-0 shadow-sm" name="conclusion_structure">
                 <option value="Aucun accident détecté">لم يتم كشف أي حادث (Aucun accident détecté)</option>
                 <option value="Accident léger">حادث بسيط (Accident léger)</option>
-                <option value="Accident réparé">حادث تم إصلحه (Accident réparé)</option>
+                <option value="Accident réparé">حادث تم إصلاحه (Accident réparé)</option>
                 <option value="Véhicule accidenté structurellement">متضررة في الهيكل الأساسي (Accidenté structurellement)</option>
               </select>
             </div>
-            <div class="col-md-5 text-end mt-3 mt-md-0">
-              <button type="submit" class="btn btn-success btn-lg px-5 fw-bold w-100 shadow">
+            <div class="col-md-5 text-end">
+              <button type="submit" class="btn btn-success btn-lg px-5 py-3 fw-bold w-100 rounded-3 shadow-lg hover-scale">
                 <i class="bi bi-check-circle-fill me-2"></i> حفظ الفحص الكامل
               </button>
             </div>
@@ -778,10 +782,9 @@ async function saveToleModule(e) {
   const elements_ext = {};
   for (let [key, val] of formData.entries()) {
     if (key.startsWith('ext_')) {
-      const parts = key.split('_');
-      const colName = parts.slice(2).join('_');
-      if (!elements_ext[val]) elements_ext[val] = [];
-      elements_ext[val].push(colName);
+      const elementName = key.replace('ext_', '');
+      if (!elements_ext[elementName]) elements_ext[elementName] = [];
+      elements_ext[elementName].push(val);
     }
   }
 
@@ -808,7 +811,6 @@ async function saveToleModule(e) {
 
   await sendData('/inspection/tole', payload);
 }
-
 // 3. التحقق من وجود التوكن وإرسال البيانات للسيرفر
 async function sendData(endpoint, payload) {
   const token = getAuthToken();
