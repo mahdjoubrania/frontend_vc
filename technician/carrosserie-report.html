@@ -7,54 +7,63 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
-        @page { size: A4; margin: 0; }
-        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background-color: #f1f5f9; color: #1e293b; margin: 0; padding: 0; }
+        @page { size: A4 portrait; margin: 0; }
+        
+        * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+        }
+
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background-color: #f1f5f9; color: #0f172a; margin: 0; padding: 0; }
         
         .page {
             width: 210mm;
-            min-height: 297mm;
-            padding: 12mm 15mm 15mm 15mm;
+            height: 296mm;
+            padding: 10mm 12mm 10mm 12mm;
             margin: 10mm auto;
             background: #ffffff;
             box-shadow: 0 10px 25px rgba(0,0,0,0.08);
             position: relative;
             box-sizing: border-box;
             page-break-after: always;
+            page-break-inside: avoid;
+            overflow: hidden;
         }
 
-        .page-top-bar { position: absolute; top: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e293b 0%, #dc2626 100%); }
+        .page-top-bar { position: absolute; top: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #0f172a 0%, #dc2626 100%) !important; }
 
-        .report-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 15px; margin-top: 5px; }
-        .report-header img { height: 55px; object-fit: contain; }
+        .report-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #cbd5e1; padding-bottom: 8px; margin-bottom: 12px; margin-top: 4px; }
+        .report-header img { height: 50px; object-fit: contain; }
         .report-header .title-box { text-align: right; }
-        .report-header h1 { font-size: 18px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; margin: 0; }
-        .report-header p { font-size: 11px; color: #64748b; font-weight: 500; margin: 0; }
+        .report-header h1 { font-size: 19px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; margin: 0; }
+        .report-header p { font-size: 11px; color: #475569; font-weight: 600; margin: 0; }
 
-        .info-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 15px; margin-bottom: 15px; }
-        .info-card-title { font-size: 12px; font-weight: 700; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; }
+        .info-card { background: #f8fafc !important; border: 1px solid #cbd5e1 !important; border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; }
+        .info-card-title { font-size: 12px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; border-bottom: 1.5px solid #e2e8f0; padding-bottom: 4px; }
         
-        .section-header { font-size: 13px; font-weight: 700; color: #0f172a; background: #f1f5f9; padding: 6px 10px; border-left: 4px solid #dc2626; border-radius: 0 6px 6px 0; margin: 15px 0 10px 0; }
+        .section-header { font-size: 13px; font-weight: 800; color: #0f172a; background: #e2e8f0 !important; padding: 6px 10px; border-left: 5px solid #dc2626 !important; border-radius: 0 6px 6px 0; margin: 12px 0 10px 0; }
 
-        .custom-table { width: 100%; border-collapse: separate; border-spacing: 0; margin-bottom: 12px; border-radius: 6px; overflow: hidden; border: 1px solid #e2e8f0; }
-        .custom-table th { background-color: #0f172a; color: #ffffff; font-size: 10px; font-weight: 600; text-transform: uppercase; padding: 7px 8px; text-align: center; }
-        .custom-table td { border-bottom: 1px solid #e2e8f0; font-size: 10px; padding: 6px 8px; color: #334155; vertical-align: middle; }
+        .custom-table { width: 100%; border-collapse: separate; border-spacing: 0; margin-bottom: 10px; border-radius: 6px; overflow: hidden; border: 1px solid #cbd5e1; }
+        .custom-table th { background-color: #0f172a !important; color: #ffffff !important; font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 6px 4px; text-align: center; }
+        .custom-table td { border-bottom: 1px solid #e2e8f0; font-size: 10.5px; padding: 5px 6px; color: #0f172a; vertical-align: middle; }
         .custom-table tr:last-child td { border-bottom: none; }
-        .custom-table tr:nth-child(even) { background-color: #f8fafc; }
+        .custom-table tr:nth-child(even) { background-color: #f8fafc !important; }
 
-        .status-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 700; text-transform: uppercase; }
-        .status-badge.ok { background-color: #dcfce7; color: #15803d; }
-        .status-badge.defect { background-color: #fee2e2; color: #b91c1c; }
+        .status-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; border-radius: 4px; font-size: 9.5px; font-weight: 700; text-transform: uppercase; }
+        .status-badge.ok { background-color: #dcfce7 !important; color: #15803d !important; }
+        .status-badge.defect { background-color: #fee2e2 !important; color: #b91c1c !important; }
 
-        .schema-container { position: relative; width: 100%; max-width: 650px; margin: 15px auto; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; background: #fafafa; }
-        .schema-img { width: 100%; height: auto; display: block; border-radius: 6px; }
-        .defect-marker { position: absolute; background-color: #dc2626; color: white; border-radius: 50%; width: 22px; height: 22px; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; transform: translate(-50%, -50%); border: 2px solid #ffffff; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+        .schema-container { position: relative; width: 100%; max-width: 600px; margin: 10px auto; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; background: #fafafa !important; }
+        .schema-img { width: 100%; height: auto; display: block; border-radius: 4px; }
+        .defect-marker { position: absolute; background-color: #dc2626 !important; color: white !important; border-radius: 50%; width: 20px; height: 20px; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; transform: translate(-50%, -50%); border: 2px solid #ffffff !important; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
 
-        .report-footer { position: absolute; bottom: 8mm; left: 15mm; right: 15mm; border-top: 1px solid #e2e8f0; padding-top: 6px; font-size: 9px; color: #94a3b8; text-align: center; }
+        .report-footer { position: absolute; bottom: 6mm; left: 12mm; right: 12mm; border-top: 1px solid #cbd5e1; padding-top: 5px; font-size: 9px; color: #64748b; font-weight: 600; text-align: center; }
 
         @media print {
             .no-print { display: none !important; }
-            body { background: none; }
-            .page { margin: 0; box-shadow: none; page-break-after: always; }
+            body { background: none; margin: 0; }
+            .page { margin: 0; box-shadow: none; page-break-after: always; page-break-inside: avoid; height: 296mm; }
         }
     </style>
 </head>
@@ -67,7 +76,7 @@
         </button>
     </div>
 
-    <!-- PAGE 1: CLIENT & VEHICLE OVERVIEW -->
+    <!-- PAGE 1: INFORMATIONS GÉNÉRALES DU VÉHICULE -->
     <div class="page">
         <div class="page-top-bar"></div>
         <div class="report-header">
@@ -78,46 +87,52 @@
             </div>
         </div>
 
-        <div class="text-center my-3 py-3 bg-light rounded-3 border">
-            <h3 class="fw-bold text-dark mb-1">DOSSIER D'INSPECTION VÉHICULE</h3>
-            <p class="text-muted small mb-2">Bilan complet des contrôles effectués sur la carrosserie & la structure</p>
-            <span class="badge bg-danger fs-6 px-3 py-2" id="rep-code">REF: REP-2026-XXXX</span>
+        <div class="text-center my-3 py-2 bg-light rounded-3 border">
+            <h4 class="fw-bold text-dark mb-1" style="font-size: 16px;">DOSSIER D'INSPECTION VÉHICULE</h4>
+            <p class="text-muted mb-1" style="font-size: 11px;">Bilan complet des contrôles effectués sur la carrosserie & la structure</p>
+            <span class="badge bg-danger px-3 py-1" id="rep-code" style="font-size: 12px;">REF: REP-2026-XXXX</span>
         </div>
 
         <div class="info-card">
-            <div class="info-card-title"><i class="bi bi-person-vcard me-2 text-danger"></i>1. INFORMATIONS DU CLIENT</div>
-            <div class="row g-3 small">
-                <div class="col-6"><strong>Nom & Prénom :</strong> <span id="client-name" class="text-dark font-monospace">--</span></div>
-                <div class="col-6"><strong>Téléphone :</strong> <span id="client-phone" class="text-dark">--</span></div>
-                <div class="col-12"><strong>Date du Contrôle :</strong> <span id="rep-date" class="text-dark">--/--/2026</span></div>
-            </div>
-        </div>
-
-        <div class="info-card">
-            <div class="info-card-title"><i class="bi bi-car-front me-2 text-danger"></i>2. CARACTÉRISTIQUES & KILOMÉTRAGE</div>
-            <div class="row g-3 small">
+            <div class="info-card-title"><i class="bi bi-info-circle me-2 text-danger"></i>1. INFORMATIONS GÉNÉRALES DU VÉHICULE</div>
+            <div class="row g-2" style="font-size: 11.5px;">
+                <div class="col-6"><strong>Date inspection :</strong> <span id="rep-date">--/--/2026</span></div>
+                <div class="col-6"><strong>Inspecteur :</strong> <span id="inspector-name">Équipe VÉRIFCAR</span></div>
+                <div class="col-6"><strong>Client :</strong> <span id="client-name" class="fw-bold">--</span></div>
+                <div class="col-6"><strong>Téléphone :</strong> <span id="client-phone">--</span></div>
                 <div class="col-6"><strong>Marque & Modèle :</strong> <span id="car-brand-model" class="fw-bold">--</span></div>
-                <div class="col-6"><strong>Immatriculation :</strong> <span id="car-plate" class="fw-bold text-primary">--</span></div>
-                <div class="col-6"><strong>Couleur :</strong> <span id="car-color">--</span></div>
-                <div class="col-6"><strong>Kilométrage Affiché :</strong> <span id="car-km" class="fw-bold">--</span></div>
-                <div class="col-12"><strong>Conformité Kilométrage :</strong> <span id="car-km-status" class="badge bg-secondary">--</span></div>
+                <div class="col-6"><strong>Année :</strong> <span id="car-year">--</span></div>
+                <div class="col-6"><strong>Immatriculation :</strong> <span id="car-plate" class="text-primary fw-bold">--</span></div>
+                <div class="col-6"><strong>VIN / Châssis :</strong> <span id="car-vin" class="font-monospace">--</span></div>
+                <div class="col-12 col-md-6"><strong>Kilométrage :</strong> <span id="car-km" class="fw-bold">--</span></div>
+                <div class="col-6"><strong>Type carburant :</strong> <span id="car-fuel">--</span></div>
+                <div class="col-6"><strong>Boîte de vitesse :</strong> <span id="car-gearbox">--</span></div>
+                <div class="col-6"><strong>Nombre de clés :</strong> <span id="car-keys">--</span></div>
+            </div>
+            
+            <hr class="my-2 text-muted">
+            
+            <div class="row g-2" style="font-size: 11px;">
+                <div class="col-4"><strong>Historique entretien :</strong> <span id="history-status" class="badge bg-white text-dark border">Oui / Non</span></div>
+                <div class="col-4"><strong>Carnet entretien :</strong> <span id="booklet-status" class="badge bg-white text-dark border">Oui / Non</span></div>
+                <div class="col-4"><strong>Contrôle technique :</strong> <span id="ct-status" class="badge bg-white text-dark border">Oui / Non</span></div>
             </div>
         </div>
 
-        <div class="row g-3">
+        <div class="row g-2">
             <div class="col-6">
                 <div class="info-card h-100 mb-0">
-                    <div class="info-card-title"><i class="bi bi-cpu me-2 text-danger"></i>3. BILAN MOTEUR & NIVEAUX</div>
-                    <div id="moteur-summary-body">
-                        <span class="text-muted small">Chargement des données...</span>
+                    <div class="info-card-title"><i class="bi bi-cpu me-2 text-danger"></i>BILAN MOTEUR & NIVEAUX</div>
+                    <div id="moteur-summary-body" style="font-size: 11px;">
+                        <span class="text-muted">Chargement des données...</span>
                     </div>
                 </div>
             </div>
             <div class="col-6">
                 <div class="info-card h-100 mb-0">
-                    <div class="info-card-title"><i class="bi bi-laptop me-2 text-danger"></i>4. DIAGNOSTIQUE SCANNER</div>
-                    <div id="scanner-summary-body">
-                        <span class="text-muted small">Chargement des données...</span>
+                    <div class="info-card-title"><i class="bi bi-laptop me-2 text-danger"></i>DIAGNOSTIQUE SCANNER</div>
+                    <div id="scanner-summary-body" style="font-size: 11px;">
+                        <span class="text-muted">Chargement des données...</span>
                     </div>
                 </div>
             </div>
@@ -126,7 +141,7 @@
         <div class="report-footer">Page 1 / 4 — VERIFCAR SARL — Oran, Algérie</div>
     </div>
 
-    <!-- PAGE 2: COMPLETE CARROSSERIE INSPECTION CHECKLIST -->
+    <!-- PAGE 2: ÉQUIPE 1 - CARROSSERIE & INSPECTION EXTÉRIEURE -->
     <div class="page">
         <div class="page-top-bar"></div>
         <div class="report-header">
@@ -137,24 +152,24 @@
             </div>
         </div>
 
-        <div class="section-header">5. ÉTAT GLOBAL DES ÉLÉMENTS EXTÉRIEURS (15 ÉLÉMENTS)</div>
+        <div class="section-header">2. ÉQUIPE 1 - CARROSSERIE (INSPECTION EXTÉRIEURE)</div>
 
         <div class="table-responsive">
             <table class="custom-table text-center">
                 <thead>
                     <tr>
-                        <th class="text-start" style="width: 22%;">Élément / القطعة</th>
-                        <th>Peinture<br><small>طلاء</small></th>
-                        <th>A froid<br><small>ع البارد</small></th>
-                        <th>Rayures<br><small>خدوش</small></th>
-                        <th>Choque<br><small>صدمة</small></th>
-                        <th>Corrosion<br><small>صدأ</small></th>
-                        <th>Jeu<br><small>فراغ</small></th>
-                        <th>Mastique<br><small>معجون</small></th>
-                        <th>Visse<br><small>براغي</small></th>
-                        <th>Raccord<br><small>تعديل</small></th>
-                        <th>Change<br><small>تغيير</small></th>
-                        <th>Soudure<br><small>لحام</small></th>
+                        <th class="text-start" style="width: 23%;">Éléments / القطعة</th>
+                        <th>Peinture<br><small style="font-size: 8.5px;">طلاء</small></th>
+                        <th>A froid<br><small style="font-size: 8.5px;">ع البارد</small></th>
+                        <th>Rayures<br><small style="font-size: 8.5px;">خدوش</small></th>
+                        <th>Choque<br><small style="font-size: 8.5px;">صدمة</small></th>
+                        <th>Corrosion<br><small style="font-size: 8.5px;">صدأ</small></th>
+                        <th>Jeu<br><small style="font-size: 8.5px;">فراغ</small></th>
+                        <th>Mastique<br><small style="font-size: 8.5px;">معجون</small></th>
+                        <th>Visse<br><small style="font-size: 8.5px;">براغي</small></th>
+                        <th>Raccord<br><small style="font-size: 8.5px;">تعديل</small></th>
+                        <th>Change<br><small style="font-size: 8.5px;">تغيير</small></th>
+                        <th>Soudure<br><small style="font-size: 8.5px;">لحام</small></th>
                     </tr>
                 </thead>
                 <tbody id="ext-defects-body">
@@ -162,11 +177,19 @@
                 </tbody>
             </table>
         </div>
+        <div class="info-card mt-2 p-2 bg-light border rounded">
+            <div class="fw-bold text-dark" style="font-size: 11px;">
+                <i class="bi bi-robot me-1 text-danger"></i> Résumé - Carrosserie :
+            </div>
+            <div id="ai-carrosserie-summary" class="text-muted mt-1" style="font-size: 10.5px;">
+                <span class="spinner-border spinner-border-sm me-1"></span> Analyse en cours...
+            </div>
+        </div>
 
         <div class="report-footer">Page 2 / 4 — VERIFCAR SARL — Oran, Algérie</div>
     </div>
 
-    <!-- PAGE 3: STRUCTURE & CHASSIS COMPLETE CHECKLIST -->
+    <!-- PAGE 3: STRUCTURE, ACCIDENT, PNEUS & SOUBASSEMENT -->
     <div class="page">
         <div class="page-top-bar"></div>
         <div class="report-header">
@@ -177,34 +200,64 @@
             </div>
         </div>
 
-        <div class="section-header">6. BILAN DE LA STRUCTURE & DU CHÂSSIS</div>
+        <div class="section-header">3. CONTRÔLE STRUCTUREL / ACCIDENT</div>
         <table class="custom-table">
             <thead>
                 <tr>
-                    <th style="width: 35%; text-align: left;">Élément Structurel Checked</th>
+                    <th style="width: 38%; text-align: left;">Contrôle Structurel Checked</th>
                     <th style="width: 20%; text-align: center;">Conformité</th>
                     <th style="text-align: left;">Observations détaillées</th>
                 </tr>
             </thead>
             <tbody id="struct-defects-body">
-                <!-- Loaded dynamically via report-loader.js -->
+                <!-- Loaded dynamically -->
             </tbody>
         </table>
+        <div class="info-card mt-1 p-2 bg-light border rounded">
+            <div class="fw-bold text-dark" style="font-size: 11px;">
+                <i class="bi bi-robot me-1 text-danger"></i> Résumé  - Structure :
+            </div>
+            <div id="ai-structure-summary" class="text-muted mt-1" style="font-size: 10.5px;">
+                <span class="spinner-border spinner-border-sm me-1"></span> Analyse en cours...
+            </div>
+        </div>
 
-        <div class="info-card mt-4">
+        <div class="section-header">4. PNEUS / JANTES / SOUBASSEMENT</div>
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th style="width: 42%; text-align: left;">Contrôle Éléments الركائز والحافات</th>
+                    <th style="width: 20%; text-align: center;">État</th>
+                    <th style="text-align: left;">Observations</th>
+                </tr>
+            </thead>
+            <tbody id="suspension-defects-body">
+                <!-- Loaded dynamically -->
+            </tbody>
+        </table>
+        <div class="info-card mt-1 p-2 bg-light border rounded">
+            <div class="fw-bold text-dark" style="font-size: 11px;">
+                <i class="bi bi-robot me-1 text-danger"></i> Résumé IA - Soubassement & Pneus :
+            </div>
+            <div id="ai-suspension-summary" class="text-muted mt-1" style="font-size: 10.5px;">
+                <span class="spinner-border spinner-border-sm me-1"></span> Analyse en cours...
+            </div>
+        </div>
+
+        <div class="info-card mt-2">
             <div class="info-card-title text-danger"><i class="bi bi-chat-square-text me-2"></i>CONCLUSION GÉNÉRALE DE L'EXPERT</div>
-            <div id="general-conclusion" class="fw-bold text-dark p-3 bg-white rounded border border-light fs-6 text-center">
+            <div id="general-conclusion" class="fw-bold text-dark p-2 bg-white rounded border border-light text-center" style="font-size: 12px;">
                 --
             </div>
         </div>
 
-        <div class="row mt-5 text-center small">
+        <div class="row mt-3 text-center" style="font-size: 11px;">
             <div class="col-6">
-                <p class="fw-bold mb-4">Visa Technicien / Expert :</p>
+                <p class="fw-bold mb-2">Visa Technicien / Expert :</p>
                 <p class="text-muted">................................................</p>
             </div>
             <div class="col-6">
-                <p class="fw-bold mb-4">Cachet Atelier VERIFCAR :</p>
+                <p class="fw-bold mb-2">Cachet Atelier VERIFCAR :</p>
                 <p class="text-muted">................................................</p>
             </div>
         </div>
@@ -212,7 +265,7 @@
         <div class="report-footer">Page 3 / 4 — VERIFCAR SARL — Oran, Algérie</div>
     </div>
 
-    <!-- PAGE 4: VISUAL DEFECTS MAPPING (HD CAR SCHEMA) -->
+    <!-- PAGE 4: CARTOGRAPHIE VISUELLE (SCHEMA) -->
     <div class="page">
         <div class="page-top-bar"></div>
         <div class="report-header">
@@ -223,20 +276,20 @@
             </div>
         </div>
 
-        <div class="section-header">7. LOCALISATION GÉOGRAPHIQUE DES DÉFAUTS DÉTECTÉS</div>
-        <p class="text-muted small mb-2">Les marqueurs rouges indiquent les zones présentant des défauts على مستوى الهيكل الخارجي:</p>
+        <div class="section-header">5. LOCALISATION GÉOGRAPHIQUE DES DÉFAUTS DÉTECTÉS</div>
+        <p class="text-muted mb-2" style="font-size: 11px;">Les marqueurs rouges indiquent les zones présentant des défauts sur le véhicule:</p>
 
         <div class="schema-container">
             <img src="../img/schema_voiture_haute_qualite.png" alt="Schéma Voiture HD" class="schema-img">
             <div id="markers-container">
-                <!-- Dynamic Defect Markers -->
+                <!-- Dynamic Markers -->
             </div>
         </div>
 
-        <div class="info-card">
+        <div class="info-card mt-2">
             <div class="info-card-title"><i class="bi bi-pin-map me-2 text-danger"></i>Légende des Numéros / دليل الأرقام المحددة:</div>
-            <div id="markers-legend" class="row g-2 small text-muted">
-                <!-- Legend -->
+            <div id="markers-legend" class="row g-2 text-muted" style="font-size: 10px;">
+                <!-- Dynamic Legend -->
             </div>
         </div>
 

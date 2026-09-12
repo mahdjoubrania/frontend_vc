@@ -138,21 +138,6 @@
             </a>
           </li>
           <li class="nav-item">
-            <a href="calendar.html" class="nav-link text-secondary">
-              <i class="bi bi-calendar-week me-2"></i> Planning & RDV
-            </a>
-          </li>
-          <li class="nav-item">
-            <a href="clients.html" class="nav-link text-secondary">
-              <i class="bi bi-car-front me-2"></i> Clients & Véhicules
-            </a>
-          </li>
-          <li class="nav-item">
-            <a href="toutsrnd.html" class="nav-link text-secondary">
-              <i class="bi bi-list-check me-2"></i> Les Rendez-vous
-            </a>
-          </li>
-          <li class="nav-item">
             <a href="verification.html" class="nav-link active">
               <i class="bi bi-tools me-2"></i> Vérification
             </a>
@@ -199,65 +184,82 @@
       </div>
     </div>
 
-    <!-- شبكة وحدات الفحص -->
-    <div id="modules-selection-view">
-      <h3 class="fw-bold mb-4">Modules de Contrôle Technique</h3>
-      <div class="row g-4">
-        <!-- Scanner -->
-        <div class="col-md-4">
-          <div class="card h-100 shadow-sm border-0 text-center p-4 module-card" onclick="openModule('scanner')">
-            <div class="display-4 text-primary mb-3"><i class="fa-solid fa-laptop-code"></i></div>
-            <h5 class="fw-bold">Scanner Diagnostique</h5>
-            <p class="text-muted small mb-0">Codes DTC, calculateur, voyants allumés.</p>
-          </div>
-        </div>
-        <!-- Moteur -->
-        <div class="col-md-4">
-          <div class="card h-100 shadow-sm border-0 text-center p-4 module-card" onclick="openModule('moteur')">
-            <div class="display-4 text-warning mb-3"><i class="fa-solid fa-car-battery"></i></div>
-            <h5 class="fw-bold">Moteur & Niveaux</h5>
-            <p class="text-muted small mb-0">Niveaux d'huile, fuites, bruits, fumée d'échappement.</p>
-          </div>
-        </div>
-        <!-- Suspension -->
-        <div class="col-md-4">
-          <div class="card h-100 shadow-sm border-0 text-center p-4 module-card" onclick="openModule('suspension')">
-            <div class="display-4 text-info mb-3"><i class="fa-solid fa-truck-monster"></i></div>
-            <h5 class="fw-bold">Suspension & Train</h5>
-            <p class="text-muted small mb-0">Amortisseurs, rotules, pneumatiques, corrosion.</p>
-          </div>
-        </div>
-        <!-- Tôle (Elements & Drawing) -->
-        <div class="col-md-6">
-          <div class="card h-100 shadow-sm border-0 text-center p-4 module-card" onclick="openModule('tole')">
-            <div class="display-4 text-danger mb-3"><i class="fa-solid fa-spray-can"></i></div>
-            <h5 class="fw-bold">Tôle & Carrosserie</h5>
-            <p class="text-muted small mb-0">Éléments de carrosserie et schéma interactif (Canvas).</p>
-          </div>
-        </div>
-        <!-- Kilométrage -->
-        <div class="col-md-6">
-          <div class="card h-100 shadow-sm border-0 text-center p-4 module-card" onclick="openModule('kilometrage')">
-            <div class="display-4 text-success mb-3"><i class="fa-solid fa-gauge"></i></div>
-            <h5 class="fw-bold">Kilométrage & Conformation</h5>
-            <p class="text-muted small mb-0">Relevé de kilométrage affiché et conformité.</p>
-          </div>
-        </div>
+  <!-- شبكة وحدات الفحص -->
+<div id="modules-selection-view">
+  <h3 class="fw-bold mb-4">Modules de Contrôle Technique</h3>
+  <div class="row g-4">
+    
+    <!-- Scanner -->
+    <div class="col-md-4">
+      <div class="card h-100 shadow-sm border-0 text-center p-4 module-card" onclick="openModule('scanner')">
+        <div class="display-4 text-primary mb-3"><i class="fa-solid fa-laptop-code"></i></div>
+        <h5 class="fw-bold">Scanner Diagnostique</h5>
+        <p class="text-muted small mb-0">Codes DTC, calculateur, voyants allumés.</p>
       </div>
     </div>
 
-    <!-- Dynamic Workspace Area -->
-    <div id="active-module-view" class="d-none">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <button class="btn btn-outline-secondary rounded-3" onclick="closeModule()">
-          <i class="bi bi-arrow-left me-2"></i>Retour aux modules
-        </button>
-        <h4 id="active-module-title" class="fw-bold text-dark mb-0">--</h4>
-      </div>
-
-      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white" id="module-content-body">
+    <!-- Moteur -->
+    <div class="col-md-4">
+      <div class="card h-100 shadow-sm border-0 text-center p-4 module-card" onclick="openModule('moteur')">
+        <div class="display-4 text-warning mb-3"><i class="fa-solid fa-car-battery"></i></div>
+        <h5 class="fw-bold">Moteur & Niveaux</h5>
+        <p class="text-muted small mb-0">Niveaux d'huile, fuites, bruits, fumée d'échappement.</p>
       </div>
     </div>
+
+    <!-- Suspension -->
+    <div class="col-md-4">
+      <div class="card h-100 shadow-sm border-0 text-center p-4 module-card" onclick="openModule('suspension')">
+        <div class="display-4 text-info mb-3"><i class="fa-solid fa-truck-monster"></i></div>
+        <h5 class="fw-bold">Suspension & Train</h5>
+        <p class="text-muted small mb-0">Amortisseurs, rotules, pneumatiques, corrosion.</p>
+      </div>
+    </div>
+
+    <!-- Tôle (Elements & Drawing) -->
+    <div class="col-md-4">
+      <div class="card h-100 shadow-sm border-0 text-center p-4 module-card" onclick="openModule('tole')">
+        <div class="display-4 text-danger mb-3"><i class="fa-solid fa-spray-can"></i></div>
+        <h5 class="fw-bold">Tôle & Carrosserie</h5>
+        <p class="text-muted small mb-0">Éléments de carrosserie et schéma interactif (Canvas).</p>
+      </div>
+    </div>
+
+    <!-- Kilométrage -->
+    <div class="col-md-4">
+      <div class="card h-100 shadow-sm border-0 text-center p-4 module-card" onclick="openModule('kilometrage')">
+        <div class="display-4 text-success mb-3"><i class="fa-solid fa-gauge"></i></div>
+        <h5 class="fw-bold">Kilométrage & Conformation</h5>
+        <p class="text-muted small mb-0">Relevé de kilométrage affiché et conformité.</p>
+      </div>
+    </div>
+
+    <!-- Observations Générales & Rapport Mécanique -->
+    <div class="col-md-4">
+      <div class="card h-100 shadow-sm border-0 text-center p-4 module-card" onclick="openModule('general')">
+        <div class="display-4 mb-3" style="color: #6f42c1;">
+          <i class="fa-solid fa-clipboard-check"></i>
+        </div>
+        <h5 class="fw-bold">Observations Générales</h5>
+        <p class="text-muted small mb-0">Nombre de clés, rapport mécanique et équipements de secours.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- واجهة النموذج النشط (تأكد من وجودها تحت قسم البطاقات) -->
+<div id="active-module-view" class="d-none">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold mb-0" id="active-module-title">Titre du Module</h3>
+    <button type="button" class="btn btn-outline-secondary rounded-3" onclick="closeModule()">
+      <i class="bi bi-arrow-left me-1"></i> Retour aux modules / العودة للوحدات
+    </button>
+  </div>
+  <div class="card border-0 shadow-sm rounded-4 p-4 bg-white" id="module-content-body">
+    <!-- يتم إدراج نموذج الفحص هنا عبر الجافاسكربت -->
+  </div>
+</div> 
 
   </main>
 </div>

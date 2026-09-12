@@ -234,6 +234,12 @@ async function openModule(moduleType) {
       initCanvas(data.drawing);
       loadToleElements(data.tole_elements || []);
       break;
+    
+    // 🟢 إضافة الحالة الجديدة هنا:
+    case 'general':
+      title.innerHTML = `<i class="fa-solid fa-clipboard-check me-2" style="color: #6f42c1;"></i> Observations Générales & Rapport`;
+      content.innerHTML = renderGeneralModule(data.general || {});
+      break;
   }
 }
 
@@ -459,6 +465,8 @@ function renderSuspensionModule(data = {}) {
 }
 
 function renderKilometrageModule(data = {}) {
+  const statusVal = data.conformite !== undefined && data.conformite !== null ? String(data.conformite) : 'real';
+
   return `
     <form id="form-kilometrage" onsubmit="saveKilometrageModule(event)">
       <div class="row g-3">
@@ -467,22 +475,25 @@ function renderKilometrageModule(data = {}) {
           <input type="number" class="form-control" id="kilometrage_affiche" required value="${data.kilometrage_affiche || ''}" placeholder="Ex: 125000">
         </div>
         <div class="col-md-6">
-          <label class="form-label fw-semibold">Conformité / المطابقة</label>
+          <label class="form-label fw-semibold">État du Kilométrage / حالة العداد</label>
           <select class="form-select" id="conforme">
-            <option value="1" ${data.conforme === 1 || data.conforme === true ? 'selected' : ''}>Conforme (Réel) / مطابق (حقيقي)</option>
-            <option value="0" ${data.conforme === 0 || data.conforme === false ? 'selected' : ''}>Non Conforme / Suspect / غير مطابق (مشبوه)</option>
+            <option value="real" ${statusVal === 'real' || statusVal === '1' || statusVal === 'true' ? 'selected' : ''}>Réel / حقيقي</option>
+            <option value="suspect" ${statusVal === 'suspect' || statusVal === '0' || statusVal === 'false' ? 'selected' : ''}>Non Réel / Falsifié / غير حقيقي (معدل)</option>
+            <option value="uncertain" ${statusVal === 'uncertain' ? 'selected' : ''}>Impossible à vérifier / لا يمكن الجزم</option>
           </select>
         </div>
         <div class="col-12">
-          <label class="form-label fw-semibold">Notes / Remarques / ملاحظات</label>
-          <textarea class="form-control" id="km_notes" rows="2">${data.notes || ''}</textarea>
+          <label class="form-label fw-semibold">Notes / Remarques / ملاحظات وأسباب التقييم</label>
+          <textarea class="form-control" id="km_notes" rows="2" placeholder="Ex: Traces d'usure incohérentes, calculateur non accessible...">${data.notes || ''}</textarea>
         </div>
       </div>
-      <button type="submit" class="btn btn-primary px-4 mt-3 rounded-3"><i class="bi bi-save me-1"></i> Sauvegarder Kilométrage / حفظ العداد</button>
+      <button type="submit" class="btn btn-primary px-4 mt-3 rounded-3">
+        <i class="bi bi-save me-1"></i> Sauvegarder Kilométrage / حفظ العداد
+      </button>
     </form>`;
 }
 
-// تعديل دالة renderToleModule لتعطي مظهر أسلوبي عصري وتسهل الاختيار
+// 1. إعادة بناء واجهة وحدة الهيكل (Tôle & Carrosserie) لتشمل مخطط السيارة الملون وأدوات التلوين
 function renderToleModule() {
   const elements = [
     { fr: "Capot", ar: "غطاء المحرك (كابو)" },
@@ -529,6 +540,43 @@ function renderToleModule() {
   return `
     <form id="form-tole" onsubmit="saveToleModule(event)" dir="rtl" class="p-1">
       
+      <!-- قسم مخطط السيارة التفاعلي والتلوين (Canvas & Schema) -->
+      <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
+        <div class="card-header bg-danger text-white py-3 d-flex justify-content-between align-items-center">
+          <h5 class="m-0 fw-bold"><i class="bi bi-palette-fill me-2"></i> مخطط الهيكل والتلوين التفاعلي (Schéma Tôle & Dessin)</h5>
+          <button type="button" class="btn btn-sm btn-light fw-bold" onclick="clearCanvas()">
+            <i class="bi bi-eraser-fill text-danger me-1"></i> مسح التلوين (Effacer)
+          </button>
+        </div>
+        <div class="card-body bg-light text-center p-3">
+          
+          <!-- لوحة اختيار ألوان ونوع عيوب الهيكل -->
+          <div class="d-flex flex-wrap justify-content-center gap-2 mb-3 p-2 bg-white rounded-3 shadow-sm" dir="ltr">
+            <button type="button" class="btn btn-sm btn-danger fw-bold active" onclick="setMarkStyle('choc', '#dc3545')">
+              <i class="bi bi-record-circle me-1"></i> Choc / صدمة (أحمر)
+            </button>
+            <button type="button" class="btn btn-sm btn-warning text-dark fw-bold" onclick="setMarkStyle('rayure', '#ffc107')">
+              <i class="bi bi-record-circle me-1"></i> Rayure / خدش (أصفر)
+            </button>
+            <button type="button" class="btn btn-sm btn-primary fw-bold" onclick="setMarkStyle('peinture', '#0d6efd')">
+              <i class="bi bi-record-circle me-1"></i> Peinture / طلاء (أزرق)
+            </button>
+            <button type="button" class="btn btn-sm btn-secondary fw-bold" onclick="setMarkStyle('mastic', '#6c757d')">
+              <i class="bi bi-record-circle me-1"></i> Mastic / معجون (رمادي)
+            </button>
+            <button type="button" class="btn btn-sm btn-dark fw-bold" onclick="setMarkStyle('corrosion', '#212529')">
+              <i class="bi bi-record-circle me-1"></i> Corrosion / صدأ (أسود)
+            </button>
+          </div>
+
+          <!-- مساحة الرسم والتلوين (Canvas) -->
+          <div class="canvas-container mx-auto position-relative" style="max-width: 750px;">
+            <canvas id="car-canvas" width="750" height="380" class="border rounded-3 bg-white shadow-sm" style="touch-action: none; cursor: crosshair;"></canvas>
+          </div>
+          <small class="text-muted d-block mt-2">انقر أو قم بالسحب على أجزاء السيارة أعلاه للتلوين وتحديد موقع الضرر.</small>
+        </div>
+      </div>
+
       <!-- 1. الفحص الخارجي للسيارة -->
       <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
         <div class="card-header bg-gradient-primary text-white py-3 d-flex justify-content-between align-items-center">
@@ -628,7 +676,7 @@ function renderToleModule() {
             </div>
             <div class="col-md-5 text-end">
               <button type="submit" class="btn btn-success btn-lg px-5 py-3 fw-bold w-100 rounded-3 shadow-lg hover-scale">
-                <i class="bi bi-check-circle-fill me-2"></i> حفظ الفحص الكامل
+                <i class="bi bi-check-circle-fill me-2"></i> حفظ الفحص الكامل للهيكل
               </button>
             </div>
           </div>
@@ -639,49 +687,49 @@ function renderToleModule() {
   `;
 }
 
-function setMarkStyle(type, color) {
-  activeMarkType = type;
-  activeDrawingColor = color;
-}
+// 5. تعديل دالة حفظ الفحص لتخزين صورة Canvas ملونة في النظام
+async function saveToleModule(e) {
+  e.preventDefault();
+  const form = e.target;
+  const formData = new FormData(form);
 
-function initCanvas(savedDrawing = null) {
   const canvas = document.getElementById('car-canvas');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
+  const drawingDataUrl = canvas ? canvas.toDataURL('image/png') : null;
 
-  if (savedDrawing) {
-    const img = new Image();
-    img.onload = () => ctx.drawImage(img, 0, 0);
-    img.src = savedDrawing;
-  } else {
-    ctx.strokeStyle = '#cccccc';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(50, 50, 500, 250);
-    ctx.font = "16px Inter";
-    ctx.fillStyle = "#aaa";
-    ctx.fillText("Schéma Carrosserie Véhicule / مخطط هيكل السيارة", 150, 180);
+  const elements_ext = {};
+  for (let [key, val] of formData.entries()) {
+    if (key.startsWith('ext_')) {
+      const elementName = key.replace('ext_', '');
+      if (!elements_ext[elementName]) elements_ext[elementName] = [];
+      elements_ext[elementName].push(val);
+    }
   }
 
-  canvas.onclick = function(e) {
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    ctx.fillStyle = activeDrawingColor;
-    ctx.beginPath();
-    ctx.arc(x, y, 6, 0, 2 * Math.PI);
-    ctx.fill();
+  const payload = {
+    inspection_id: currentInspectionId,
+    drawing: drawingDataUrl, // يحفظ صورة السيارة الملونة
+    elements_ext_json: elements_ext,
+    longerons_status: formData.get('longerons_status'),
+    longerons_obs: formData.get('longerons_obs'),
+    traverses_status: formData.get('traverses_status'),
+    traverses_obs: formData.get('traverses_obs'),
+    passage_roues_status: formData.get('passage_roues_status'),
+    passage_roues_obs: formData.get('passage_roues_obs'),
+    fond_coffre_status: formData.get('fond_coffre_status'),
+    fond_coffre_obs: formData.get('fond_coffre_obs'),
+    chassis_status: formData.get('chassis_status'),
+    chassis_obs: formData.get('chassis_obs'),
+    optique_status: formData.get('optique_status'),
+    optique_obs: formData.get('optique_obs'),
+    vitre_status: formData.get('vitre_status'),
+    vitre_obs: formData.get('vitre_obs'),
+    conclusion_structure: formData.get('conclusion_structure'),
+    notes: ''
   };
+
+  await sendData('/inspection/tole', payload);
 }
 
-function clearCanvas() {
-  const canvas = document.getElementById('car-canvas');
-  if (canvas) {
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    initCanvas();
-  }
-}
 
 function loadToleElements(savedElements = []) {
   const elements = [
@@ -736,6 +784,37 @@ async function saveMoteurModule(e) {
   await sendData('/inspection/moteur', payload);
 }
 
+function renderGeneralModule(data = {}) {
+  return `
+    <form id="form-general" onsubmit="saveGeneralModule(event)" class="p-2">
+      <div class="row g-3">
+        <!-- Nombre de clés -->
+        <div class="col-md-4">
+          <label class="form-label fw-bold">Nombre de clés</label>
+          <input type="number" class="form-control" id="nombre_cles" min="1" max="10" value="${data.nombre_cles || 1}" required>
+        </div>
+
+        <!-- Équipements de secours -->
+        <div class="col-md-8">
+          <label class="form-label fw-bold">Équipements de secours</label>
+          <input type="text" class="form-control" id="equipements_secour" value="${data.equipements_secour || ''}" placeholder="Ex: Roue de secours, cric, triangle de signalisation...">
+        </div>
+
+        <!-- Rapport Mécanique -->
+        <div class="col-12">
+          <label class="form-label fw-bold">Rapport Mécanique Général</label>
+          <textarea class="form-control" id="rapport_mecanique" rows="4" placeholder="Saisissez les observations mécaniques générales, état du moteur, boîte de vitesses, etc...">${data.rapport_mecanique || ''}</textarea>
+        </div>
+      </div>
+
+      <div class="text-end">
+        <button type="submit" class="btn btn-primary px-4 mt-4 rounded-3 fw-bold">
+          <i class="bi bi-save me-1"></i> Enregistrer
+        </button>
+      </div>
+    </form>`;
+}
+
 async function saveSuspensionModule(e) {
   e.preventDefault();
   const form = e.target;
@@ -767,51 +846,12 @@ async function saveKilometrageModule(e) {
   const payload = {
     inspection_id: currentInspectionId,
     kilometrage_affiche: document.getElementById('kilometrage_affiche').value,
-    conformite: document.getElementById('conforme').value === "1", 
+    conformite: document.getElementById('conforme').value, // ترسل: 'real' أو 'suspect' أو 'uncertain'
     notes: document.getElementById('km_notes').value
   };
   await sendData('/inspection/kilometrage', payload);
 }
 
-
-async function saveToleModule(e) {
-  e.preventDefault();
-  const form = e.target;
-  const formData = new FormData(form);
-
-  const elements_ext = {};
-  for (let [key, val] of formData.entries()) {
-    if (key.startsWith('ext_')) {
-      const elementName = key.replace('ext_', '');
-      if (!elements_ext[elementName]) elements_ext[elementName] = [];
-      elements_ext[elementName].push(val);
-    }
-  }
-
-  const payload = {
-    inspection_id: currentInspectionId,
-    elements_ext_json: elements_ext,
-    longerons_status: formData.get('longerons_status'),
-    longerons_obs: formData.get('longerons_obs'),
-    traverses_status: formData.get('traverses_status'),
-    traverses_obs: formData.get('traverses_obs'),
-    passage_roues_status: formData.get('passage_roues_status'),
-    passage_roues_obs: formData.get('passage_roues_obs'),
-    fond_coffre_status: formData.get('fond_coffre_status'),
-    fond_coffre_obs: formData.get('fond_coffre_obs'),
-    chassis_status: formData.get('chassis_status'),
-    chassis_obs: formData.get('chassis_obs'),
-    optique_status: formData.get('optique_status'),
-    optique_obs: formData.get('optique_obs'),
-    vitre_status: formData.get('vitre_status'),
-    vitre_obs: formData.get('vitre_obs'),
-    conclusion_structure: formData.get('conclusion_structure'),
-    notes: ''
-  };
-
-  await sendData('/inspection/tole', payload);
-}
-// 3. التحقق من وجود التوكن وإرسال البيانات للسيرفر
 async function sendData(endpoint, payload) {
   const token = getAuthToken();
 
@@ -841,5 +881,145 @@ async function sendData(endpoint, payload) {
   } catch (err) {
     alert('Impossible de contacter le serveur');
     console.error(err);
+  }
+}
+async function saveGeneralModule(e) {
+    if (e) e.preventDefault();
+    
+    if (!currentInspectionId) {
+        alert("Veuillez sélectionner un rendez-vous d'abord !");
+        return;
+    }
+    const payload = {
+  inspection_id: currentInspectionId,
+  nombre_cles: parseInt(document.getElementById('nombre_cles')?.value || 1),
+  equipements_secour: document.getElementById('equipements_secour')?.value || '', 
+  rapport_mecanique: document.getElementById('rapport_mecanique')?.value || ''
+};
+await sendData('/inspection/general', payload);
+
+}
+
+const saveObsBtn = document.getElementById('btn-save-obs') || document.getElementById('btn-save-observations');
+
+if (saveObsBtn) {
+    saveObsBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        await saveGeneralObservations();
+    });
+}
+async function saveKilometrageModule(e) {
+  e.preventDefault();
+  const payload = {
+    inspection_id: currentInspectionId,
+    kilometrage_affiche: document.getElementById('kilometrage_affiche').value,
+    conformite: document.getElementById('conforme').value, 
+    notes: document.getElementById('km_notes').value
+  };
+  await sendData('/inspection/kilometrage', payload);
+}
+// 1. تحديث نمط ولون التحديد/التلوين النشط
+function setMarkStyle(type, color) {
+  activeMarkType = type;
+  activeDrawingColor = color;
+  
+  const buttons = document.querySelectorAll('#form-tole .btn-group button, #form-tole .d-flex button');
+  buttons.forEach(btn => btn.classList.remove('active'));
+  if (window.event && window.event.currentTarget) {
+    window.event.currentTarget.classList.add('active');
+  }
+}
+
+// 2. تحميل صورة CAR.png الموجودة في مجلد img والتلوين فوقها
+function initCanvas(savedDrawing = null) {
+  const canvas = document.getElementById('car-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  let isDrawing = false;
+
+  // تحميل الصورة الحقيقية من مجلد img
+  const carImg = new Image();
+  carImg.src='../img/schema_voiture_haute_qualite.png'
+ 
+
+  function renderBackground() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // رسم صورة السيارة CAR.png لتملأ مساحة الـ Canvas
+    ctx.drawImage(carImg, 0, 0, canvas.width, canvas.height);
+
+    // إذا كان هناك رسم سابق تم حفظه، نقوم برسمه فوق الصورة
+    if (savedDrawing) {
+      const savedImg = new Image();
+      savedImg.onload = () => ctx.drawImage(savedImg, 0, 0);
+      savedImg.src = savedDrawing;
+    }
+  }
+
+  carImg.onload = () => {
+    renderBackground();
+  };
+
+  // في حال وجود مشكلة في المسار يُظهر رسالة تنبيهية
+  carImg.onerror = () => {
+    console.error("لم يتم العثور على الصورة في المسار: ../img/CAR.png");
+  };
+
+  // دوال الرسم والتقاط موقع الفأرة أو اللمس
+  function getPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return {
+      x: (clientX - rect.left) * (canvas.width / rect.width),
+      y: (clientY - rect.top) * (canvas.height / rect.height)
+    };
+  }
+
+  function startDrawing(e) {
+    isDrawing = true;
+    draw(e);
+  }
+
+  function stopDrawing() {
+    isDrawing = false;
+    ctx.beginPath();
+  }
+
+  function draw(e) {
+    if (!isDrawing) return;
+    e.preventDefault();
+    const pos = getPos(e);
+
+    ctx.lineWidth = 6;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = activeDrawingColor || '#dc3545';
+
+    ctx.lineTo(pos.x, pos.y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(pos.x, pos.y);
+  }
+
+  // ربط أحداث الفأرة واللمس
+  canvas.onmousedown = startDrawing;
+  canvas.onmousemove = draw;
+  canvas.onmouseup = stopDrawing;
+  canvas.onmouseleave = stopDrawing;
+
+  canvas.addEventListener('touchstart', startDrawing, { passive: false });
+  canvas.addEventListener('touchmove', draw, { passive: false });
+  canvas.addEventListener('touchend', stopDrawing);
+}
+
+// 3. دالة تفريغ اللوحة وإعادة رسم صورة CAR.png من جديد
+function clearCanvas() {
+  const canvas = document.getElementById('car-canvas');
+  if (canvas) {
+    initCanvas();
   }
 }

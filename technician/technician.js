@@ -321,7 +321,6 @@ function renderRecentTickets(tickets) {
         <td>${vehicleName}</td>
         <td>${formatDateTime(ticket.appointment_date || ticket.start)}</td>
         <td><span class="badge ${getStatusBadgeClass(ticket.status)} px-2 py-1">${ticket.status || 'PENDING'}</span></td>
-        <td class="fw-bold text-dark">${ticket.total_amount ? Number(ticket.total_amount).toLocaleString() + ' DZD' : '-'}</td>
       </tr>
     `;
     tableBody.insertAdjacentHTML('beforeend', row);

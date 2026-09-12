@@ -37,21 +37,6 @@
             </a>
           </li>
           <li class="nav-item">
-            <a href="calendar.html" class="nav-link text-secondary">
-              <i class="bi bi-calendar-week me-2"></i> Planning & RDV
-            </a>
-          </li>
-          <li class="nav-item">
-            <a href="clients.html" class="nav-link text-secondary">
-              <i class="bi bi-car-front me-2"></i> Clients & Véhicules
-            </a>
-          </li>
-          <li class="nav-item">
-            <a href="toutsrnd.html" class="nav-link text-secondary">
-              <i class="bi bi-list-check me-2"></i> Les Rendez-vous
-            </a>
-          </li>
-          <li class="nav-item">
             <a href="verification.html" class="nav-link text-secondary">
               <i class="bi bi-tools me-2"></i> Vérification
             </a>
@@ -314,12 +299,9 @@
       }
     }
 
-// =========================================================
-// فتح قالب التقرير الشامل (4 صفحات) للطباعة والتنزيل
-// =========================================================
 function printReport(reportId) {
   if (!reportId) {
-    alert("رقم التقرير غير صالحة.");
+    alert("رقم التقرير غير صالح.");
     return;
   }
   const printWindow = window.open(`carrosserie-report.html?id=${reportId}`, '_blank');
@@ -330,7 +312,8 @@ function printReport(reportId) {
     alert("يرجى السماح بالنوافذ المنبثقة (Pop-ups) لفتح التقرير للطباعة.");
   }
 }
-  </script>
+
+</script>
 </body>
 
 </html>
