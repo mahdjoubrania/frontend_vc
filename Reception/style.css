@@ -17,6 +17,9 @@ body {
 /* Navbar للموبايل فقط */
 .mobile-navbar {
   display: none;
+  position: sticky;
+  top: 0;
+  z-index: 1030;
 }
 
 .sidebar-overlay {
@@ -42,48 +45,6 @@ body {
   min-height: 100vh;
   width: calc(100% - var(--sidebar-width));
   flex-grow: 1;
-}
-
-/* Mobile & Small Screen Styles (Under 992px) */
-@media (max-width: 991.98px) {
-  .mobile-navbar {
-    display: flex !important;
-    position: sticky;
-    top: 0;
-    z-index: 1020;
-  }
-
-  .sidebar {
-    position: fixed;
-    top: 0;
-    left: -270px;
-    height: 100vh;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-    transition: left 0.3s ease-in-out;
-  }
-
-  .sidebar.show {
-    left: 0;
-  }
-
-  .sidebar-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(15, 23, 42, 0.4);
-    backdrop-filter: blur(4px);
-    z-index: 1025;
-  }
-
-  .sidebar-overlay.show {
-    display: block;
-  }
-
-  .main-content {
-    width: 100%;
-  }
 }
 
 /* Elements UI */
@@ -187,6 +148,16 @@ body {
   white-space: nowrap;
 }
 
+/* Search Box */
+.search-box {
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.search-box:focus-within {
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.12);
+}
+
 /* Calendar Grid */
 .calendar-grid {
   display: grid;
@@ -208,15 +179,13 @@ body {
   padding: 6px;
   font-size: 11px;
 }
-/* تحسين الهيدر في الهواتف */
-.mobile-navbar {
-  position: sticky;
-  top: 0;
-  z-index: 1030;
-}
 
-/* القائمة الجانبية وتغطية الشاشة */
+/* القائمة الجانبية وتغطية الشاشة على الهاتف والشاشات المتوسطة */
 @media (max-width: 991.98px) {
+  .mobile-navbar {
+    display: flex !important;
+  }
+
   .sidebar {
     position: fixed;
     top: 0;
@@ -226,21 +195,21 @@ body {
     z-index: 1045;
     background-color: #fff;
     transition: left 0.3s ease-in-out;
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
   }
-  
+
   .sidebar.show {
     left: 0;
   }
 
   .sidebar-overlay {
-    display: none;
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(4px);
     z-index: 1040;
   }
 
@@ -249,6 +218,7 @@ body {
   }
 
   .main-content {
+    width: 100%;
     padding: 1rem !important;
   }
 }
@@ -265,7 +235,6 @@ body {
   font-size: 0.875rem;
 }
 
-
 @media (max-width: 576px) {
   .kpi-card h3 {
     font-size: 1.25rem !important;
@@ -276,6 +245,16 @@ body {
     font-size: 14px !important;
   }
 }
+
+/* إمكانية الوصول: إبراز التركيز عبر لوحة المفاتيح */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+.nav-link:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
 .fs-11 { font-size: 11px; }
 .fs-12 { font-size: 12px; }
 .fs-13 { font-size: 13px; }

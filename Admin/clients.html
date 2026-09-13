@@ -306,6 +306,7 @@
 </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="auth-guard.js"></script>
 
   
 
@@ -316,10 +317,8 @@
 
   // دالة مساعدة للحصول على الهيدرز مع الـ Token
   function getAuthHeaders() {
-    const userSessionRaw = localStorage.getItem('verifcar_admin_user');
-    const userSession = userSessionRaw ? JSON.parse(userSessionRaw) : null;
-    const token = userSession ? (userSession.token || userSession.accessToken) : '';
-    
+    const token = localStorage.getItem('token') || '';
+
     return {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
@@ -346,6 +345,23 @@
   }
 
   // عرض الجدول
+  // تنظيف أي نص قبل إدراجه كـ innerHTML (يمنع حقن HTML)
+  function escapeHtml(str) {
+    return String(str ?? '').replace(/[&<>"']/g, (ch) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[ch]));
+  }
+
+  // تنظيف أي نص قبل إدراجه داخل onclick="...('...')" (يمنع كسر السلسلة النصية وتنفيذ JS تعسفي)
+  function escapeJsAttr(str) {
+    return String(str ?? '')
+      .replace(/\\/g, '\\\\')
+      .replace(/'/g, "\\'")
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
   function renderClientsTable(clients) {
     const body = document.getElementById('clients-table-body');
     if (!body) return;
@@ -365,10 +381,10 @@
         vehiclesHtml = c.vehicles.map(v => `
           <div class="d-flex align-items-center justify-content-between gap-2 mb-1 p-1 bg-light rounded border">
             <div>
-              <span class="fw-medium text-dark">${v.make} ${v.model || ''}</span>
-              <span class="badge bg-white text-dark border px-2 py-0 fs-12 ms-1">${v.license_plate || 'Sans Immatriculation'}</span>
+              <span class="fw-medium text-dark">${escapeHtml(v.make)} ${escapeHtml(v.model || '')}</span>
+              <span class="badge bg-white text-dark border px-2 py-0 fs-12 ms-1">${escapeHtml(v.license_plate || 'Sans Immatriculation')}</span>
             </div>
-            <button class="btn btn-sm text-warning p-0 ms-2" title="Modifier Véhicule" onclick="openEditVehicleModal(${v.id}, '${v.make}', '${v.model || ''}', '${v.license_plate || ''}', '${v.vin_number || ''}')">
+            <button class="btn btn-sm text-warning p-0 ms-2" title="Modifier Véhicule" onclick="openEditVehicleModal(${v.id}, '${escapeJsAttr(v.make)}', '${escapeJsAttr(v.model || '')}', '${escapeJsAttr(v.license_plate || '')}', '${escapeJsAttr(v.vin_number || '')}')">
               <i class="bi bi-pencil-fill"></i>
             </button>
           </div>
@@ -380,17 +396,17 @@
           <td class="ps-4">
             <div class="d-flex align-items-center gap-3">
               <div class="avatar bg-primary-subtle text-primary fw-bold rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; font-size: 14px;">
-                ${initials}
+                ${escapeHtml(initials)}
               </div>
               <div>
-                <div class="fw-semibold text-dark">${c.full_name || 'Client Inconnu'}</div>
+                <div class="fw-semibold text-dark">${escapeHtml(c.full_name || 'Client Inconnu')}</div>
                 <small class="text-muted">ID: #${c.id}</small>
               </div>
             </div>
           </td>
           <td>
-            <a href="tel:${c.phone}" class="text-decoration-none text-secondary fw-medium">
-              <i class="bi bi-telephone text-muted me-1"></i> ${c.phone || 'N/A'}
+            <a href="tel:${encodeURIComponent(c.phone || '')}" class="text-decoration-none text-secondary fw-medium">
+              <i class="bi bi-telephone text-muted me-1"></i> ${escapeHtml(c.phone || 'N/A')}
             </a>
           </td>
           <td>${vehiclesHtml}</td>
@@ -401,7 +417,7 @@
             <button class="btn btn-sm btn-light border rounded-2 me-1 text-success" title="Ajouter véhicule" onclick="openAddVehicleModal(${c.id})">
               <i class="bi bi-car-front"></i> +
             </button>
-            <button class="btn btn-sm btn-light border rounded-2 me-1 text-primary" title="Modifier" onclick="openEditModal(${c.id}, '${c.full_name}', '${c.phone}')">
+            <button class="btn btn-sm btn-light border rounded-2 me-1 text-primary" title="Modifier" onclick="openEditModal(${c.id}, '${escapeJsAttr(c.full_name)}', '${escapeJsAttr(c.phone)}')">
               <i class="bi bi-pencil"></i>
             </button>
             <button class="btn btn-sm btn-light border rounded-2 text-danger" title="Supprimer" onclick="openDeleteChoiceModal(${c.id})">
@@ -576,7 +592,7 @@
     const vinNumber = document.getElementById('veh-vin').value;
 
     try {
-      const res = await fetch(`${API_URL}/admin/vehicles`, {
+      const res = await fetch(`${API_URL}/vehicules/vehicules`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({ clientId, make, model, licensePlate, vinNumber })
@@ -607,7 +623,7 @@
     const vinNumber = document.getElementById('edit-veh-vin').value;
 
     try {
-      const res = await fetch(`${API_URL}/admin/vehicles/${vehicleId}`, {
+      const res = await fetch(`${API_URL}/vehicules/vehicles/${vehicleId}`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify({ make, model, licensePlate, vinNumber })
@@ -632,7 +648,7 @@
     if (!confirm('Voulez-vous vraiment supprimer cette véhicule ?')) return;
 
     try {
-      const res = await fetch(`${API_URL}/admin/vehicles/${vehicleId}`, {
+      const res = await fetch(`${API_URL}/vehicules/vehicles/${vehicleId}`, {
         method: 'DELETE',
         headers: getAuthHeaders()
       });

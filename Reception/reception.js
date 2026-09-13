@@ -17,6 +17,13 @@ function getAuthToken() {
   return localStorage.getItem('token') || '';
 }
 
+// تنظيف أي نص قبل إدراجه كـ innerHTML (يمنع حقن HTML من بيانات العملاء/المركبات)
+function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, (ch) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[ch]));
+}
+
 function checkAuth() {
   const rawUser = localStorage.getItem('verifcar_reception_user') 
                || localStorage.getItem('verifcar_user') 
@@ -168,14 +175,14 @@ function renderAppointmentsTable(data) {
 
     return `
       <tr>
-        <td class="fw-bold text-dark">${clientName}</td>
-        <td>${phone}</td>
+        <td class="fw-bold text-dark">${escapeHtml(clientName)}</td>
+        <td>${escapeHtml(phone)}</td>
         <td>
-          <div class="fw-semibold">${vehicle}</div>
-          <small class="text-muted">${licensePlate}</small>
+          <div class="fw-semibold">${escapeHtml(vehicle)}</div>
+          <small class="text-muted">${escapeHtml(licensePlate)}</small>
         </td>
         <td><i class="bi bi-clock me-1 text-muted"></i>${timeFormatted}</td>
-        <td><span class="badge bg-light text-dark border">${service}</span></td>
+        <td><span class="badge bg-light text-dark border">${escapeHtml(service)}</span></td>
         <td id="chrono-${item.id}">${getRemainingTime(item)}</td>
         <td>
           <select class="form-select form-select-sm" onchange="updatePaymentStatus('${item.id}', this.value)">
@@ -408,7 +415,7 @@ function setupEventListeners() {
       const phone = e.target.value.trim();
       if (phone.length >= 8) {
         try {
-          const res = await fetch(`${API_URL}/clients/search?query=${encodeURIComponent(phone)}`, {
+          const res = await fetch(`${API_URL}/admin/clients/search?query=${encodeURIComponent(phone)}`, {
             headers: { 'Authorization': `Bearer ${getAuthToken()}` }
           });
           if (res.ok) {

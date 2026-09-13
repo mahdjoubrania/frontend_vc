@@ -3,19 +3,121 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VerifCar - Admin Dashboard</title>
+  <title>VerifCar - Espace Réception & Inspection</title>
+
   <link href="../img/IMG_7697.png" rel="icon">
-  <link href="../img/IMG_7697.png" rel="apple-touch-icon">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
+  
+  <style>
+    /* التنسيق الجمالي والتفاعلي للواجهة */
+:root {
+  --primary-gradient: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+  --card-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+}
+
+.bg-gradient-primary {
+  background: var(--primary-gradient) !important;
+}
+
+.module-card {
+  border: none !important;
+  border-radius: 16px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  background: #ffffff;
+}
+
+.module-card:hover {
+  transform: translateY(-8px) scale(1.01);
+  box-shadow: 0 15px 35px rgba(13, 110, 253, 0.15) !important;
+}
+
+.module-card .display-4 {
+  transition: transform 0.3s ease;
+}
+
+.module-card:hover .display-4 {
+  transform: scale(1.15);
+}
+
+/* تحسين شكل جدول الفحص الخارجي */
+.custom-table th {
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.custom-chk {
+  width: 1.35em !important;
+  height: 1.35em !important;
+  cursor: pointer;
+  border-radius: 6px !important;
+  border: 2px solid #adb5bd;
+  transition: all 0.2s ease;
+}
+
+.custom-chk:checked {
+  background-color: #dc3545 !important;
+  border-color: #dc3545 !important;
+  box-shadow: 0 0 8px rgba(220, 53, 69, 0.4);
+}
+
+.hover-scale {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-scale:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(25, 135, 84, 0.3) !important;
+}
+
+.fs-11 { font-size: 0.72rem; }
+.fs-12 { font-size: 0.8rem; }
+.fs-13 { font-size: 0.85rem; }
+.fs-14 { font-size: 0.92rem; }
+    .module-card {
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      cursor: pointer;
+    }
+    .module-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+    }
+    .canvas-container {
+      position: relative;
+      display: inline-block;
+      width: 100%;
+      max-width: 700px;
+    }
+    #car-canvas {
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      cursor: crosshair;
+      width: 100%;
+      height: auto;
+      background-color: #f8f9fa;
+    }
+  </style>
 </head>
-<body class="bg-light">
-  <div id="dashboard-section" class="d-flex">    
-    <!-- Sidebar -->
-   <aside class="sidebar p-3 d-flex flex-column justify-content-between" id="sidebar">
+<body>
+
+<header class="mobile-navbar justify-content-between align-items-center px-3 py-2 bg-white border-bottom shadow-sm">
+  <div class="d-flex align-items-center gap-2">
+    <button class="btn btn-light border-0" id="sidebar-toggle-btn" type="button">
+      <i class="bi bi-list fs-3 text-dark"></i>
+    </button>
+    <img src="../img/IMG_7697.png" alt="VérifCar Logo" style="max-height: 38px; object-fit: contain;">
+  </div>
+  <div class="avatar bg-primary text-white rounded-circle shadow-sm d-flex align-items-center justify-content-center" style="width: 34px; height: 34px; font-size: 13px;" id="mobile-avatar">RC</div>
+</header>
+
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+<div class="d-flex">
+  <!-- Sidebar -->
+    <aside class="sidebar p-3 d-flex flex-column justify-content-between" id="sidebar">
       <div>
         <div class="d-flex align-items-center justify-content-between mb-4 px-2">
           <div class="d-flex align-items-center gap-2">
@@ -31,13 +133,14 @@
         <div class="menu-label">WORKSPACE</div>
         <ul class="nav nav-pills flex-column mb-3">
           <li class="nav-item">
+          <li class="nav-item">
             <a href="index.html" class="nav-link active">
-              <i class="bi bi-grid-1x2 me-2"></i> Tableau de bord
+              <i class="bi bi-tools me-2"></i> Vérification
             </a>
           </li>
           <li class="nav-item">
-            <a href="verification.html" class="nav-link text-secondary">
-              <i class="bi bi-tools me-2"></i> Vérification
+            <a href="les-rnd.html" class="nav-link text-secondary">
+              <i class="bi bi-grid-1x2 me-2"></i> Tableau de bord
             </a>
           </li>
           <li class="nav-item">
@@ -60,111 +163,110 @@
       </div>
     </aside>
 
-    <!-- Main Content -->
-    <main class="main-content flex-grow-1 p-4">
-      <header class="d-flex justify-content-between align-items-center mb-4">
-        <div class="d-flex align-items-center gap-2">
-
-          <button class="btn btn-white border shadow-sm btn-sm d-lg-none" id="mobile-sidebar-toggle">
-            <i class="bi bi-list fs-5"></i>
-          </button>
-          <div class="text-muted fs-14">
-            Workspace > <span class="fw-bold text-dark">Tableau de bord</span>
-          </div>
+  <!-- Main Content Area -->
+  <main class="main-content flex-grow-1 p-3 p-lg-4">
+    
+    
+    <!-- اختيار موعد الفحص (جدول appointments + clients + vehicules) -->
+    <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
+      <div class="row align-items-center">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Sélectionner un rendez-vous (Appointment ID) :</label>
+          <select id="select-rdv" class="form-select" onchange="onAppointmentSelect(this.value)">
+            <option value="">-- Choisir un RDV (READY_FOR_WORKSHOP / IN_PROGRESS) --</option>
+          </select>
         </div>
-      </header>
-
-      <div class="mb-4">
-        <p class="text-uppercase text-muted fw-bold mb-1 fs-12">VERIFCAR 2026</p>
-        <h2 class="fw-bold text-dark">Welcome back, <span class="text-primary" id="admin-welcome">...</span></h2>
-        <p class="text-muted">Aperçu rapide de l'activité du système, des revenus et des opérations en cours.</p>
-      </div>
-
-<!-- KPI Cards (خاصة بالتقني فقط - 3 بطاقات دون مبالغ مالية) -->
-      <div class="row g-3 mb-4">
-        <div class="col-12 col-md-4">
-          <div class="card card-kpi p-3 border-0 shadow-sm rounded-4">
-            <div class="d-flex align-items-center justify-content-between">
-              <div>
-                <span class="text-muted fs-12 fw-semibold">RDV Aujourd'hui</span>
-                <h3 class="fw-bold my-1 text-dark" id="stat-today-count">0</h3>
-                <small class="text-muted fs-12">À traiter aujourd'hui</small>
-              </div>
-              <div class="kpi-icon bg-primary-subtle text-primary rounded-4 d-flex align-items-center justify-content-center">
-                <i class="bi bi-calendar-check fs-3"></i>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-12 col-md-4">
-          <div class="card card-kpi p-3 border-0 shadow-sm rounded-4">
-            <div class="d-flex align-items-center justify-content-between">
-              <div>
-                <span class="text-muted fs-12 fw-semibold">En Atelier</span>
-                <h3 class="fw-bold my-1 text-dark" id="stat-in-workshop">0</h3>
-                <small class="text-warning fw-bold fs-12"><i class="bi bi-clock-history me-1"></i>Inspection en cours</small>
-              </div>
-              <div class="kpi-icon bg-warning-subtle text-warning rounded-4 d-flex align-items-center justify-content-center">
-                <i class="bi bi-tools fs-3"></i>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-12 col-md-4">
-          <div class="card card-kpi p-3 border-0 shadow-sm rounded-4">
-            <div class="d-flex align-items-center justify-content-between">
-              <div>
-                <span class="text-muted fs-12 fw-semibold">Inspections Terminées</span>
-                <h3 class="fw-bold my-1 text-dark" id="stat-completed">0</h3>
-                <small class="text-success fw-bold fs-12"><i class="bi bi-check-circle me-1"></i>Terminées ce mois</small>
-              </div>
-              <div class="kpi-icon bg-success-subtle text-success rounded-4 d-flex align-items-center justify-content-center">
-                <i class="bi bi-file-earmark-check fs-3"></i>
-              </div>
-            </div>
+        <div class="col-md-6" id="selected-rdv-info">
+          <div class="p-2 border rounded bg-light">
+            <small class="text-muted d-block">Client: <b id="info-client-name">--</b> | Tél: <span id="info-client-phone">--</span></small>
+            <small class="text-muted d-block">Véhicule: <b id="info-vehicle-name">--</b> | Matricule: <span id="info-vehicle-plate">--</span> | VIN: <span id="info-vehicle-vin">--</span></small>
           </div>
         </div>
       </div>
-
-  
-      <!-- قسم جدول مواعيد اليوم -->
-<div class="card border-0 shadow-sm rounded-4 p-4 mt-4">
-  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-    <div>
-      <h5 class="fw-bold text-dark m-0">Rendez-vous d'aujourd'hui</h5>
-      <small class="text-muted">Liste des rendez-vous prévus pour aujourd'hui</small>
     </div>
-  </div>
 
-  <div class="table-responsive">
-    <table class="table table-hover align-middle mb-0">
-      <thead class="table-light">
-        <tr>
-          <th>N° RDV</th>
-          <th>CLIENT</th>
-          <th>VÉHICULE</th>
-          <th>DATE & HEURE</th>
-          <th>STATUT</th>
-         
-        </tr>
-      </thead>
-      <tbody id="recent-tickets-body">
-        
-      </tbody>
-    </table>
+  <!-- شبكة وحدات الفحص -->
+<div id="modules-selection-view">
+  <h3 class="fw-bold mb-4">Modules de Contrôle Technique</h3>
+  <div class="row g-4">
+    
+    <!-- Scanner -->
+    <div class="col-md-4">
+      <div class="card h-100 shadow-sm border-0 text-center p-4 module-card" onclick="openModule('scanner')">
+        <div class="display-4 text-primary mb-3"><i class="fa-solid fa-laptop-code"></i></div>
+        <h5 class="fw-bold">Scanner Diagnostique</h5>
+        <p class="text-muted small mb-0">Codes DTC, calculateur, voyants allumés.</p>
+      </div>
+    </div>
+
+    <!-- Moteur -->
+    <div class="col-md-4">
+      <div class="card h-100 shadow-sm border-0 text-center p-4 module-card" onclick="openModule('moteur')">
+        <div class="display-4 text-warning mb-3"><i class="fa-solid fa-car-battery"></i></div>
+        <h5 class="fw-bold">Moteur & Niveaux</h5>
+        <p class="text-muted small mb-0">Niveaux d'huile, fuites, bruits, fumée d'échappement.</p>
+      </div>
+    </div>
+
+    <!-- Suspension -->
+    <div class="col-md-4">
+      <div class="card h-100 shadow-sm border-0 text-center p-4 module-card" onclick="openModule('suspension')">
+        <div class="display-4 text-info mb-3"><i class="fa-solid fa-truck-monster"></i></div>
+        <h5 class="fw-bold">Suspension & Train</h5>
+        <p class="text-muted small mb-0">Amortisseurs, rotules, pneumatiques, corrosion.</p>
+      </div>
+    </div>
+
+    <!-- Tôle (Elements & Drawing) -->
+    <div class="col-md-4">
+      <div class="card h-100 shadow-sm border-0 text-center p-4 module-card" onclick="openModule('tole')">
+        <div class="display-4 text-danger mb-3"><i class="fa-solid fa-spray-can"></i></div>
+        <h5 class="fw-bold">Tôle & Carrosserie</h5>
+        <p class="text-muted small mb-0">Éléments de carrosserie et schéma interactif (Canvas).</p>
+      </div>
+    </div>
+
+    <!-- Kilométrage -->
+    <div class="col-md-4">
+      <div class="card h-100 shadow-sm border-0 text-center p-4 module-card" onclick="openModule('kilometrage')">
+        <div class="display-4 text-success mb-3"><i class="fa-solid fa-gauge"></i></div>
+        <h5 class="fw-bold">Kilométrage & Conformation</h5>
+        <p class="text-muted small mb-0">Relevé de kilométrage affiché et conformité.</p>
+      </div>
+    </div>
+
+    <!-- Observations Générales & Rapport Mécanique -->
+    <div class="col-md-4">
+      <div class="card h-100 shadow-sm border-0 text-center p-4 module-card" onclick="openModule('general')">
+        <div class="display-4 mb-3" style="color: #6f42c1;">
+          <i class="fa-solid fa-clipboard-check"></i>
+        </div>
+        <h5 class="fw-bold">Observations Générales</h5>
+        <p class="text-muted small mb-0">Nombre de clés, rapport mécanique et équipements de secours.</p>
+      </div>
+    </div>
+
   </div>
 </div>
 
-    </main>
+<!-- واجهة النموذج النشط (تأكد من وجودها تحت قسم البطاقات) -->
+<div id="active-module-view" class="d-none">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold mb-0" id="active-module-title">Titre du Module</h3>
+    <button type="button" class="btn btn-outline-secondary rounded-3" onclick="closeModule()">
+      <i class="bi bi-arrow-left me-1"></i> Retour aux modules / العودة للوحدات
+    </button>
   </div>
+  <div class="card border-0 shadow-sm rounded-4 p-4 bg-white" id="module-content-body">
+    <!-- يتم إدراج نموذج الفحص هنا عبر الجافاسكربت -->
+  </div>
+</div> 
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="technician.js"></script>
+  </main>
+</div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="verif.js"></script>
 
-
- 
 </body>
 </html>

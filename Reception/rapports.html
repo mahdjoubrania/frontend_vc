@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VerifCar - Rapports D'Inspection</title>
+  <title>VerifCar - Rapports d'Inspection</title>
   <link href="../img/IMG_7697.png" rel="icon">
   <link href="../img/IMG_7697.png" rel="apple-touch-icon">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -13,51 +13,55 @@
 </head>
 <body class="bg-light">
 
+<!-- Mobile Top Navigation Bar -->
+<header class="mobile-navbar justify-content-between align-items-center px-3 py-2 bg-white border-bottom shadow-sm">
+  <div class="d-flex align-items-center gap-2">
+    <button class="btn btn-light border-0" id="sidebar-toggle-btn" type="button">
+      <i class="bi bi-list fs-3 text-dark"></i>
+    </button>
+    <img src="../img/IMG_7697.png" alt="VerifCar Logo" style="max-height: 38px; object-fit: contain;">
+  </div>
+  <div class="avatar bg-primary text-white rounded-circle shadow-sm d-flex align-items-center justify-content-center" style="width: 34px; height: 34px; font-size: 13px;" id="mobile-avatar">RC</div>
+</header>
+
+<!-- Sidebar Overlay -->
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+
   <div id="dashboard-section" class="d-flex">
-     <aside class="sidebar p-3 d-flex flex-column justify-content-between">
+     <aside id="sidebar" class="sidebar p-3 d-flex flex-column justify-content-between">
       <div>
         <div class="d-flex align-items-center gap-2 mb-4 px-2">
           <img src="../img/IMG_7697.png" alt="VérifCar Logo" style="max-height: 45px; object-fit: contain;">
-          <div><h6 class="fw-bold mb-0 text-dark">VerifCar</h6><small class="text-muted fs-12">v1.0 - Admin</small></div>
+          <div><h6 class="fw-bold mb-0 text-dark">VerifCar</h6><small class="text-muted fs-12">v1.0 - Reception</small></div>
         </div>
-        
+
           <button class="btn-close d-lg-none" id="sidebar-close-btn"></button>
 
         <div class="menu-label">RECEPTION</div>
         <ul class="nav nav-pills flex-column mb-3">
           <li class="nav-item"><a href="index.html" class="nav-link text-secondary"><i class="bi bi-grid-1x2 me-2"></i> Tableau de bord</a></li>
           <li class="nav-item"><a href="clients.html" class="nav-link text-secondary"><i class="bi bi-car-front me-2"></i> Clients & Véhicules</a></li>
-          <li class="nav-item"><a href="rapports.html" class="nav-link active"><i class="bi bi-file-earmark-bar-graph me-2"></i> Rapports D'Inspection</a></li>
-           <li class="nav-item"><a href="toutsrnd.html" class="nav-link text-secondary"><i class="bi bi-file-earmark-bar-graph me-2"></i>les Rendez-vous</a></li>
+          <li class="nav-item"><a href="rapports.html" class="nav-link active"><i class="bi bi-file-earmark-bar-graph me-2"></i> Rapports d'Inspection</a></li>
+           <li class="nav-item"><a href="toutsrnd.html" class="nav-link text-secondary"><i class="bi bi-file-earmark-bar-graph me-2"></i> Les Rendez-vous</a></li>
         </ul>
       </div>
 
             <div class="user-profile p-2 rounded d-flex align-items-center justify-content-between border-top pt-3">
         <div class="d-flex align-items-center gap-2">
-          <div class="avatar bg-primary text-white rounded-circle" id="admin-avatar">--</div>
+          <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" id="admin-avatar" style="width: 35px; height: 35px;">--</div>
           <div>
             <h6 class="mb-0 fw-bold fs-14" id="admin-name">Chargement...</h6>
-            <small class="text-muted fs-12">Reception</small>
+            <small class="text-muted fs-12">Réception</small>
           </div>
         </div>
         <button id="logout-btn" class="btn btn-link text-danger p-0 fs-5" title="Déconnexion"><i class="bi bi-box-arrow-right"></i></button>
       </div>
     </aside>
 
-    <main class="main-content flex-grow-1 p-4">
-
-<header class="mobile-navbar d-lg-none d-flex justify-content-between align-items-center px-3 py-2 bg-white border-bottom shadow-sm">
-  <div class="d-flex align-items-center gap-2">
-    <button class="btn btn-light border-0" id="mobile-sidebar-toggle" type="button">
-      <i class="bi bi-list fs-3 text-dark"></i>
-    </button>
-    <img src="../img/IMG_7697.png" alt="VerifCar Logo" style="max-height: 38px;">
-  </div>
-  <div class="avatar bg-primary text-white rounded-circle shadow-sm d-flex align-items-center justify-content-center" style="width: 34px; height: 34px; font-size: 13px;">RC</div>
-</header>
+    <main class="main-content flex-grow-1 p-3 p-lg-4">
 
       <div class="mb-4">
-        <h2 class="fw-bold text-dark">Rapports d'Inspections</h2>
+        <h2 class="fw-bold text-dark">Rapports d'Inspection</h2>
         <p class="text-muted">Historique des fiches d'inspection réalisées par les techniciens.</p>
       </div>
 
@@ -84,52 +88,52 @@
   <script src="reception.js"></script>
 <script>
    function loadAdminProfile() {
-    const userSessionRaw = localStorage.getItem('verifcar_admin_user');
+    const userSessionRaw = localStorage.getItem('verifcar_reception_user')
+                        || localStorage.getItem('verifcar_user')
+                        || localStorage.getItem('verifcar_admin_user');
     const userSession = userSessionRaw ? JSON.parse(userSessionRaw) : null;
 
     if (userSession) {
-      const adminFullName = userSession.fullName || userSession.full_name || 'Admin';
+      const adminFullName = userSession.fullName || userSession.full_name || 'Utilisateur';
       if (document.getElementById('admin-name')) {
         document.getElementById('admin-name').innerText = adminFullName;
       }
       if (document.getElementById('admin-avatar')) {
         document.getElementById('admin-avatar').innerText = adminFullName.charAt(0).toUpperCase();
       }
+      if (document.getElementById('mobile-avatar')) {
+        document.getElementById('mobile-avatar').innerText = adminFullName.charAt(0).toUpperCase();
+      }
     } else {
-      if (document.getElementById('admin-name')) document.getElementById('admin-name').innerText = 'Administrateur';
-      if (document.getElementById('admin-avatar')) document.getElementById('admin-avatar').innerText = 'AD';
+      if (document.getElementById('admin-name')) document.getElementById('admin-name').innerText = 'Réception';
+      if (document.getElementById('admin-avatar')) document.getElementById('admin-avatar').innerText = 'RC';
+      if (document.getElementById('mobile-avatar')) document.getElementById('mobile-avatar').innerText = 'RC';
     }
   }
 
   document.addEventListener('DOMContentLoaded', () => {
 
     loadAdminProfile();
-  // إنشاء الطبقة الخلفية (Overlay) عند فتح القائمة في الهاتف
-  let overlay = document.querySelector('.sidebar-overlay');
-  if (!overlay) {
-    overlay = document.createElement('div');
-    overlay.className = 'sidebar-overlay';
-    document.body.appendChild(overlay);
-  }
 
-  const sidebar = document.querySelector('.sidebar');
-  const toggleBtn = document.getElementById('mobile-sidebar-toggle');
-  const closeBtn = document.getElementById('sidebar-close-btn');
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('sidebar-toggle-btn');
+    const closeBtn = document.getElementById('sidebar-close-btn');
+    const overlay = document.getElementById('sidebar-overlay');
 
-  function openSidebar() {
-    sidebar?.classList.add('show');
-    overlay?.classList.add('show');
-  }
+    function openSidebar() {
+      sidebar?.classList.add('show');
+      overlay?.classList.add('show');
+    }
 
-  function closeSidebar() {
-    sidebar?.classList.remove('show');
-    overlay?.classList.remove('show');
-  }
+    function closeSidebar() {
+      sidebar?.classList.remove('show');
+      overlay?.classList.remove('show');
+    }
 
-  toggleBtn?.addEventListener('click', openSidebar);
-  closeBtn?.addEventListener('click', closeSidebar);
-  overlay?.addEventListener('click', closeSidebar);
-});
+    toggleBtn?.addEventListener('click', openSidebar);
+    closeBtn?.addEventListener('click', closeSidebar);
+    overlay?.addEventListener('click', closeSidebar);
+  });
 </script>
 
 

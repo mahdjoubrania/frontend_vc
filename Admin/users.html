@@ -219,6 +219,14 @@
   let usersCache = [];
   let deleteUserId = null;
 
+  function getAuthHeaders() {
+    const token = localStorage.getItem('token') || '';
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    };
+  }
+
   function loadAdminProfile() {
     const userSessionRaw = localStorage.getItem('verifcar_admin_user');
     const userSession = userSessionRaw ? JSON.parse(userSessionRaw) : null;
@@ -280,7 +288,9 @@
 
   async function loadUsers() {
     try {
-      const res = await fetch(`${API_URL}/users`);
+      const res = await fetch(`${API_URL}/users`, {
+        headers: getAuthHeaders()
+      });
       if (res.ok) {
         usersCache = await res.json();
         renderTable(usersCache);
@@ -353,7 +363,7 @@
       try {
         const res = await fetch(`${API_URL}/users`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
           body: JSON.stringify(payload)
         });
         const data = await res.json();
@@ -385,7 +395,7 @@
       try {
         const res = await fetch(`${API_URL}/users/${userId}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
           body: JSON.stringify(payload)
         });
         const data = await res.json();
@@ -406,7 +416,8 @@
       if (!deleteUserId) return;
       try {
         const res = await fetch(`${API_URL}/users/${deleteUserId}`, {
-          method: 'DELETE'
+          method: 'DELETE',
+          headers: getAuthHeaders()
         });
         const data = await res.json();
         if (res.ok) {

@@ -6,14 +6,7 @@ let rawRevenueData = [];
 
 // الحصول على توكن التوثيق من الجلسة
 function getAuthToken() {
-  const userSessionRaw = localStorage.getItem('verifcar_admin_user');
-  if (!userSessionRaw) return '';
-  try {
-    const userSession = JSON.parse(userSessionRaw);
-    return userSession.token || userSession.accessToken || '';
-  } catch (e) {
-    return '';
-  }
+  return localStorage.getItem('token') || '';
 }
 
 document.addEventListener('DOMContentLoaded', () => {

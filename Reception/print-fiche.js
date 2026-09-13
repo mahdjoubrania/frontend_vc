@@ -1,6 +1,17 @@
 const API_URL = 'https://romantic-enjoyment-production-f458.up.railway.app/api';
 
 document.addEventListener('DOMContentLoaded', () => {
+  const rawUser = localStorage.getItem('verifcar_reception_user')
+               || localStorage.getItem('verifcar_user')
+               || localStorage.getItem('verifcar_admin_user');
+  const token = localStorage.getItem('token') || '';
+
+  if (!rawUser || !token) {
+    alert('Accès non autorisé.');
+    window.location.href = '../Auth/index.html';
+    return;
+  }
+
   loadAppointmentDetails();
 });
 
@@ -14,7 +25,10 @@ async function loadAppointmentDetails() {
   }
 
   try {
-    const res = await fetch(`${API_URL}/admin/appointments`);
+    const token = localStorage.getItem('token') || '';
+    const res = await fetch(`${API_URL}/admin/appointments`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
     if (!res.ok) throw new Error('فشل جلب البيانات من السيرفر');
 
     const appointments = await res.json();

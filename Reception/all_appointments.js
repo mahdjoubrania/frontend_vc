@@ -16,6 +16,13 @@ function getAuthToken() {
   return localStorage.getItem('token') || '';
 }
 
+// تنظيف أي نص قبل إدراجه كـ innerHTML (يمنع حقن HTML من بيانات العملاء/المركبات)
+function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, (ch) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[ch]));
+}
+
 function checkAuth() {
   const rawUser = localStorage.getItem('verifcar_reception_user') 
                || localStorage.getItem('verifcar_user') 
@@ -130,17 +137,17 @@ function renderAppointmentsTable(data) {
 
     return `
       <tr>
-        <td class="fw-bold text-dark">${clientName}</td>
-        <td>${phone}</td>
+        <td class="fw-bold text-dark">${escapeHtml(clientName)}</td>
+        <td>${escapeHtml(phone)}</td>
         <td>
-          <div class="fw-semibold">${vehicle}</div>
-          <small class="text-muted">${licensePlate}</small>
+          <div class="fw-semibold">${escapeHtml(vehicle)}</div>
+          <small class="text-muted">${escapeHtml(licensePlate)}</small>
         </td>
         <td>
           <div><i class="bi bi-calendar-event me-1 text-muted"></i>${dateFormatted}</div>
           <small class="text-muted"><i class="bi bi-clock me-1"></i>${timeFormatted}</small>
         </td>
-        <td><span class="badge bg-light text-dark border">${service}</span></td>
+        <td><span class="badge bg-light text-dark border">${escapeHtml(service)}</span></td>
         <td class="text-end">
           <button class="btn btn-sm btn-outline-primary me-1" title="Imprimer Fiche" onclick="printAppointment('${item.id}')">
             <i class="bi bi-printer"></i>
@@ -179,8 +186,8 @@ function renderCalendarView() {
     });
 
     let appListHtml = dayAppointments.map(a => `
-      <div class="bg-primary text-white fs-11 p-1 rounded mb-1 text-truncate" title="${a.client_name || a.title || a.clientName}">
-        ${a.client_name || a.title || a.clientName}
+      <div class="bg-primary text-white fs-11 p-1 rounded mb-1 text-truncate" title="${escapeHtml(a.client_name || a.title || a.clientName)}">
+        ${escapeHtml(a.client_name || a.title || a.clientName)}
       </div>
     `).join('');
 
