@@ -115,7 +115,7 @@ async function loadAppointments() {
   }
 
   try {
-    const response = await fetch(`${API_URL}/admin/appointments`, {
+    const response = await fetch(`${API_URL}/admin/appointments/today`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

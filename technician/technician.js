@@ -1,36 +1,94 @@
 const API_URL = 'https://romantic-enjoyment-production-f458.up.railway.app/api';
 
-let revenueChartInstance = null;
-let typeChartInstance = null;
-let rawRevenueData = []; 
+let appointmentsToday = [];
 
+// ==========================================
+// 1. قراءة التوكن وجلسة المستخدم
+// ==========================================
 function getAuthToken() {
-  const userSessionRaw = localStorage.getItem('verifcar_admin_user');
-  if (!userSessionRaw) return localStorage.getItem('token') || '';
-  try {
-    const userSession = JSON.parse(userSessionRaw);
-    return userSession.token || userSession.accessToken || localStorage.getItem('token') || '';
-  } catch (e) {
-    return localStorage.getItem('token') || '';
+  const sessionKeys = [
+    'verifcar_technician_user',
+    'verifcar_admin_user',
+    'verifcar_reception_user',
+    'verifcar_user'
+  ];
+
+  for (const key of sessionKeys) {
+    const sessionData = localStorage.getItem(key);
+    if (sessionData) {
+      try {
+        const parsed = JSON.parse(sessionData);
+        if (parsed.token) return parsed.token;
+        if (parsed.accessToken) return parsed.accessToken;
+      } catch (e) {
+        if (sessionData.length > 20) return sessionData;
+      }
+    }
   }
+
+  return localStorage.getItem('token') || '';
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  const userSessionRaw = localStorage.getItem('verifcar_admin_user');
-  const userSession = userSessionRaw ? JSON.parse(userSessionRaw) : null;
+function getUserSession() {
+  const sessionKeys = [
+    'verifcar_technician_user',
+    'verifcar_admin_user',
+    'verifcar_reception_user',
+    'verifcar_user'
+  ];
 
-  if (userSession) {
-    const adminFullName = userSession.fullName || userSession.full_name || 'Admin';
-    if (document.getElementById('admin-name')) document.getElementById('admin-name').innerText = adminFullName;
-    if (document.getElementById('admin-welcome')) document.getElementById('admin-welcome').innerText = adminFullName.split(' ')[0];
-    if (document.getElementById('admin-avatar')) document.getElementById('admin-avatar').innerText = adminFullName.charAt(0).toUpperCase();
+  for (const key of sessionKeys) {
+    const rawUser = localStorage.getItem(key);
+    if (rawUser) {
+      try {
+        return JSON.parse(rawUser);
+      } catch (e) {
+        return null;
+      }
+    }
+  }
+  return null;
+}
+
+// ==========================================
+// 2. فحص الصلاحية (ADMIN / TECHNICIAN فقط) + تعبئة الملف الشخصي
+// ==========================================
+function checkAuth() {
+  const userSession = getUserSession();
+  const token = getAuthToken();
+  const allowedRoles = ['ADMIN', 'TECHNICIAN', 'TECHNICIEN'];
+
+  if (!userSession || !token) {
+    alert('Accès non autorisé.');
+    window.location.href = '../Auth/index.html';
+    return false;
   }
 
-  initMobileSidebar();
-  setupFilterEvents();
-  loadDashboardSummary();
-});
+  const userRole = (userSession.role || '').toUpperCase();
+  if (!allowedRoles.includes(userRole)) {
+    alert('Accès non autorisé.');
+    window.location.href = '../Auth/index.html';
+    return false;
+  }
 
+  const fullName = userSession.fullName || userSession.full_name || 'Technicien';
+  const firstName = fullName.split(' ')[0];
+  const initial = fullName.charAt(0).toUpperCase();
+
+  const nameEl = document.getElementById('admin-name');
+  const welcomeEl = document.getElementById('admin-welcome');
+  const avatarEl = document.getElementById('admin-avatar');
+
+  if (nameEl) nameEl.innerText = fullName;
+  if (welcomeEl) welcomeEl.innerText = firstName;
+  if (avatarEl) avatarEl.innerText = initial;
+
+  return true;
+}
+
+// ==========================================
+// 3. القائمة الجانبية للهاتف
+// ==========================================
 function initMobileSidebar() {
   const sidebar = document.getElementById('sidebar');
   const toggleBtn = document.getElementById('mobile-sidebar-toggle');
@@ -59,244 +117,67 @@ function initMobileSidebar() {
   });
 }
 
-async function loadDashboardSummary() {
-  try {
-    const res = await fetch(`${API_URL}/admin/dashboard-summary`, {
-      headers: { 
-        'Authorization': `Bearer ${getAuthToken()}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    if (res.ok) {
-      const data = await res.json();
-      
-      if (data.users) {
-        const totalUsersElem = document.getElementById('total-users-count') || document.getElementById('total-users');
-        if (totalUsersElem) totalUsersElem.innerText = data.users.totalUsers || 0;
-        
-        if (document.getElementById('reception-count')) 
-          document.getElementById('reception-count').innerText = data.users.receptionCount || 0;
-        if (document.getElementById('tech-count')) 
-          document.getElementById('tech-count').innerText = data.users.techCount || 0;
-        if (document.getElementById('admin-count')) 
-          document.getElementById('admin-count').innerText = data.users.adminCount || 0;
-      }
-
-      if (data.revenue) {
-        rawRevenueData = data.revenue;
-        filterAndRenderRevenue();
-      }
-
-      if (data.inspectionTypes) {
-        initTypeChart(data.inspectionTypes);
-      }
-    }
-
-    loadRecentAppointments();
-
-  } catch (error) {
-    console.error("Erreur lors du chargement des statistiques:", error);
-  }
+function setupLogout() {
+  const logoutBtn = document.getElementById('logout-btn');
+  logoutBtn?.addEventListener('click', () => {
+    localStorage.clear();
+    window.location.href = '../Auth/index.html';
+  });
 }
 
-async function loadRecentAppointments() {
+// ==========================================
+// 4. جلب مواعيد اليوم وتحديث بطاقات KPI
+// ==========================================
+async function loadTodayAppointments() {
   try {
     const res = await fetch(`${API_URL}/admin/appointments/today`, {
-      headers: { 
+      headers: {
         'Authorization': `Bearer ${getAuthToken()}`,
         'Content-Type': 'application/json'
       }
     });
-    
+
     if (res.ok) {
-      const todayAppointments = await res.json();
-      const rawArray = Array.isArray(todayAppointments) ? todayAppointments : (todayAppointments.data || []);
-      
-      renderRecentTickets(rawArray);
-      updateTechnicianKPIs(rawArray); // <-- أضف هذا السطر هنا لتحديث العدادات
+      const data = await res.json();
+      appointmentsToday = Array.isArray(data) ? data : (data.data || []);
+      renderRecentTickets(appointmentsToday);
+      updateTechnicianKPIs(appointmentsToday);
+    } else if (res.status === 401 || res.status === 403) {
+      alert('Session expirée. Veuillez vous reconnecter.');
+      window.location.href = '../Auth/index.html';
     } else {
-      console.error("Erreur HTTP lors du chargement des RDV du jour:", res.status);
+      console.error('Erreur HTTP lors du chargement des RDV du jour:', res.status);
     }
   } catch (error) {
-    console.error("Erreur lors du chargement des rendez-vous du jour:", error);
+    console.error('Erreur lors du chargement des rendez-vous du jour:', error);
   }
 }
 
-function setupFilterEvents() {
-  const periodSelect = document.getElementById('revenue-period-select');
-  const applyBtn = document.getElementById('apply-date-btn');
+function updateTechnicianKPIs(tickets) {
+  if (!Array.isArray(tickets)) return;
 
-  periodSelect?.addEventListener('change', () => {
-    const customInputs = document.getElementById('custom-date-inputs');
-    if (periodSelect.value === 'custom') {
-      customInputs?.classList.remove('d-none');
-    } else {
-      customInputs?.classList.add('d-none');
-      filterAndRenderRevenue();
-    }
-  });
+  const todayCount = tickets.length;
+  const inWorkshopCount = tickets.filter(t =>
+    ['IN_PROGRESS', 'IN_WORKSHOP', 'EN_COURS'].includes((t.status || '').toUpperCase())
+  ).length;
+  const completedCount = tickets.filter(t =>
+    ['COMPLETED', 'TERMINE'].includes((t.status || '').toUpperCase())
+  ).length;
 
-  applyBtn?.addEventListener('click', filterAndRenderRevenue);
+  const todayElem = document.getElementById('stat-today-count');
+  const workshopElem = document.getElementById('stat-in-workshop');
+  const completedElem = document.getElementById('stat-completed');
+
+  if (todayElem) todayElem.innerText = todayCount;
+  if (workshopElem) workshopElem.innerText = inWorkshopCount;
+  if (completedElem) completedElem.innerText = completedCount;
 }
 
-function filterAndRenderRevenue() {
-  const period = document.getElementById('revenue-period-select')?.value || 'year';
-  const now = new Date();
-
-  if (period === 'year') {
-    const monthLabels = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
-    const totalPrixMonthly = new Array(12).fill(0);
-    const versementMonthly = new Array(12).fill(0);
-
-    rawRevenueData.forEach(item => {
-      const monthIndex = Number(item.month) - 1;
-      if (monthIndex >= 0 && monthIndex < 12) {
-        totalPrixMonthly[monthIndex] += Number(item.total_prix) || 0;
-        versementMonthly[monthIndex] += Number(item.total_versement) || 0;
-      }
-    });
-
-    renderRevenueChart(monthLabels, totalPrixMonthly, versementMonthly);
-    return;
-  }
-
-  let datesList = [];
-
-  if (period === 'month') {
-    const year = now.getFullYear();
-    const month = now.getMonth();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-    for (let day = 1; day <= daysInMonth; day++) {
-      const d = new Date(Date.UTC(year, month, day));
-      datesList.push(d.toISOString().split('T')[0]);
-    }
-  } else if (period === '15days') {
-    for (let i = 14; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(now.getDate() - i);
-      datesList.push(d.toISOString().split('T')[0]);
-    }
-  } else if (period === 'custom') {
-    const startVal = document.getElementById('start-date')?.value;
-    const endVal = document.getElementById('end-date')?.value;
-
-    if (startVal && endVal) {
-      let current = new Date(startVal);
-      const end = new Date(endVal);
-      while (current <= end) {
-        datesList.push(current.toISOString().split('T')[0]);
-        current.setDate(current.getDate() + 1);
-      }
-    }
-  }
-
-  const totalsMap = {};
-  const versementsMap = {};
-
-  datesList.forEach(d => {
-    totalsMap[d] = 0;
-    versementsMap[d] = 0;
-  });
-
-  rawRevenueData.forEach(item => {
-    const itemDate = item.date ? item.date.split('T')[0] : null;
-    if (itemDate && totalsMap.hasOwnProperty(itemDate)) {
-      totalsMap[itemDate] += Number(item.total_prix) || 0;
-      versementsMap[itemDate] += Number(item.total_versement) || 0;
-    }
-  });
-
-  const displayLabels = datesList.map(d => {
-    const parts = d.split('-');
-    return `${parts[2]}/${parts[1]}`;
-  });
-
-  const totalsData = datesList.map(d => totalsMap[d]);
-  const versementsData = datesList.map(d => versementsMap[d]);
-
-  renderRevenueChart(displayLabels, totalsData, versementsData);
-}
-
-function renderRevenueChart(labels, totalPrixData, versementData) {
-  const ctx = document.getElementById('revenueChart');
-  if (!ctx) return;
-
-  if (revenueChartInstance) revenueChartInstance.destroy();
-
-  revenueChartInstance = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: labels,
-      datasets: [
-        {
-          label: 'Total Prix (DZD)',
-          data: totalPrixData,
-          borderColor: '#de61f1',
-          backgroundColor: 'rgba(222, 97, 241, 0.08)',
-          fill: true,
-          tension: 0.4,
-          borderWidth: 3,
-          pointRadius: 4
-        },
-        {
-          label: 'Versement (DZD)',
-          data: versementData,
-          borderColor: '#56c8e8',
-          backgroundColor: 'rgba(86, 200, 232, 0.08)',
-          fill: true,
-          tension: 0.4,
-          borderWidth: 3,
-          pointRadius: 4
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { position: 'top' },
-        tooltip: {
-          callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw.toLocaleString()} DZD` }
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: { callback: val => val.toLocaleString() + ' DZD' }
-        }
-      }
-    }
-  });
-}
-
-function initTypeChart(inspectionTypes) {
-  const typeCtx = document.getElementById('typeChart');
-  if (!typeCtx) return;
-
-  if (typeChartInstance) typeChartInstance.destroy();
-
-  const labels = (inspectionTypes && inspectionTypes.length > 0) ? inspectionTypes.map(i => i.label) : ['Aucune donnée'];
-  const counts = (inspectionTypes && inspectionTypes.length > 0) ? inspectionTypes.map(i => i.count) : [1];
-
-  typeChartInstance = new Chart(typeCtx, {
-    type: 'doughnut',
-    data: {
-      labels: labels,
-      datasets: [{
-        data: counts,
-        backgroundColor: ['#2563eb', '#f59e0b', '#10b981', '#8b5cf6', '#ef4444'],
-        borderWidth: 0
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { position: 'bottom' } },
-      cutout: '70%'
-    }
-  });
+// تنظيف أي نص قبل إدراجه كـ innerHTML (يمنع حقن HTML من بيانات العملاء/المركبات)
+function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, (ch) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[ch]));
 }
 
 function renderRecentTickets(tickets) {
@@ -304,31 +185,29 @@ function renderRecentTickets(tickets) {
   if (!tableBody) return;
 
   if (!tickets || tickets.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-3">Aucun rendez-vous récent</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-3">Aucun rendez-vous aujourd'hui</td></tr>`;
     return;
   }
 
-  tableBody.innerHTML = '';
-  tickets.forEach(ticket => {
+  tableBody.innerHTML = tickets.map(ticket => {
     const ticketNum = ticket.ticket_number || ticket.id || '-';
     const clientName = ticket.client_name || ticket.client_full_name || 'N/A';
     const vehicleName = ticket.vehicle_name || (ticket.brand ? `${ticket.brand} ${ticket.model || ''}` : 'N/A');
 
-    const row = `
+    return `
       <tr>
-        <td class="fw-bold text-primary">#RDV-${ticketNum}</td>
-        <td><div class="fw-semibold text-dark">${clientName}</div></td>
-        <td>${vehicleName}</td>
+        <td class="fw-bold text-primary">#RDV-${escapeHtml(ticketNum)}</td>
+        <td><div class="fw-semibold text-dark">${escapeHtml(clientName)}</div></td>
+        <td>${escapeHtml(vehicleName)}</td>
         <td>${formatDateTime(ticket.appointment_date || ticket.start)}</td>
-        <td><span class="badge ${getStatusBadgeClass(ticket.status)} px-2 py-1">${ticket.status || 'PENDING'}</span></td>
+        <td><span class="badge ${getStatusBadgeClass(ticket.status)} px-2 py-1">${escapeHtml(ticket.status || 'PENDING')}</span></td>
       </tr>
     `;
-    tableBody.insertAdjacentHTML('beforeend', row);
-  });
+  }).join('');
 }
 
 function getStatusBadgeClass(status) {
-  switch (status?.toUpperCase()) {
+  switch ((status || '').toUpperCase()) {
     case 'COMPLETED': return 'bg-success-subtle text-success';
     case 'PENDING': return 'bg-warning-subtle text-warning';
     case 'CANCELLED':
@@ -351,62 +230,13 @@ function formatDateTime(dateTimeStr) {
   return `${formattedDate} ${formattedTime}`;
 }
 
-function updateTechnicianKPIs(tickets) {
-  if (!Array.isArray(tickets)) return;
-
-  // 1. عدد مواعيد اليوم الإجمالي
-  const todayCount = tickets.length;
-
-  // 2. عدد السيارات قيد الفحص في الورشة
-  const inWorkshopCount = tickets.filter(t => 
-    ['IN_PROGRESS', 'IN_WORKSHOP', 'EN_COURS'].includes(t.status?.toUpperCase())
-  ).length;
-
-  // 3. عدد الفحوصات المكتملة
-  const completedCount = tickets.filter(t => 
-    ['COMPLETED', 'TERMINE'].includes(t.status?.toUpperCase())
-  ).length;
-
-  // ربط القيم مع عناصر الـ HTML
-  const todayElem = document.getElementById('stat-today-count');
-  const workshopElem = document.getElementById('stat-in-workshop');
-  const completedElem = document.getElementById('stat-completed');
-
-  if (todayElem) todayElem.innerText = todayCount;
-  if (workshopElem) workshopElem.innerText = inWorkshopCount;
-  if (completedElem) completedElem.innerText = completedCount;
-}
-
-function getTechnicianSession() {
-  const sessionRaw = localStorage.getItem('verifcar_technician_user') || localStorage.getItem('verifcar_user');
-  if (!sessionRaw) return null;
-  try {
-    return JSON.parse(sessionRaw);
-  } catch (e) {
-    return null;
-  }
-}
-
-function getAuthToken() {
-  const userSession = getTechnicianSession();
-  return userSession?.token || userSession?.accessToken || localStorage.getItem('token') || '';
-}
-
+// ==========================================
+// 5. نقطة الدخول
+// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-  const userSession = getTechnicianSession();
-
-  if (userSession) {
-    const fullName = userSession.fullName || userSession.full_name || 'Technicien';
-    const firstName = fullName.split(' ')[0];
-    const initial = fullName.charAt(0).toUpperCase();
-
-    // تحديث اسم التقني والأحرف الأولى
-    if (document.getElementById('admin-name')) document.getElementById('admin-name').innerText = fullName;
-    if (document.getElementById('admin-welcome')) document.getElementById('admin-welcome').innerText = firstName;
-    if (document.getElementById('admin-avatar')) document.getElementById('admin-avatar').innerText = initial;
-  }
+  if (!checkAuth()) return;
 
   initMobileSidebar();
-  setupFilterEvents();
-  loadDashboardSummary();
-});
+  setupLogout();
+  loadTodayAppointments();
+});s
