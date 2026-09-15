@@ -76,10 +76,11 @@
               <th>VÉHICULE</th>
               <th>TECHNICIEN</th>
               <th>DATE</th>
+              <th class="text-end">ACTIONS</th>
             </tr>
           </thead>
           <tbody id="reports-table-body">
-            <tr><td colspan="5" class="text-center text-muted py-4">Aucun rapport trouvé</td></tr>
+            <tr><td colspan="6" class="text-center text-muted py-4">Chargement des rapports...</td></tr>
           </tbody>
         </table>
       </div>
@@ -110,6 +111,7 @@
   document.addEventListener('DOMContentLoaded', () => {
 
     loadAdminProfile();
+    fetchAndRenderReports();
   // إنشاء الطبقة الخلفية (Overlay) عند فتح القائمة في الهاتف
   let overlay = document.querySelector('.sidebar-overlay');
   if (!overlay) {
@@ -136,6 +138,100 @@
   closeBtn?.addEventListener('click', closeSidebar);
   overlay?.addEventListener('click', closeSidebar);
 });
+
+// تنظيف أي نص قبل إدراجه كـ innerHTML (يمنع حقن HTML)
+function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, (ch) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[ch]));
+}
+
+async function fetchAndRenderReports() {
+  const tableBody = document.getElementById('reports-table-body');
+  if (!tableBody) return;
+
+  try {
+    const token = getAuthToken();
+    if (!token) {
+      tableBody.innerHTML = `
+        <tr><td colspan="6" class="text-center text-warning py-4">
+          <i class="bi bi-shield-lock fs-4 d-block mb-2"></i>
+          Accès non autorisé.<br>Veuillez vous connecter.
+        </td></tr>`;
+      return;
+    }
+
+    const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
+    const response = await fetch(`${API_URL}/inspection/all`, { method: 'GET', headers });
+    let result = {};
+    try { result = await response.json(); } catch (e) {}
+
+    if (response.status === 401) {
+      tableBody.innerHTML = `
+        <tr><td colspan="6" class="text-center text-warning py-4">
+          <i class="bi bi-shield-lock fs-4 d-block mb-2"></i>
+          Session expirée.<br>Veuillez vous reconnecter.
+        </td></tr>`;
+      return;
+    }
+
+    if (!response.ok) {
+      tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">Erreur serveur (${response.status})</td></tr>`;
+      return;
+    }
+
+    const reportsList = Array.isArray(result) ? result : (result.data || []);
+
+    if (reportsList.length === 0) {
+      tableBody.innerHTML = `
+        <tr><td colspan="6" class="text-center text-muted py-4">
+          <i class="bi bi-file-earmark-x fs-4 d-block mb-2"></i>
+          Aucun rapport trouvé dans la base de données.
+        </td></tr>`;
+      return;
+    }
+
+    tableBody.innerHTML = reportsList.map(report => {
+      const reportDate = new Date(report.created_at || Date.now()).toLocaleDateString('fr-FR');
+      return `
+        <tr>
+          <td class="fw-bold text-primary">#REP-${report.id}</td>
+          <td>
+            <div class="fw-bold">${escapeHtml(report.client_name || 'Non spécifié')}</div>
+            <small class="text-muted">${escapeHtml(report.client_phone || '')}</small>
+          </td>
+          <td>
+            <div class="fw-bold">${escapeHtml(report.brand || '')} ${escapeHtml(report.model || '')}</div>
+            <small class="text-muted">${escapeHtml(report.plate || 'Sans immatriculation')}</small>
+          </td>
+          <td><span class="badge bg-light text-dark border">${escapeHtml(report.technician_name || 'Technicien')}</span></td>
+          <td>${reportDate}</td>
+          <td class="text-end">
+            <button onclick="printReport(${report.id})" class="btn btn-sm btn-outline-primary shadow-sm">
+              <i class="bi bi-printer-fill me-1"></i> Voir / Imprimer
+            </button>
+          </td>
+        </tr>`;
+    }).join('');
+  } catch (error) {
+    console.error('Erreur lors du chargement des rapports:', error);
+    tableBody.innerHTML = `
+      <tr><td colspan="6" class="text-center text-danger py-4">
+        <i class="bi bi-wifi-off fs-4 d-block mb-2"></i> Erreur de connexion au serveur.
+      </td></tr>`;
+  }
+}
+
+function printReport(reportId) {
+  if (!reportId) return;
+  const printWindow = window.open(`carrosserie-report.html?id=${reportId}`, '_blank');
+  if (printWindow) {
+    printWindow.focus();
+  } else {
+    alert('يرجى السماح بالنوافذ المنبثقة (Pop-ups) لفتح التقرير للطباعة.');
+  }
+}
+
 </script>
 
 

@@ -58,6 +58,15 @@
         .schema-img { width: 100%; height: auto; display: block; border-radius: 4px; }
         .defect-marker { position: absolute; background-color: #dc2626 !important; color: white !important; border-radius: 50%; width: 20px; height: 20px; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; transform: translate(-50%, -50%); border: 2px solid #ffffff !important; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
 
+        .car-image-cell { border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; margin-bottom: 6px; background: #fafafa !important; }
+        .car-image-label { background: #0f172a !important; color: #ffffff !important; font-size: 9px; font-weight: 700; text-align: center; padding: 3px; text-transform: uppercase; letter-spacing: 0.3px; }
+        .car-image-photo { width: 100%; height: 55mm; object-fit: contain; display: block; background: #ffffff !important; }
+        .car-image-empty { width: 100%; height: 55mm; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 10px; background: #f1f5f9 !important; }
+
+        .color-legend-box { display: flex; flex-wrap: wrap; gap: 10px; background: #f8fafc !important; border: 1px solid #cbd5e1 !important; border-radius: 8px; padding: 6px 10px; }
+        .color-legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 600; color: #0f172a; }
+        .color-dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; border: 1px solid rgba(0,0,0,0.15); }
+
         .report-footer { position: absolute; bottom: 6mm; left: 12mm; right: 12mm; border-top: 1px solid #cbd5e1; padding-top: 5px; font-size: 9px; color: #64748b; font-weight: 600; text-align: center; }
 
         @media print {
@@ -72,7 +81,7 @@
     <!-- Floating Print Button -->
     <div class="no-print position-fixed top-0 end-0 m-3 z-3">
         <button class="btn btn-danger shadow fw-bold px-4 rounded-pill" onclick="window.print()">
-            <i class="bi bi-printer-fill me-2"></i> Imprimer Rapport Complet (4 Pages)
+            <i class="bi bi-printer-fill me-2"></i> Imprimer Rapport Complet (5 Pages)
         </button>
     </div>
 
@@ -89,7 +98,7 @@
 
         <div class="text-center my-3 py-2 bg-light rounded-3 border">
             <h4 class="fw-bold text-dark mb-1" style="font-size: 16px;">DOSSIER D'INSPECTION VÉHICULE</h4>
-            <p class="text-muted mb-1" style="font-size: 11px;">Bilan complet des contrôles effectués sur la carrosserie & la structure</p>
+            <p class="text-muted mb-1" style="font-size: 11px;">Bilan complet des contrôles techniques effectués</p>
             <span class="badge bg-danger px-3 py-1" id="rep-code" style="font-size: 12px;">REF: REP-2026-XXXX</span>
         </div>
 
@@ -101,157 +110,169 @@
                 <div class="col-6"><strong>Client :</strong> <span id="client-name" class="fw-bold">--</span></div>
                 <div class="col-6"><strong>Téléphone :</strong> <span id="client-phone">--</span></div>
                 <div class="col-6"><strong>Marque & Modèle :</strong> <span id="car-brand-model" class="fw-bold">--</span></div>
-                <div class="col-6"><strong>Année :</strong> <span id="car-year">--</span></div>
                 <div class="col-6"><strong>Immatriculation :</strong> <span id="car-plate" class="text-primary fw-bold">--</span></div>
-                <div class="col-6"><strong>VIN / Châssis :</strong> <span id="car-vin" class="font-monospace">--</span></div>
-                <div class="col-12 col-md-6"><strong>Kilométrage :</strong> <span id="car-km" class="fw-bold">--</span></div>
-                <div class="col-6"><strong>Type carburant :</strong> <span id="car-fuel">--</span></div>
-                <div class="col-6"><strong>Boîte de vitesse :</strong> <span id="car-gearbox">--</span></div>
-                <div class="col-6"><strong>Nombre de clés :</strong> <span id="car-keys">--</span></div>
-            </div>
-            
-            <hr class="my-2 text-muted">
-            
-            <div class="row g-2" style="font-size: 11px;">
-                <div class="col-4"><strong>Historique entretien :</strong> <span id="history-status" class="badge bg-white text-dark border">Oui / Non</span></div>
-                <div class="col-4"><strong>Carnet entretien :</strong> <span id="booklet-status" class="badge bg-white text-dark border">Oui / Non</span></div>
-                <div class="col-4"><strong>Contrôle technique :</strong> <span id="ct-status" class="badge bg-white text-dark border">Oui / Non</span></div>
+                <div class="col-12"><strong>VIN / Châssis :</strong> <span id="car-vin" class="font-monospace">--</span></div>
             </div>
         </div>
 
         <div class="row g-2">
             <div class="col-6">
                 <div class="info-card h-100 mb-0">
-                    <div class="info-card-title"><i class="bi bi-cpu me-2 text-danger"></i>BILAN MOTEUR & NIVEAUX</div>
-                    <div id="moteur-summary-body" style="font-size: 11px;">
-                        <span class="text-muted">Chargement des données...</span>
+                    <div class="info-card-title"><i class="bi bi-speedometer2 me-2 text-danger"></i>KILOMÉTRAGE & CONFORMATION</div>
+                    <div style="font-size: 11.5px;">
+                        <div class="mb-2"><strong>Kilométrage affiché :</strong> <span id="km-value" class="fw-bold">--</span> KM</div>
+                        <div class="mb-2"><strong>Conformité :</strong> <span id="km-conformite-badge">--</span></div>
+                        <div><strong>Notes :</strong> <span id="km-notes" class="text-muted">--</span></div>
                     </div>
                 </div>
             </div>
             <div class="col-6">
                 <div class="info-card h-100 mb-0">
-                    <div class="info-card-title"><i class="bi bi-laptop me-2 text-danger"></i>DIAGNOSTIQUE SCANNER</div>
-                    <div id="scanner-summary-body" style="font-size: 11px;">
-                        <span class="text-muted">Chargement des données...</span>
+                    <div class="info-card-title"><i class="bi bi-key-fill me-2 text-danger"></i>OBSERVATIONS DE BASE</div>
+                    <div style="font-size: 11.5px;">
+                        <div class="mb-2"><strong>Nombre de clés :</strong> <span id="car-keys" class="fw-bold">--</span></div>
+                    <!--    <div><strong>Équipements de secours :</strong> <span id="equip-secours" class="text-muted">--</span></div> -->
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="report-footer">Page 1 / 4 — VERIFCAR SARL — Oran, Algérie</div>
+
+        <div class="report-footer">Page 1 / 5 — VERIFCAR SARL — Oran, Algérie</div>
     </div>
 
-    <!-- PAGE 2: ÉQUIPE 1 - CARROSSERIE & INSPECTION EXTÉRIEURE -->
+ 
+    <!-- PAGE 2: SCANNER DIAGNOSTIQUE + MOTEUR & NIVEAUX -->
     <div class="page">
         <div class="page-top-bar"></div>
         <div class="report-header">
             <img src="../img/IMG_7697.png" alt="Verifcar Logo">
             <div class="title-box">
-                <h1>EXAMEN DE LA CARROSSERIE</h1>
-                <p>Inspection complète des éléments extérieurs</p>
+                <h1>DIAGNOSTIC ÉLECTRONIQUE & MOTEUR</h1>
+                <p>Scanner OBD & Contrôle des niveaux</p>
             </div>
         </div>
-
-        <div class="section-header">2. ÉQUIPE 1 - CARROSSERIE (INSPECTION EXTÉRIEURE)</div>
-
-        <div class="table-responsive">
-            <table class="custom-table text-center">
-                <thead>
-                    <tr>
-                        <th class="text-start" style="width: 23%;">Éléments / القطعة</th>
-                        <th>Peinture<br><small style="font-size: 8.5px;">طلاء</small></th>
-                        <th>A froid<br><small style="font-size: 8.5px;">ع البارد</small></th>
-                        <th>Rayures<br><small style="font-size: 8.5px;">خدوش</small></th>
-                        <th>Choque<br><small style="font-size: 8.5px;">صدمة</small></th>
-                        <th>Corrosion<br><small style="font-size: 8.5px;">صدأ</small></th>
-                        <th>Jeu<br><small style="font-size: 8.5px;">فراغ</small></th>
-                        <th>Mastique<br><small style="font-size: 8.5px;">معجون</small></th>
-                        <th>Visse<br><small style="font-size: 8.5px;">براغي</small></th>
-                        <th>Raccord<br><small style="font-size: 8.5px;">تعديل</small></th>
-                        <th>Change<br><small style="font-size: 8.5px;">تغيير</small></th>
-                        <th>Soudure<br><small style="font-size: 8.5px;">لحام</small></th>
-                    </tr>
-                </thead>
-                <tbody id="ext-defects-body">
-                    <!-- Loaded dynamically via report-loader.js -->
-                </tbody>
-            </table>
+ 
+        <div class="section-header">2. SCANNER DIAGNOSTIQUE</div>
+        <div class="info-card">
+            <div class="row g-2" style="font-size: 11.5px;">
+                <div class="col-6"><strong>Statut Calculateur :</strong> <span id="scanner-calculateur-badge">--</span></div>
+                <div class="col-6"><strong>Voyants Allumés :</strong> <span id="scanner-voyants" class="text-muted">--</span></div>
+                <div class="col-12"><strong>Codes d'Erreurs DTC :</strong> <span id="scanner-dtc" class="fw-bold text-dark">--</span></div>
+                <div class="col-12"><strong>Notes :</strong> <span id="scanner-notes" class="text-muted">--</span></div>
+            </div>
         </div>
         <div class="info-card mt-2 p-2 bg-light border rounded">
-            <div class="fw-bold text-dark" style="font-size: 11px;">
-                <i class="bi bi-robot me-1 text-danger"></i> Résumé - Carrosserie :
-            </div>
-            <div id="ai-carrosserie-summary" class="text-muted mt-1" style="font-size: 10.5px;">
-                <span class="spinner-border spinner-border-sm me-1"></span> Analyse en cours...
+            <div class="fw-bold text-dark" style="font-size: 11px;"><i class="bi bi-robot me-1 text-danger"></i> Résumé - Scanner :</div>
+            <div id="ai-scanner-summary" class="text-muted mt-1" style="font-size: 10.5px;"><span class="spinner-border spinner-border-sm me-1"></span> Analyse en cours...</div>
+        </div>
+ 
+        <div class="section-header">3. MOTEUR & NIVEAUX</div>
+        <div class="info-card">
+            <div class="row g-2" style="font-size: 11.5px;">
+                <div class="col-6"><strong>Niveau d'Huile :</strong> <span id="moteur-huile" class="fw-bold">--</span></div>
+                <div class="col-6"><strong>Fumée d'Échappement :</strong> <span id="moteur-fumee" class="fw-bold">--</span></div>
+                <div class="col-4"><strong>Fuite Huile :</strong> <span id="moteur-fuite-huile-badge">--</span></div>
+                <div class="col-4"><strong>Fuite Liquide Refroid. :</strong> <span id="moteur-fuite-liquide-badge">--</span></div>
+                <div class="col-4"><strong>Bruit Anormal :</strong> <span id="moteur-bruit-badge">--</span></div>
+                <div class="col-12"><strong>Notes :</strong> <span id="moteur-notes" class="text-muted">--</span></div>
             </div>
         </div>
-
-        <div class="report-footer">Page 2 / 4 — VERIFCAR SARL — Oran, Algérie</div>
+        <div class="info-card mt-2 p-2 bg-light border rounded">
+            <div class="fw-bold text-dark" style="font-size: 11px;"><i class="bi bi-robot me-1 text-danger"></i> Résumé - Moteur :</div>
+            <div id="ai-moteur-summary" class="text-muted mt-1" style="font-size: 10.5px;"><span class="spinner-border spinner-border-sm me-1"></span> Analyse en cours...</div>
+        </div>
+ 
+        <div class="report-footer">Page 2 / 5 — VERIFCAR SARL — Oran, Algérie</div>
     </div>
-
-    <!-- PAGE 3: STRUCTURE, ACCIDENT, PNEUS & SOUBASSEMENT -->
+ 
+    <!-- PAGE 3: SUSPENSION & TRAIN + STRUCTURE -->
     <div class="page">
         <div class="page-top-bar"></div>
         <div class="report-header">
             <img src="../img/IMG_7697.png" alt="Verifcar Logo">
             <div class="title-box">
-                <h1>EXPERTISE STRUCTURE & CHÂSSIS</h1>
-                <p>Contrôle complet des éléments de sécurité</p>
+                <h1>SUSPENSION, PNEUS & STRUCTURE</h1>
+                <p>Contrôle du train roulant et du châssis</p>
             </div>
         </div>
-
-        <div class="section-header">3. CONTRÔLE STRUCTUREL / ACCIDENT</div>
+ 
+        <div class="section-header">4. SUSPENSION & TRAIN (PNEUS / JANTES)</div>
+        <table class="custom-table text-center">
+            <thead>
+                <tr>
+                    <th style="text-align: left;">Position</th>
+                    <th>État Pneu</th>
+                    <th>Jante</th>
+                    <th style="text-align: left;">Observation</th>
+                </tr>
+            </thead>
+            <tbody id="suspension-tires-body">
+                <!-- Loaded dynamically -->
+            </tbody>
+        </table>
+        <div class="row g-2 mt-1" style="font-size: 11px;">
+            <div class="col-6"><strong>Corrosion Soubassement :</strong> <span id="susp-corrosion-badge">--</span></div>
+            <div class="col-6"><strong>Traces de Choc :</strong> <span id="susp-choc-badge">--</span></div>
+            <div class="col-12 mt-1"><strong>Notes :</strong> <span id="susp-notes" class="text-muted">--</span></div>
+        </div>
+        <div class="info-card mt-2 p-2 bg-light border rounded">
+            <div class="fw-bold text-dark" style="font-size: 11px;"><i class="bi bi-robot me-1 text-danger"></i> Résumé - Suspension :</div>
+            <div id="ai-suspension-summary" class="text-muted mt-1" style="font-size: 10.5px;"><span class="spinner-border spinner-border-sm me-1"></span> Analyse en cours...</div>
+        </div>
+ 
+        <div class="section-header">5. CONTRÔLE STRUCTUREL / ACCIDENT</div>
         <table class="custom-table">
             <thead>
                 <tr>
-                    <th style="width: 38%; text-align: left;">Contrôle Structurel Checked</th>
+                    <th style="width: 38%; text-align: left;">Élément Structurel</th>
                     <th style="width: 20%; text-align: center;">Conformité</th>
-                    <th style="text-align: left;">Observations détaillées</th>
+                    <th style="text-align: left;">Observations</th>
                 </tr>
             </thead>
             <tbody id="struct-defects-body">
                 <!-- Loaded dynamically -->
             </tbody>
         </table>
-        <div class="info-card mt-1 p-2 bg-light border rounded">
-            <div class="fw-bold text-dark" style="font-size: 11px;">
-                <i class="bi bi-robot me-1 text-danger"></i> Résumé  - Structure :
-            </div>
-            <div id="ai-structure-summary" class="text-muted mt-1" style="font-size: 10.5px;">
-                <span class="spinner-border spinner-border-sm me-1"></span> Analyse en cours...
+        <div class="row g-2" style="font-size: 11px;">
+            <div class="col-12"><strong>Conclusion Structure :</strong> <span id="struct-conclusion" class="fw-bold text-danger">--</span></div>
+            <div class="col-12"><strong>Notes :</strong> <span id="struct-notes" class="text-muted">--</span></div>
+        </div>
+        <div class="info-card mt-2 p-2 bg-light border rounded">
+            <div class="fw-bold text-dark" style="font-size: 11px;"><i class="bi bi-robot me-1 text-danger"></i> Résumé - Structure :</div>
+            <div id="ai-structure-summary" class="text-muted mt-1" style="font-size: 10.5px;"><span class="spinner-border spinner-border-sm me-1"></span> Analyse en cours...</div>
+        </div>
+ 
+        <div class="report-footer">Page 3 / 5 — VERIFCAR SARL — Oran, Algérie</div>
+    </div>
+ 
+    <!-- PAGE 4: OBSERVATIONS GÉNÉRALES + CONCLUSION + SIGNATURES -->
+    <div class="page">
+        <div class="page-top-bar"></div>
+        <div class="report-header">
+            <img src="../img/IMG_7697.png" alt="Verifcar Logo">
+            <div class="title-box">
+                <h1>OBSERVATIONS GÉNÉRALES</h1>
+                <p>Rapport mécanique & conclusion de l'expert</p>
             </div>
         </div>
-
-        <div class="section-header">4. PNEUS / JANTES / SOUBASSEMENT</div>
-        <table class="custom-table">
-            <thead>
-                <tr>
-                    <th style="width: 42%; text-align: left;">Contrôle Éléments الركائز والحافات</th>
-                    <th style="width: 20%; text-align: center;">État</th>
-                    <th style="text-align: left;">Observations</th>
-                </tr>
-            </thead>
-            <tbody id="suspension-defects-body">
-                <!-- Loaded dynamically -->
-            </tbody>
-        </table>
-        <div class="info-card mt-1 p-2 bg-light border rounded">
-            <div class="fw-bold text-dark" style="font-size: 11px;">
-                <i class="bi bi-robot me-1 text-danger"></i> Résumé IA - Soubassement & Pneus :
-            </div>
-            <div id="ai-suspension-summary" class="text-muted mt-1" style="font-size: 10.5px;">
-                <span class="spinner-border spinner-border-sm me-1"></span> Analyse en cours...
+ 
+        <div class="section-header">6. OBSERVATIONS GÉNÉRALES & RAPPORT MÉCANIQUE</div>
+        <div class="info-card">
+            <div style="font-size: 11.5px;">
+                <div class="mb-2"><strong>Rapport Mécanique Général :</strong></div>
+                <p id="rapport-mecanique-text" class="text-dark" style="white-space: pre-wrap;">--</p>
             </div>
         </div>
-
-        <div class="info-card mt-2">
+ 
+        <div class="info-card mt-3">
             <div class="info-card-title text-danger"><i class="bi bi-chat-square-text me-2"></i>CONCLUSION GÉNÉRALE DE L'EXPERT</div>
             <div id="general-conclusion" class="fw-bold text-dark p-2 bg-white rounded border border-light text-center" style="font-size: 12px;">
                 --
             </div>
         </div>
-
-        <div class="row mt-3 text-center" style="font-size: 11px;">
+ 
+        <div class="row mt-4 text-center" style="font-size: 11px;">
             <div class="col-6">
                 <p class="fw-bold mb-2">Visa Technicien / Expert :</p>
                 <p class="text-muted">................................................</p>
@@ -261,41 +282,40 @@
                 <p class="text-muted">................................................</p>
             </div>
         </div>
-
-        <div class="report-footer">Page 3 / 4 — VERIFCAR SARL — Oran, Algérie</div>
+ 
+        <div class="report-footer">Page 4 / 5 — VERIFCAR SARL — Oran, Algérie</div>
     </div>
-
-    <!-- PAGE 4: CARTOGRAPHIE VISUELLE (SCHEMA) -->
+ 
+    <!-- PAGE 4: SCHÉMA VISUEL DE LA CARROSSERIE (5 ANGLES) -->
     <div class="page">
         <div class="page-top-bar"></div>
         <div class="report-header">
             <img src="../img/IMG_7697.png" alt="Verifcar Logo">
             <div class="title-box">
-                <h1>CARTOGRAPHIE VISUELLE</h1>
-                <p>Schéma dynamique des défauts</p>
+                <h1>SCHÉMA VISUEL DE LA CARROSSERIE</h1>
+                <p>Photos annotées par le technicien (5 angles)</p>
             </div>
         </div>
-
-        <div class="section-header">5. LOCALISATION GÉOGRAPHIQUE DES DÉFAUTS DÉTECTÉS</div>
-        <p class="text-muted mb-2" style="font-size: 11px;">Les marqueurs rouges indiquent les zones présentant des défauts sur le véhicule:</p>
-
-        <div class="schema-container">
-            <img src="../img/schema_voiture_haute_qualite.png" alt="Schéma Voiture HD" class="schema-img">
-            <div id="markers-container">
-                <!-- Dynamic Markers -->
-            </div>
+ 
+        <div class="section-header">5. RELEVÉ VISUEL — 5 ANGLES DU VÉHICULE</div>
+        <p class="text-muted mb-2" style="font-size: 11px;">Chaque photo ci-dessous montre les zones marquées par le technicien lors du contrôle visuel :</p>
+ 
+        <div class="color-legend-box mb-3">
+            <div class="color-legend-item"><span class="color-dot" style="background:#dc3545 !important;"></span> Choc / صدمة</div>
+            <div class="color-legend-item"><span class="color-dot" style="background:#ffc107 !important;"></span> Rayure / خدش</div>
+            <div class="color-legend-item"><span class="color-dot" style="background:#a1ff8c !important;"></span> Peinture / طلاء</div>
+            <div class="color-legend-item"><span class="color-dot" style="background:#6c757d !important;"></span> Mastic / معجون</div>
+            <div class="color-legend-item"><span class="color-dot" style="background:#212529 !important;"></span> Corrosion / صدأ</div>
+            <div class="color-legend-item"><span class="color-dot" style="background:#9333ea !important;"></span> À Froid </div>
         </div>
-
-        <div class="info-card mt-2">
-            <div class="info-card-title"><i class="bi bi-pin-map me-2 text-danger"></i>Légende des Numéros / دليل الأرقام المحددة:</div>
-            <div id="markers-legend" class="row g-2 text-muted" style="font-size: 10px;">
-                <!-- Dynamic Legend -->
-            </div>
+ 
+        <div class="row g-2" id="car-images-gallery">
+            <!-- Dynamic: up to 5 photos injected here -->
         </div>
-
-        <div class="report-footer">Page 4 / 4 — VERIFCAR SARL — Oran, Algérie</div>
+ 
+        <div class="report-footer">Page 5 / 5 — VERIFCAR SARL — Oran, Algérie</div>
     </div>
-
+ 
     <script src="report-loader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

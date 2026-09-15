@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapport d'Expertise Détaillé - VERIFCAR</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        @page { size: A4 portrait; margin: 0; }
+        
+        * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+        }
+
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background-color: #f1f5f9; color: #0f172a; margin: 0; padding: 0; }
+        
+        .page {
+            width: 210mm;
+            height: 296mm;
+            padding: 10mm 12mm 10mm 12mm;
+            margin: 10mm auto;
+            background: #ffffff;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            position: relative;
+            box-sizing: border-box;
+            page-break-after: always;
+            page-break-inside: avoid;
+            overflow: hidden;
+        }
+
+        .page-top-bar { position: absolute; top: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #0f172a 0%, #dc2626 100%) !important; }
+
+        .report-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #cbd5e1; padding-bottom: 8px; margin-bottom: 12px; margin-top: 4px; }
+        .report-header img { height: 50px; object-fit: contain; }
+        .report-header .title-box { text-align: right; }
+        .report-header h1 { font-size: 19px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; margin: 0; }
+        .report-header p { font-size: 11px; color: #475569; font-weight: 600; margin: 0; }
+
+        .info-card { background: #f8fafc !important; border: 1px solid #cbd5e1 !important; border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; }
+        .info-card-title { font-size: 12px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; border-bottom: 1.5px solid #e2e8f0; padding-bottom: 4px; }
+        
+        .section-header { font-size: 13px; font-weight: 800; color: #0f172a; background: #e2e8f0 !important; padding: 6px 10px; border-left: 5px solid #dc2626 !important; border-radius: 0 6px 6px 0; margin: 12px 0 10px 0; }
+
+        .custom-table { width: 100%; border-collapse: separate; border-spacing: 0; margin-bottom: 10px; border-radius: 6px; overflow: hidden; border: 1px solid #cbd5e1; }
+        .custom-table th { background-color: #0f172a !important; color: #ffffff !important; font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 6px 4px; text-align: center; }
+        .custom-table td { border-bottom: 1px solid #e2e8f0; font-size: 10.5px; padding: 5px 6px; color: #0f172a; vertical-align: middle; }
+        .custom-table tr:last-child td { border-bottom: none; }
+        .custom-table tr:nth-child(even) { background-color: #f8fafc !important; }
+
+        .status-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; border-radius: 4px; font-size: 9.5px; font-weight: 700; text-transform: uppercase; }
+        .status-badge.ok { background-color: #dcfce7 !important; color: #15803d !important; }
+        .status-badge.defect { background-color: #fee2e2 !important; color: #b91c1c !important; }
+
+        .schema-container { position: relative; width: 100%; max-width: 600px; margin: 10px auto; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; background: #fafafa !important; }
+        .schema-img { width: 100%; height: auto; display: block; border-radius: 4px; }
+        .defect-marker { position: absolute; background-color: #dc2626 !important; color: white !important; border-radius: 50%; width: 20px; height: 20px; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; transform: translate(-50%, -50%); border: 2px solid #ffffff !important; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+
+        .report-footer { position: absolute; bottom: 6mm; left: 12mm; right: 12mm; border-top: 1px solid #cbd5e1; padding-top: 5px; font-size: 9px; color: #64748b; font-weight: 600; text-align: center; }
+
+        @media print {
+            .no-print { display: none !important; }
+            body { background: none; margin: 0; }
+            .page { margin: 0; box-shadow: none; page-break-after: always; page-break-inside: avoid; height: 296mm; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Floating Print Button -->
+    <div class="no-print position-fixed top-0 end-0 m-3 z-3">
+        <button class="btn btn-danger shadow fw-bold px-4 rounded-pill" onclick="window.print()">
+            <i class="bi bi-printer-fill me-2"></i> Imprimer Rapport Complet (4 Pages)
+        </button>
+    </div>
+
+    <!-- PAGE 1: INFORMATIONS GÉNÉRALES DU VÉHICULE -->
+    <div class="page">
+        <div class="page-top-bar"></div>
+        <div class="report-header">
+            <img src="../img/IMG_7697.png" alt="Verifcar Logo">
+            <div class="title-box">
+                <h1>RAPPORT D'EXPERTISE AUTOMOBILE</h1>
+                <p>ATELIER DE VÉRIFICATION & DIAGNOSTIC - ORAN</p>
+            </div>
+        </div>
+
+        <div class="text-center my-3 py-2 bg-light rounded-3 border">
+            <h4 class="fw-bold text-dark mb-1" style="font-size: 16px;">DOSSIER D'INSPECTION VÉHICULE</h4>
+            <p class="text-muted mb-1" style="font-size: 11px;">Bilan complet des contrôles effectués sur la carrosserie & la structure</p>
+            <span class="badge bg-danger px-3 py-1" id="rep-code" style="font-size: 12px;">REF: REP-2026-XXXX</span>
+        </div>
+
+        <div class="info-card">
+            <div class="info-card-title"><i class="bi bi-info-circle me-2 text-danger"></i>1. INFORMATIONS GÉNÉRALES DU VÉHICULE</div>
+            <div class="row g-2" style="font-size: 11.5px;">
+                <div class="col-6"><strong>Date inspection :</strong> <span id="rep-date">--/--/2026</span></div>
+                <div class="col-6"><strong>Inspecteur :</strong> <span id="inspector-name">Équipe VÉRIFCAR</span></div>
+                <div class="col-6"><strong>Client :</strong> <span id="client-name" class="fw-bold">--</span></div>
+                <div class="col-6"><strong>Téléphone :</strong> <span id="client-phone">--</span></div>
+                <div class="col-6"><strong>Marque & Modèle :</strong> <span id="car-brand-model" class="fw-bold">--</span></div>
+                <div class="col-6"><strong>Année :</strong> <span id="car-year">--</span></div>
+                <div class="col-6"><strong>Immatriculation :</strong> <span id="car-plate" class="text-primary fw-bold">--</span></div>
+                <div class="col-6"><strong>VIN / Châssis :</strong> <span id="car-vin" class="font-monospace">--</span></div>
+                <div class="col-12 col-md-6"><strong>Kilométrage :</strong> <span id="car-km" class="fw-bold">--</span></div>
+                <div class="col-6"><strong>Type carburant :</strong> <span id="car-fuel">--</span></div>
+                <div class="col-6"><strong>Boîte de vitesse :</strong> <span id="car-gearbox">--</span></div>
+                <div class="col-6"><strong>Nombre de clés :</strong> <span id="car-keys">--</span></div>
+            </div>
+            
+            <hr class="my-2 text-muted">
+            
+            <div class="row g-2" style="font-size: 11px;">
+                <div class="col-4"><strong>Historique entretien :</strong> <span id="history-status" class="badge bg-white text-dark border">Oui / Non</span></div>
+                <div class="col-4"><strong>Carnet entretien :</strong> <span id="booklet-status" class="badge bg-white text-dark border">Oui / Non</span></div>
+                <div class="col-4"><strong>Contrôle technique :</strong> <span id="ct-status" class="badge bg-white text-dark border">Oui / Non</span></div>
+            </div>
+        </div>
+
+        <div class="row g-2">
+            <div class="col-6">
+                <div class="info-card h-100 mb-0">
+                    <div class="info-card-title"><i class="bi bi-cpu me-2 text-danger"></i>BILAN MOTEUR & NIVEAUX</div>
+                    <div id="moteur-summary-body" style="font-size: 11px;">
+                        <span class="text-muted">Chargement des données...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="info-card h-100 mb-0">
+                    <div class="info-card-title"><i class="bi bi-laptop me-2 text-danger"></i>DIAGNOSTIQUE SCANNER</div>
+                    <div id="scanner-summary-body" style="font-size: 11px;">
+                        <span class="text-muted">Chargement des données...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="report-footer">Page 1 / 4 — VERIFCAR SARL — Oran, Algérie</div>
+    </div>
+
+    <!-- PAGE 2: ÉQUIPE 1 - CARROSSERIE & INSPECTION EXTÉRIEURE -->
+    <div class="page">
+        <div class="page-top-bar"></div>
+        <div class="report-header">
+            <img src="../img/IMG_7697.png" alt="Verifcar Logo">
+            <div class="title-box">
+                <h1>EXAMEN DE LA CARROSSERIE</h1>
+                <p>Inspection complète des éléments extérieurs</p>
+            </div>
+        </div>
+
+        <div class="section-header">2. ÉQUIPE 1 - CARROSSERIE (INSPECTION EXTÉRIEURE)</div>
+
+        <div class="table-responsive">
+            <table class="custom-table text-center">
+                <thead>
+                    <tr>
+                        <th class="text-start" style="width: 23%;">Éléments / القطعة</th>
+                        <th>Peinture<br><small style="font-size: 8.5px;">طلاء</small></th>
+                        <th>A froid<br><small style="font-size: 8.5px;">ع البارد</small></th>
+                        <th>Rayures<br><small style="font-size: 8.5px;">خدوش</small></th>
+                        <th>Choque<br><small style="font-size: 8.5px;">صدمة</small></th>
+                        <th>Corrosion<br><small style="font-size: 8.5px;">صدأ</small></th>
+                        <th>Jeu<br><small style="font-size: 8.5px;">فراغ</small></th>
+                        <th>Mastique<br><small style="font-size: 8.5px;">معجون</small></th>
+                        <th>Visse<br><small style="font-size: 8.5px;">براغي</small></th>
+                        <th>Raccord<br><small style="font-size: 8.5px;">تعديل</small></th>
+                        <th>Change<br><small style="font-size: 8.5px;">تغيير</small></th>
+                        <th>Soudure<br><small style="font-size: 8.5px;">لحام</small></th>
+                    </tr>
+                </thead>
+                <tbody id="ext-defects-body">
+                    <!-- Loaded dynamically via report-loader.js -->
+                </tbody>
+            </table>
+        </div>
+        <div class="info-card mt-2 p-2 bg-light border rounded">
+            <div class="fw-bold text-dark" style="font-size: 11px;">
+                <i class="bi bi-robot me-1 text-danger"></i> Résumé - Carrosserie :
+            </div>
+            <div id="ai-carrosserie-summary" class="text-muted mt-1" style="font-size: 10.5px;">
+                <span class="spinner-border spinner-border-sm me-1"></span> Analyse en cours...
+            </div>
+        </div>
+
+        <div class="report-footer">Page 2 / 4 — VERIFCAR SARL — Oran, Algérie</div>
+    </div>
+
+    <!-- PAGE 3: STRUCTURE, ACCIDENT, PNEUS & SOUBASSEMENT -->
+    <div class="page">
+        <div class="page-top-bar"></div>
+        <div class="report-header">
+            <img src="../img/IMG_7697.png" alt="Verifcar Logo">
+            <div class="title-box">
+                <h1>EXPERTISE STRUCTURE & CHÂSSIS</h1>
+                <p>Contrôle complet des éléments de sécurité</p>
+            </div>
+        </div>
+
+        <div class="section-header">3. CONTRÔLE STRUCTUREL / ACCIDENT</div>
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th style="width: 38%; text-align: left;">Contrôle Structurel Checked</th>
+                    <th style="width: 20%; text-align: center;">Conformité</th>
+                    <th style="text-align: left;">Observations détaillées</th>
+                </tr>
+            </thead>
+            <tbody id="struct-defects-body">
+                <!-- Loaded dynamically -->
+            </tbody>
+        </table>
+        <div class="info-card mt-1 p-2 bg-light border rounded">
+            <div class="fw-bold text-dark" style="font-size: 11px;">
+                <i class="bi bi-robot me-1 text-danger"></i> Résumé  - Structure :
+            </div>
+            <div id="ai-structure-summary" class="text-muted mt-1" style="font-size: 10.5px;">
+                <span class="spinner-border spinner-border-sm me-1"></span> Analyse en cours...
+            </div>
+        </div>
+
+        <div class="section-header">4. PNEUS / JANTES / SOUBASSEMENT</div>
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th style="width: 42%; text-align: left;">Contrôle Éléments الركائز والحافات</th>
+                    <th style="width: 20%; text-align: center;">État</th>
+                    <th style="text-align: left;">Observations</th>
+                </tr>
+            </thead>
+            <tbody id="suspension-defects-body">
+                <!-- Loaded dynamically -->
+            </tbody>
+        </table>
+        <div class="info-card mt-1 p-2 bg-light border rounded">
+            <div class="fw-bold text-dark" style="font-size: 11px;">
+                <i class="bi bi-robot me-1 text-danger"></i> Résumé IA - Soubassement & Pneus :
+            </div>
+            <div id="ai-suspension-summary" class="text-muted mt-1" style="font-size: 10.5px;">
+                <span class="spinner-border spinner-border-sm me-1"></span> Analyse en cours...
+            </div>
+        </div>
+
+        <div class="info-card mt-2">
+            <div class="info-card-title text-danger"><i class="bi bi-chat-square-text me-2"></i>CONCLUSION GÉNÉRALE DE L'EXPERT</div>
+            <div id="general-conclusion" class="fw-bold text-dark p-2 bg-white rounded border border-light text-center" style="font-size: 12px;">
+                --
+            </div>
+        </div>
+
+        <div class="row mt-3 text-center" style="font-size: 11px;">
+            <div class="col-6">
+                <p class="fw-bold mb-2">Visa Technicien / Expert :</p>
+                <p class="text-muted">................................................</p>
+            </div>
+            <div class="col-6">
+                <p class="fw-bold mb-2">Cachet Atelier VERIFCAR :</p>
+                <p class="text-muted">................................................</p>
+            </div>
+        </div>
+
+        <div class="report-footer">Page 3 / 4 — VERIFCAR SARL — Oran, Algérie</div>
+    </div>
+
+    <!-- PAGE 4: CARTOGRAPHIE VISUELLE (SCHEMA) -->
+    <div class="page">
+        <div class="page-top-bar"></div>
+        <div class="report-header">
+            <img src="../img/IMG_7697.png" alt="Verifcar Logo">
+            <div class="title-box">
+                <h1>CARTOGRAPHIE VISUELLE</h1>
+                <p>Schéma dynamique des défauts</p>
+            </div>
+        </div>
+
+        <div class="section-header">5. LOCALISATION GÉOGRAPHIQUE DES DÉFAUTS DÉTECTÉS</div>
+        <p class="text-muted mb-2" style="font-size: 11px;">Les marqueurs rouges indiquent les zones présentant des défauts sur le véhicule:</p>
+
+        <div class="schema-container">
+            <img src="../img/schema_voiture_haute_qualite.png" alt="Schéma Voiture HD" class="schema-img">
+            <div id="markers-container">
+                <!-- Dynamic Markers -->
+            </div>
+        </div>
+
+        <div class="info-card mt-2">
+            <div class="info-card-title"><i class="bi bi-pin-map me-2 text-danger"></i>Légende des Numéros / دليل الأرقام المحددة:</div>
+            <div id="markers-legend" class="row g-2 text-muted" style="font-size: 10px;">
+                <!-- Dynamic Legend -->
+            </div>
+        </div>
+
+        <div class="report-footer">Page 4 / 4 — VERIFCAR SARL — Oran, Algérie</div>
+    </div>
+
+    <script src="report-loader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

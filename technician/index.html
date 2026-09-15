@@ -185,6 +185,13 @@
       </div>
     </div>
 
+    <!-- زر إنهاء الفحص يدوياً -->
+    <div class="d-flex justify-content-end mb-4 d-none" id="btn-complete-inspection">
+      <button type="button" class="btn btn-success px-4 py-2 fw-bold shadow-sm" onclick="completeInspection()">
+        <i class="bi bi-check-circle-fill me-1"></i> Terminer le contrôle / إنهاء الفحص
+      </button>
+    </div>
+
   <!-- شبكة وحدات الفحص -->
 <div id="modules-selection-view">
   <h3 class="fw-bold mb-4">Modules de Contrôle Technique</h3>
@@ -265,6 +272,9 @@
   </main>
 </div>
 
+<div class="toast-container position-fixed bottom-0 end-0 p-3" id="toast-container" style="z-index: 1080;"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="verif.js"></script>
 
