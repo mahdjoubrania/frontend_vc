@@ -65,264 +65,251 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 // 3. رسم النقاط على مخطط السيارة والخريطة
-function renderMarkersAndLegend(markersList) {
-    const markersContainer = document.getElementById('markers-container');
-    const legendContainer = document.getElementById('markers-legend');
-    
-    if (markersContainer) markersContainer.innerHTML = '';
-    if (legendContainer) legendContainer.innerHTML = '';
+// عرض الصور الخمسة المرسومة (Tôle & Carrosserie) — تُقرأ من elements_ext_json.drawings
+function renderCarImagesGallery(data) {
+    const gallery = document.getElementById('car-images-gallery');
+    if (!gallery) return;
 
-    const coordinates = {
-        "Capot": { top: "35%", left: "85%" },
-        "Aile AVG": { top: "20%", left: "75%" },
-        "Aile AVD": { top: "50%", left: "75%" },
-        "Porte AVG": { top: "20%", left: "55%" },
-        "Porte AVD": { top: "50%", left: "55%" },
-        "Porte ARG": { top: "20%", left: "38%" },
-        "Porte ARD": { top: "50%", left: "38%" },
-        "Aile ARG": { top: "20%", left: "22%" },
-        "Aile ARD": { top: "50%", left: "22%" },
-        "Toit": { top: "35%", left: "48%" },
-        "Coffre": { top: "35%", left: "12%" },
-        "Pare-chocs Avant": { top: "35%", left: "95%" },
-        "Pare-chocs Arrière": { top: "35%", left: "5%" },
-        "Bas de caisse": { top: "65%", left: "48%" },
-        "Montant": { top: "35%", left: "62%" }
-    };
-
-    if (markersList.length === 0 && legendContainer) {
-        legendContainer.innerHTML = `<div class="col-12 text-center text-success fw-bold py-2"><i class="bi bi-check-circle-fill me-2"></i>Aucun défaut extérieur à afficher sur le schéma</div>`;
-        return;
+    let extData = {};
+    if (typeof data.elements_ext_json === 'string') {
+        try { extData = JSON.parse(data.elements_ext_json); } catch (e) { extData = {}; }
+    } else if (typeof data.elements_ext_json === 'object' && data.elements_ext_json !== null) {
+        extData = data.elements_ext_json;
     }
 
-    markersList.forEach(m => {
-        const coord = coordinates[m.part] || { top: "35%", left: "50%" };
-        
-        if (markersContainer) {
-            markersContainer.innerHTML += `
-                <div class="defect-marker" style="top: ${coord.top}; left: ${coord.left};" title="${m.part}: ${m.defects}">
-                    ${m.id}
-                </div>
-            `;
-        }
+    const drawings = extData.drawings || {};
 
-        if (legendContainer) {
-            legendContainer.innerHTML += `
-                <div class="col-6">
-                    <span class="badge bg-danger me-1">${m.id}</span> <strong>${m.part}:</strong> <span class="text-dark">${m.defects}</span>
+    const angles = [
+        { label: 'Face Avant / الواجهة الأمامية' },
+        { label: 'Face Arrière / الواجهة الخلفية' },
+        { label: 'Côté Droit / الجانب الأيمن' },
+        { label: 'Côté Gauche / الجانب الأيسر' },
+        { label: 'Vue de Dessus / المنظر العلوي' }
+    ];
+
+    gallery.innerHTML = angles.map((angle, index) => {
+        const photo = drawings[index] || drawings[String(index)];
+        const cellContent = photo
+            ? `<img src="${photo}" class="car-image-photo" alt="${angle.label}">`
+            : `<div class="car-image-empty"><i class="bi bi-camera-slash me-1"></i> Non renseigné</div>`;
+
+        return `
+            <div class="col-6">
+                <div class="car-image-cell">
+                    <div class="car-image-label">${angle.label}</div>
+                    ${cellContent}
                 </div>
-            `;
-        }
-    });
+            </div>
+        `;
+    }).join('');
 }
 
 // 4. عرض بيانات التقرير بالكامل
 function renderFullReport(data) {
-    // 1. البيانات العامة
+    // 0. معرض الصور الخمسة المرسومة (Tôle & Carrosserie) — الصفحة الأخيرة
+    renderCarImagesGallery(data);
+
+    const setText = (id, val, fallback = '--') => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = (val !== undefined && val !== null && val !== '') ? val : fallback;
+    };
+
+    const statusBadge = (val, okLabel = 'Conforme', defautLabel = 'Défaut') => {
+        const isDefaut = String(val).toUpperCase() === 'DEFAUT' || String(val) === 'Défaut';
+        return isDefaut
+            ? `<span class="status-badge defect"><i class="bi bi-x-circle-fill"></i> ${defautLabel}</span>`
+            : `<span class="status-badge ok"><i class="bi bi-check-circle-fill"></i> ${okLabel}</span>`;
+    };
+
+    const boolBadge = (val, yesLabel = 'Oui', noLabel = 'Non') => {
+        return val
+            ? `<span class="status-badge defect"><i class="bi bi-x-circle-fill"></i> ${yesLabel}</span>`
+            : `<span class="status-badge ok"><i class="bi bi-check-circle-fill"></i> ${noLabel}</span>`;
+    };
+
+    // ===== PAGE 1: Page de garde =====
     const reportId = data.inspection_id || data.id || '--';
-    if (document.getElementById('rep-code')) document.getElementById('rep-code').innerText = `REF: REP-2026-${reportId}`;
-    if (document.getElementById('client-name')) document.getElementById('client-name').innerText = data.client_name || 'Non spécifié';
-    if (document.getElementById('client-phone')) document.getElementById('client-phone').innerText = data.client_phone || 'Non renseigné';
-    
+    setText('rep-code', `REF: REP-2026-${reportId}`);
+    setText('client-name', data.client_name, 'Non spécifié');
+    setText('client-phone', data.client_phone, 'Non renseigné');
+
     const formattedDate = data.created_at ? new Date(data.created_at).toLocaleDateString('fr-FR') : new Date().toLocaleDateString('fr-FR');
-    if (document.getElementById('rep-date')) document.getElementById('rep-date').innerText = formattedDate;
+    setText('rep-date', formattedDate);
 
-    if (document.getElementById('car-brand-model')) document.getElementById('car-brand-model').innerText = `${data.brand || ''} ${data.model || ''}`.trim() || 'Non spécifié';
-    if (document.getElementById('car-plate')) document.getElementById('car-plate').innerText = data.plate || '';
-    if (document.getElementById('car-vin')) document.getElementById('car-vin').innerText = data.vin_number || data.vin || '--';
-// 1. استخراج عام الصنع (Année) - إما من السيرفر أو تلقائياً من رقم اللوحة (Matricule)
-let carYear = data.year || data.annee || data.car_year || data.model_year;
+    setText('car-brand-model', `${data.brand || ''} ${data.model || ''}`.trim() || 'Non spécifié');
+    setText('car-plate', data.plate, 'Non spécifié');
+    setText('car-vin', data.vin_number, 'Non renseigné');
+    setText('km-value', data.kilometrage_affiche ? `${Number(data.kilometrage_affiche).toLocaleString()} KM` : null, 'Non contrôlé');
 
-if (!carYear && data.plate) {
-    
-    const plateParts = String(data.plate).split('-');
-    if (plateParts.length >= 2) {
-        const middlePart = plateParts[1].trim(); 
-        if (middlePart.length >= 2) {
-            const yearDigits = middlePart.slice(-2); 
-            const fullYear = parseInt(yearDigits, 10) > 50 ? `19${yearDigits}` : `20${yearDigits}`;
-            carYear = fullYear;
-        }
+    const kmConformiteMap = { REAL: ['ok', 'Réel'], SUSPECT: ['defect', 'Non Réel'], UNCERTAIN: ['defect', 'Incertain'] };
+    const kmConfBadgeVal = (data.km_conformite || 'UNCERTAIN').toUpperCase();
+    const kmBadgeInfo = kmConformiteMap[kmConfBadgeVal] || kmConformiteMap.UNCERTAIN;
+    const kmBadgeEl = document.getElementById('km-conformite-badge');
+    if (kmBadgeEl) kmBadgeEl.innerHTML = `<span class="status-badge ${kmBadgeInfo[0]}">${kmBadgeInfo[1]}</span>`;
+
+    // نفس الحقول تظهر بصفحة 2 (Observations Générales) كمان
+    setText('km-notes', data.km_notes, 'Aucune remarque');
+    setText('car-keys', data.nombre_cles, '--');
+    setText('equip-secours', data.equipements_secour, 'Non renseigné');
+
+    // --- حساب حالة كل وحدة (Conforme / Défaut) ---
+    const kmConf = (data.km_conformite || 'UNCERTAIN').toUpperCase();
+    const suspPositions = ['avg', 'avd', 'arg', 'ard'];
+    const structElementsKeys = ['longerons', 'traverses', 'passage_roues', 'fond_coffre', 'chassis', 'optique', 'vitre'];
+
+    const moduleStatus = {
+        scanner: (data.calculateur_status === 'DEFAUT' || (data.dtc_codes && data.dtc_codes.trim() !== '')) ? 'defect' : 'ok',
+        moteur: (data.fuite_huile || data.fuite_liquide_refroidissement || data.bruit_moteur || (data.fumee_echappement && data.fumee_echappement.toUpperCase() !== 'AUCUNE')) ? 'defect' : 'ok',
+        suspension: (suspPositions.some(p => data['usure_pneu_' + p] === 'Défaut' || data['jante_' + p] === 'Défaut') || !!data.corrosion_soubassement || !!data.traces_choc) ? 'defect' : 'ok',
+        structure: structElementsKeys.some(e => data[e + '_status'] === 'Défaut') ? 'defect' : 'ok',
+        kilometrage: kmConf !== 'REAL' ? 'defect' : 'ok'
+    };
+
+    const overallDefect = Object.values(moduleStatus).includes('defect');
+    const bannerEl = document.getElementById('cover-status-banner');
+    const bannerValueEl = document.getElementById('cover-status-value');
+    const bannerDescEl = document.getElementById('cover-status-desc');
+    const bannerIconEl = document.getElementById('cover-status-icon-inner');
+    if (bannerEl) {
+        bannerEl.classList.remove('ok', 'warn');
+        bannerEl.classList.add(overallDefect ? 'warn' : 'ok');
     }
-}
-if (document.getElementById('car-year')) {
-    document.getElementById('car-year').innerText = carYear ? carYear : 'Non spécifié';
-}
-
-    if (document.getElementById('car-fuel')) document.getElementById('car-fuel').innerText = data.fuel || 'Essence / Diesel';
-    if (document.getElementById('car-gearbox')) document.getElementById('car-gearbox').innerText = data.gearbox || 'Manuelle / Auto';
-
-    // عرض حالة الكيلومتراج (حقيقي / غير حقيقي / لا يمكن الجزم)
-    const kmVal = data.kilometrage_affiche;
-    const kmStatus = String(data.conformite !== undefined ? data.conformite : (data.kilometrage_status || 'real'));
-
-    let kmBadgeHtml = '';
-    if (kmStatus === 'real' || kmStatus === '1' || kmStatus === 'true') {
-        kmBadgeHtml = `<span class="badge bg-success ms-1"><i class="bi bi-check-circle me-1"></i>Réel (حقيقي)</span>`;
-    } else if (kmStatus === 'suspect' || kmStatus === '0' || kmStatus === 'false') {
-        kmBadgeHtml = `<span class="badge bg-danger ms-1"><i class="bi bi-exclamation-triangle me-1"></i>Non Réel / Suspect (غير حقيقي)</span>`;
-    } else if (kmStatus === 'uncertain') {
-        kmBadgeHtml = `<span class="badge bg-warning text-dark ms-1"><i class="bi bi-question-circle me-1"></i>Non vérifiable (لا يمكن الجزم)</span>`;
+    if (bannerIconEl) bannerIconEl.className = overallDefect ? 'bi bi-exclamation-triangle-fill' : 'bi bi-check-lg';
+    if (bannerValueEl) bannerValueEl.innerText = overallDefect ? 'NON CONFORME' : 'CONFORME';
+    if (bannerDescEl) {
+        bannerDescEl.innerText = overallDefect
+            ? "Des anomalies ont été détectées lors de l'inspection. Voir le détail par section."
+            : "Le véhicule ne présente pas de défaut majeur. Aucun problème critique détecté lors de l'inspection.";
     }
 
-    if (document.getElementById('car-km')) {
-        document.getElementById('car-km').innerHTML = (kmVal !== null && kmVal !== undefined) 
-            ? `${kmVal} KM ${kmBadgeHtml}` 
-            : 'Non renseigné';
-    }
-    // 2. قراءة عدد المفاتيح (Nombre de clés) مع فحص كافة الاحتمالات الممكنة لاسم الحقل
-const keysCount = data.keys_count ?? data.keys ?? data.nombre_cles ?? data.nombre_de_cles ?? data.car_keys;
-
-if (document.getElementById('car-keys')) {
-    document.getElementById('car-keys').innerText = (keysCount !== undefined && keysCount !== null && keysCount !== '') 
-        ? keysCount 
-        : 'Non spécifié';
-}
-
-    // 2. جدول الهيكل الخارجي (Carrosserie)
-    const extBody = document.getElementById('ext-defects-body');
-    if (extBody) {
-        extBody.innerHTML = '';
-        const elementsList = [
-            { fr: "Capot", ar: "غطاء المحرك" },
-            { fr: "Pare-chocs Avant", ar: "الواقي الأمامي" },
-            { fr: "Aile AVG", ar: "الجناح أمامي أيسر" },
-            { fr: "Porte AVG", ar: "الباب أمامي أيسر" },
-            { fr: "Porte ARG", ar: "الباب خلفي أيسر" },
-            { fr: "Aile ARG", ar: "الجناح خلفي أيسر" },
-            { fr: "Coffre", ar: "الصندوق الخلفي" },
-            { fr: "Toit", ar: "سقف السيارة" },
-            { fr: "Pare-chocs Arrière", ar: "الواقي الخلفي" },
-            { fr: "Aile AVD", ar: "الجناح أمامي أيمن" },
-            { fr: "Porte AVD", ar: "الباب أمامي أيمن" },
-            { fr: "Porte ARD", ar: "الباب خلفي أيمن" },
-            { fr: "Aile ARD", ar: "الجناح خلفي أيمن" },
-            { fr: "Montant", ar: "العارضة (المونطون)" },
-            { fr: "Bas de caisse", ar: "أسفل الهيكل" }
+    // --- شبكة أنواع الفحوصات (6 وحدات) ---
+    const checksGrid = document.getElementById('cover-checks-grid');
+    if (checksGrid) {
+        const checks = [
+            { key: 'scanner', label: 'Scanner Diagnostique', icon: 'bi-cpu-fill' },
+            { key: 'moteur', label: 'Moteur & Niveaux', icon: 'bi-gear-fill' },
+            { key: 'suspension', label: 'Suspension & Train', icon: 'bi-truck-front-fill' },
+            { key: 'structure', label: 'Tôle & Carrosserie', icon: 'bi-palette-fill' },
+            { key: 'kilometrage', label: 'Kilométrage', icon: 'bi-speedometer2' },
+            { key: 'general', label: 'Observations', icon: 'bi-clipboard2-check-fill' }
         ];
-
-        const columnsList = ["Peinture", "A froid", "Rayures", "Choque", "Corrosion", "Jeu", "Mastique", "Visse", "Raccord", "Change", "Soudure"];
-
-        let extDefects = {};
-        if (typeof data.elements_ext_json === 'string') {
-            try { extDefects = JSON.parse(data.elements_ext_json); } catch(e) {}
-        } else if (typeof data.elements_ext_json === 'object' && data.elements_ext_json !== null) {
-            extDefects = data.elements_ext_json;
-        }
-
-        let markerIndex = 1;
-        const markersList = [];
-
-        elementsList.forEach((el) => {
-            const detectedDefects = extDefects[el.fr] || [];
-            let rowDefectsText = Array.isArray(detectedDefects) ? detectedDefects : [detectedDefects];
-
-            if (rowDefectsText.length > 0 && rowDefectsText[0] !== '') {
-                markersList.push({ id: markerIndex++, part: el.fr, defects: rowDefectsText.join(', ') });
-            }
-
-            let rowHtml = `<tr>
-                <td class="text-start fw-bold">${el.fr} <small class="d-block text-muted fw-normal">${el.ar}</small></td>`;
-
-            columnsList.forEach((col) => {
-                const isChecked = rowDefectsText.includes(col);
-                rowHtml += `<td>${isChecked ? '<i class="bi bi-x-circle-fill text-danger fs-6"></i>' : '<i class="bi bi-check2 text-muted opacity-25"></i>'}</td>`;
-            });
-
-            rowHtml += `</tr>`;
-            extBody.innerHTML += rowHtml;
-        });
-
-        renderMarkersAndLegend(markersList);
+        checksGrid.innerHTML = checks.map(c => {
+            const status = moduleStatus[c.key] || 'info';
+            const badge = status === 'ok'
+                ? '<span class="status-badge ok"><i class="bi bi-check-circle-fill"></i> OK</span>'
+                : status === 'defect'
+                    ? '<span class="status-badge defect"><i class="bi bi-x-circle-fill"></i> DÉFAUT</span>'
+                    : '<span class="status-badge info"><i class="bi bi-info-circle-fill"></i> Renseigné</span>';
+            return `
+                <div class="col-4">
+                    <div class="cover-check-card">
+                        <div class="cover-check-icon"><i class="bi ${c.icon}"></i></div>
+                        <div class="cover-check-label">${c.label}</div>
+                        ${badge}
+                    </div>
+                </div>
+            `;
+        }).join('');
     }
 
-    // 3. Fiches de Contrôle Structurel
+    setText('cover-notes-text', data.rapport_mecanique, "Aucune observation particulière n'a été relevée lors de l'inspection.");
+
+    // ===== PAGE 2: Scanner + Moteur =====
+    const scannerBadgeEl = document.getElementById('scanner-calculateur-badge');
+    if (scannerBadgeEl) scannerBadgeEl.innerHTML = statusBadge(data.calculateur_status, 'OK', 'DÉFAUT');
+    setText('scanner-voyants', data.voyants_allumes, 'Aucun');
+    setText('scanner-dtc', data.dtc_codes, 'Aucun code détecté');
+    setText('scanner-notes', data.scanner_notes, 'Aucune remarque');
+
+    setText('moteur-huile', data.niveau_huile, 'Non contrôlé');
+    setText('moteur-fumee', data.fumee_echappement, 'Aucune');
+    const fuiteHuileEl = document.getElementById('moteur-fuite-huile-badge');
+    if (fuiteHuileEl) fuiteHuileEl.innerHTML = boolBadge(!!data.fuite_huile);
+    const fuiteLiquideEl = document.getElementById('moteur-fuite-liquide-badge');
+    if (fuiteLiquideEl) fuiteLiquideEl.innerHTML = boolBadge(!!data.fuite_liquide_refroidissement);
+    const bruitEl = document.getElementById('moteur-bruit-badge');
+    if (bruitEl) bruitEl.innerHTML = boolBadge(!!data.bruit_moteur);
+    setText('moteur-notes', data.moteur_notes, 'Aucune remarque');
+
+    // ===== PAGE 3: Suspension & Structure =====
+    const tiresBody = document.getElementById('suspension-tires-body');
+    if (tiresBody) {
+        const positions = [
+            { key: 'avg', label: 'Avant Gauche (AVG)' },
+            { key: 'avd', label: 'Avant Droit (AVD)' },
+            { key: 'arg', label: 'Arrière Gauche (ARG)' },
+            { key: 'ard', label: 'Arrière Droit (ARD)' }
+        ];
+        tiresBody.innerHTML = positions.map(pos => {
+            const pneuObs = data['obs_pneu_' + pos.key];
+            const janteObs = data['jante_' + pos.key + '_obs'];
+            const obsParts = [];
+            if (pneuObs) obsParts.push(`Pneu: ${pneuObs}`);
+            if (janteObs) obsParts.push(`Jante: ${janteObs}`);
+            const obsText = obsParts.length > 0 ? obsParts.join(' — ') : '--';
+
+            return `
+            <tr>
+                <td class="text-start fw-bold">${pos.label}</td>
+                <td>${statusBadge(data['usure_pneu_' + pos.key])}</td>
+                <td>${statusBadge(data['jante_' + pos.key])}</td>
+                <td class="text-start">${obsText}</td>
+            </tr>
+        `;
+        }).join('');
+    }
+    const suspCorrosionEl = document.getElementById('susp-corrosion-badge');
+    if (suspCorrosionEl) suspCorrosionEl.innerHTML = boolBadge(!!data.corrosion_soubassement);
+    const suspChocEl = document.getElementById('susp-choc-badge');
+    if (suspChocEl) suspChocEl.innerHTML = boolBadge(!!data.traces_choc);
+    setText('susp-notes', data.suspension_notes, 'Aucune remarque');
+
     const structBody = document.getElementById('struct-defects-body');
     if (structBody) {
-        structBody.innerHTML = '';
-        const structItems = [
-            { key: 'longerons', name: 'Longerons / العوارض الطولية' },
-            { key: 'traverses', name: 'Traverses / العوارض العرضية' },
-            { key: 'passage_roues', name: 'Passage de roues / ممر العجلات' },
-            { key: 'fond_coffre', name: 'Fond de coffre / أرضية الصندوق' },
-            { key: 'chassis', name: 'Châssis / الهيكل الأساسي' },
-            { key: 'optique', name: 'Optique / الأضواء' },
-            { key: 'vitre', name: 'Vitre / الزجاج' }
+        const structElements = [
+            { key: 'longerons', fr: 'Longerons' },
+            { key: 'traverses', fr: 'Traverses' },
+            { key: 'passage_roues', fr: 'Passage de roues' },
+            { key: 'fond_coffre', fr: 'Fond coffre' },
+            { key: 'chassis', fr: 'Châssis' },
+            { key: 'optique', fr: 'Optique' },
+            { key: 'vitre', fr: 'Vitre' }
         ];
-
-        structItems.forEach(item => {
-            const status = data[`${item.key}_status`] || 'Conforme';
-            const obs = data[`${item.key}_obs`] || 'سليم / Aucun défaut';
-            const isOk = status === 'Conforme' || status === 'OK' || status === 'سليم';
-
-            structBody.innerHTML += `
-                <tr>
-                    <td class="fw-bold text-dark text-start">${item.name}</td>
-                    <td class="text-center">
-                        <span class="status-badge ${isOk ? 'ok' : 'defect'}">
-                            ${isOk ? '<i class="bi bi-check-lg me-1"></i>Conforme' : '<i class="bi bi-exclamation-triangle-fill me-1"></i>Défaut'}
-                        </span>
-                    </td>
-                    <td class="text-start">${obs}</td>
-                </tr>
-            `;
-        });
+        structBody.innerHTML = structElements.map(el => `
+            <tr>
+                <td class="text-start fw-bold">${el.fr}</td>
+                <td class="text-center">${statusBadge(data[el.key + '_status'])}</td>
+                <td class="text-start">${data[el.key + '_obs'] || '--'}</td>
+            </tr>
+        `).join('');
     }
+    setText('struct-conclusion', data.conclusion_structure, 'Aucun accident détecté');
+    setText('struct-notes', data.tole_notes, 'Aucune remarque');
 
-    // 4. Pneus / Jantes / Soubassement
-    const suspBody = document.getElementById('suspension-defects-body');
-    if (suspBody) {
-        suspBody.innerHTML = '';
-        const suspItems = [
-            { name: 'Usure pneus (AVG, AVD, ARG, ARD)', val: data.usure_pneus || 'Conforme' },
-            { name: 'État jantes (AVG, AVD, ARG, ARD)', val: data.etat_jantes || 'Conforme' },
-            { name: 'Corrosion soubassement (صدأ أسفل الهيكل)', val: data.corrosion_soubassement ? 'Défaut' : 'Conforme' },
-            { name: 'Traces de choc dessous véhicule (آثار صدمات سفلي)', val: data.traces_choc ? 'Défaut' : 'Conforme' }
-        ];
+    // ===== PAGE 2: Observations Générales (rapport mécanique) =====
+    setText('rapport-mecanique-text', data.rapport_mecanique, 'Aucune observation mécanique enregistrée.');
 
-        suspItems.forEach(item => {
-            const isOk = item.val === 'Conforme' || item.val === 'OK';
-            suspBody.innerHTML += `
-                <tr>
-                    <td class="fw-bold text-dark text-start">${item.name}</td>
-                    <td class="text-center">
-                        <span class="status-badge ${isOk ? 'ok' : 'defect'}">
-                            ${isOk ? '<i class="bi bi-check-lg me-1"></i>Conforme' : '<i class="bi bi-exclamation-triangle-fill me-1"></i>Défaut'}
-                        </span>
-                    </td>
-                    <td class="text-start">${isOk ? 'سليم / R.A.S' : 'A contrôler'}</td>
-                </tr>
-            `;
-        });
-    }
-
-    // 5. الخاتمة الافتراضية
-    const generalConclusion = document.getElementById('general-conclusion');
-    if (generalConclusion) {
-        generalConclusion.innerText = data.conclusion_structure || 'Aucun accident détecté';
-    }
-
-    // 6. استدعاء تلخيص الذكاء الاصطناعي
-    fetchAISummary(data);
+    // استدعاء تلخيص الذكاء الاصطناعي (يحدّث الملخصات بصفحة 2 و3)
+    // نرسل نسخة خفيفة بدون elements_ext_json (يحتوي 5 صور base64 ضخمة غير مستخدمة بالـ prompt)
+    const { elements_ext_json, ...aiPayload } = data;
+    fetchAISummary(aiPayload);
 }
 
 // 5. النصوص البديلة في حال فشل الاتصال بالسيرفر
 function fallbackSummaries() {
     const defaultMsg = "Aucun résumé disponible pour le moment.";
-    if (document.getElementById('ai-carrosserie-summary')) document.getElementById('ai-carrosserie-summary').innerText = defaultMsg;
-    if (document.getElementById('ai-structure-summary')) document.getElementById('ai-structure-summary').innerText = defaultMsg;
-    if (document.getElementById('ai-suspension-summary')) document.getElementById('ai-suspension-summary').innerText = defaultMsg;
-    if (document.getElementById('moteur-summary-body')) document.getElementById('moteur-summary-body').innerText = defaultMsg;
-    if (document.getElementById('scanner-summary-body')) document.getElementById('scanner-summary-body').innerText = defaultMsg;
+    ['ai-scanner-summary', 'ai-moteur-summary', 'ai-suspension-summary', 'ai-structure-summary'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = defaultMsg;
+    });
 }
 
 // 6. دالة جلب ملخص الذكاء الاصطناعي (موحدة ومعالجة)
 async function fetchAISummary(inspectionData) {
-    const elCarrosserie = document.getElementById('ai-carrosserie-summary');
-    const elStructure = document.getElementById('ai-structure-summary');
+    const elScanner = document.getElementById('ai-scanner-summary');
+    const elMoteur = document.getElementById('ai-moteur-summary');
     const elSuspension = document.getElementById('ai-suspension-summary');
-    const elMoteur = document.getElementById('moteur-summary-body');
-    const elScanner = document.getElementById('scanner-summary-body');
+    const elStructure = document.getElementById('ai-structure-summary');
     const elConclusion = document.getElementById('general-conclusion');
 
     const API_URL = 'https://romantic-enjoyment-production-f458.up.railway.app/api';
@@ -345,11 +332,10 @@ async function fetchAISummary(inspectionData) {
         const result = await response.json();
 
         if (result.success && result.data) {
-            if (elCarrosserie) elCarrosserie.innerText = result.data.carrosserie_summary || "R.A.S / لا توجد ملاحظات";
-            if (elStructure) elStructure.innerText = result.data.structure_summary || "R.A.S / لا توجد ملاحظات";
+            if (elScanner) elScanner.innerText = result.data.scanner_summary || "R.A.S / لا توجد ملاحظات";
+            if (elMoteur) elMoteur.innerText = result.data.moteur_summary || "R.A.S / لا توجد ملاحظات";
             if (elSuspension) elSuspension.innerText = result.data.suspension_summary || "R.A.S / لا توجد ملاحظات";
-            if (elMoteur) elMoteur.innerHTML = `<i class="bi bi-robot text-danger me-1"></i> ${result.data.moteur_summary || "Bilan Moteur Conforme"}`;
-            if (elScanner) elScanner.innerHTML = `<i class="bi bi-robot text-danger me-1"></i> ${result.data.scanner_summary || "Aucun code défaut"}`;
+            if (elStructure) elStructure.innerText = result.data.carrosserie_summary || "R.A.S / لا توجد ملاحظات";
             if (elConclusion) elConclusion.innerText = result.data.conclusion_generale || inspectionData.conclusion_structure || "Aucun accident détecté";
         } else {
             fallbackSummaries();

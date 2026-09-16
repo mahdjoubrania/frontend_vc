@@ -112,6 +112,33 @@ function getRemainingTime(item) {
     return `<span class="badge bg-danger">${item.cancel_reason || 'Annulé'}</span>`;
   }
 
+  const inWorkshop = ['IN_WORKSHOP', 'IN_PROGRESS', 'INCOMPLETE'].includes(currentStatus);
+
+  // السيارة دخلت الورشة فعلياً -> العد التنازلي يبدأ من لحظة الدخول الحقيقية (started_at)
+  // بغض النظر عن الموعد المبرمج أصلاً (حتى لو دخلت متأخرة أو مبكرة)
+  if (inWorkshop) {
+    const startedAtStr = item.started_at || item.extendedProps?.started_at;
+    const startedDate = parseLocalAppointmentDate(startedAtStr);
+
+    if (!startedDate) {
+      return `<span class="badge bg-info text-dark">⚙️ En cours</span>`;
+    }
+
+    const startedTime = startedDate.getTime();
+    const now = new Date().getTime();
+    const durationMs = 60 * 60 * 1000;
+    const remainingTimeMs = durationMs - (now - startedTime);
+
+    if (remainingTimeMs <= 0) {
+      return `<span class="badge bg-danger">⏱️ Dépassement (+1h)</span>`;
+    }
+
+    const minutesLeft = Math.floor(remainingTimeMs / (1000 * 60));
+    const secondsLeft = Math.floor((remainingTimeMs % (1000 * 60)) / 1000);
+    return `<span class="badge bg-primary fs-12">⏳ ${minutesLeft}m ${secondsLeft}s</span>`;
+  }
+
+  // السيارة لسا ما دخلت الورشة (PENDING / READY_FOR_WORKSHOP) -> نعرض بس معلومة الموعد المبرمج، بدون عد تنازلي حقيقي
   const dateStr = item.appointment_date || item.start || item.appointmentDate;
   const appDate = parseLocalAppointmentDate(dateStr);
 
@@ -120,25 +147,12 @@ function getRemainingTime(item) {
   const appTime = appDate.getTime();
   const now = new Date().getTime();
 
-  // 1. الموعد لم يحن وقته بعد
   if (now < appTime) {
     const timeUntilApp = Math.ceil((appTime - now) / (1000 * 60));
     return `<span class="badge bg-light text-muted border">Pas encore (${timeUntilApp}m)</span>`;
   }
 
-  // 2. الموعد حان وقته أو تجاوزه: يبدأ العد التنازلي لـ 60 دقيقة
-  const durationMs = 60 * 60 * 1000;
-  const elapsedTime = now - appTime;
-  const remainingTimeMs = durationMs - elapsedTime;
-
-  if (remainingTimeMs <= 0) {
-    return `<span class="badge bg-danger">⏱️ Dépassement (+1h)</span>`;
-  }
-
-  const minutesLeft = Math.floor(remainingTimeMs / (1000 * 60));
-  const secondsLeft = Math.floor((remainingTimeMs % (1000 * 60)) / 1000);
-
-  return `<span class="badge bg-primary fs-12">⏳ ${minutesLeft}m ${secondsLeft}s</span>`;
+  return `<span class="badge bg-warning text-dark">En attente d'entrée</span>`;
 }
 
 function renderAppointmentsTable(data) {
@@ -279,7 +293,7 @@ function updateKPIs(data) {
     return dateVal.startsWith(todayStr);
   }).length;
 
-  const pendingCount = data.filter(a => ['PENDING', 'EN_ATTENTE'].includes(a.extendedProps?.status || a.status)).length;
+  const pendingCount = data.filter(a => ['PENDING', 'EN_ATTENTE', 'READY_FOR_WORKSHOP'].includes(a.extendedProps?.status || a.status)).length;
   const progressCount = data.filter(a => ['INCOMPLETE', 'EN_COURS', 'IN_PROGRESS', 'IN_WORKSHOP'].includes(a.extendedProps?.status || a.status)).length;
   const completedCount = data.filter(a => ['COMPLETED', 'TERMINE'].includes(a.extendedProps?.status || a.status)).length;
 

@@ -127,7 +127,7 @@ function renderFullReport(data) {
             : `<span class="status-badge ok"><i class="bi bi-check-circle-fill"></i> ${noLabel}</span>`;
     };
 
-    // ===== PAGE 1: Informations Générales =====
+    // ===== PAGE 1: Page de garde =====
     const reportId = data.inspection_id || data.id || '--';
     setText('rep-code', `REF: REP-2026-${reportId}`);
     setText('client-name', data.client_name, 'Non spécifié');
@@ -139,17 +139,74 @@ function renderFullReport(data) {
     setText('car-brand-model', `${data.brand || ''} ${data.model || ''}`.trim() || 'Non spécifié');
     setText('car-plate', data.plate, 'Non spécifié');
     setText('car-vin', data.vin_number, 'Non renseigné');
+    setText('km-value', data.kilometrage_affiche ? `${Number(data.kilometrage_affiche).toLocaleString()} KM` : null, 'Non contrôlé');
 
-    setText('km-value', data.kilometrage_affiche ? Number(data.kilometrage_affiche).toLocaleString() : null, 'Non contrôlé');
-    const kmConformiteMap = { REAL: ['ok', 'Réel'], SUSPECT: ['defect', 'Falsifié'], UNCERTAIN: ['defect', 'Incertain'] };
-    const kmConf = (data.km_conformite || 'UNCERTAIN').toUpperCase();
-    const kmInfo = kmConformiteMap[kmConf] || kmConformiteMap.UNCERTAIN;
-    const kmBadgeEl = document.getElementById('km-conformite-badge');
-    if (kmBadgeEl) kmBadgeEl.innerHTML = `<span class="status-badge ${kmInfo[0]}"><i class="bi bi-check-circle-fill"></i> ${kmInfo[1]}</span>`;
+    // نفس الحقول تظهر بصفحة 4 (Observations Générales) كمان
     setText('km-notes', data.km_notes, 'Aucune remarque');
-
     setText('car-keys', data.nombre_cles, '--');
     setText('equip-secours', data.equipements_secour, 'Non renseigné');
+
+    // --- حساب حالة كل وحدة (Conforme / Défaut) ---
+    const kmConf = (data.km_conformite || 'UNCERTAIN').toUpperCase();
+    const suspPositions = ['avg', 'avd', 'arg', 'ard'];
+    const structElementsKeys = ['longerons', 'traverses', 'passage_roues', 'fond_coffre', 'chassis', 'optique', 'vitre'];
+
+    const moduleStatus = {
+        scanner: (data.calculateur_status === 'DEFAUT' || (data.dtc_codes && data.dtc_codes.trim() !== '')) ? 'defect' : 'ok',
+        moteur: (data.fuite_huile || data.fuite_liquide_refroidissement || data.bruit_moteur || (data.fumee_echappement && data.fumee_echappement.toUpperCase() !== 'AUCUNE')) ? 'defect' : 'ok',
+        suspension: (suspPositions.some(p => data['usure_pneu_' + p] === 'Défaut' || data['jante_' + p] === 'Défaut') || !!data.corrosion_soubassement || !!data.traces_choc) ? 'defect' : 'ok',
+        structure: structElementsKeys.some(e => data[e + '_status'] === 'Défaut') ? 'defect' : 'ok',
+        kilometrage: kmConf !== 'REAL' ? 'defect' : 'ok'
+    };
+
+    const overallDefect = Object.values(moduleStatus).includes('defect');
+    const bannerEl = document.getElementById('cover-status-banner');
+    const bannerValueEl = document.getElementById('cover-status-value');
+    const bannerDescEl = document.getElementById('cover-status-desc');
+    const bannerIconEl = document.getElementById('cover-status-icon-inner');
+    if (bannerEl) {
+        bannerEl.classList.remove('ok', 'warn');
+        bannerEl.classList.add(overallDefect ? 'warn' : 'ok');
+    }
+    if (bannerIconEl) bannerIconEl.className = overallDefect ? 'bi bi-exclamation-triangle-fill' : 'bi bi-check-lg';
+    if (bannerValueEl) bannerValueEl.innerText = overallDefect ? 'NON CONFORME' : 'CONFORME';
+    if (bannerDescEl) {
+        bannerDescEl.innerText = overallDefect
+            ? "Des anomalies ont été détectées lors de l'inspection. Voir le détail par section."
+            : "Le véhicule ne présente pas de défaut majeur. Aucun problème critique détecté lors de l'inspection.";
+    }
+
+    // --- شبكة أنواع الفحوصات (6 وحدات) ---
+    const checksGrid = document.getElementById('cover-checks-grid');
+    if (checksGrid) {
+        const checks = [
+            { key: 'scanner', label: 'Scanner Diagnostique', icon: 'bi-cpu-fill' },
+            { key: 'moteur', label: 'Moteur & Niveaux', icon: 'bi-gear-fill' },
+            { key: 'suspension', label: 'Suspension & Train', icon: 'bi-truck-front-fill' },
+            { key: 'structure', label: 'Tôle & Carrosserie', icon: 'bi-palette-fill' },
+            { key: 'kilometrage', label: 'Kilométrage', icon: 'bi-speedometer2' },
+            { key: 'general', label: 'Observations', icon: 'bi-clipboard2-check-fill' }
+        ];
+        checksGrid.innerHTML = checks.map(c => {
+            const status = moduleStatus[c.key] || 'info';
+            const badge = status === 'ok'
+                ? '<span class="status-badge ok"><i class="bi bi-check-circle-fill"></i> OK</span>'
+                : status === 'defect'
+                    ? '<span class="status-badge defect"><i class="bi bi-x-circle-fill"></i> DÉFAUT</span>'
+                    : '<span class="status-badge info"><i class="bi bi-info-circle-fill"></i> Renseigné</span>';
+            return `
+                <div class="col-4">
+                    <div class="cover-check-card">
+                        <div class="cover-check-icon"><i class="bi ${c.icon}"></i></div>
+                        <div class="cover-check-label">${c.label}</div>
+                        ${badge}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    setText('cover-notes-text', data.rapport_mecanique, "Aucune observation particulière n'a été relevée lors de l'inspection.");
 
     // ===== PAGE 2: Scanner + Moteur =====
     const scannerBadgeEl = document.getElementById('scanner-calculateur-badge');
