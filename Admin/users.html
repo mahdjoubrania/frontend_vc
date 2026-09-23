@@ -165,12 +165,72 @@
             <!-- داخل modal التعديل (#editUserModal) -->
 <div class="mb-3">
   <label class="form-label fw-medium text-dark">Rôle</label> 
-  <select id="edit-user-role" class="form-select rounded-3" required>
+  <select id="edit-user-role" class="form-select rounded-3" required onchange="toggleModulePermissionsVisibility()">
     <option value="ADMIN">Administrateur</option>
     <option value="RECEPTION">Réceptionniste</option>
     <option value="TECHNICIAN">Technicien</option>
   </select>
 </div>
+
+            <!-- قسم صلاحيات الوحدات: يظهر فقط لو الدور TECHNICIEN -->
+            <div class="mb-3 d-none" id="module-permissions-section">
+              <label class="form-label fw-medium text-dark">Accès aux modules de vérification</label>
+              <div class="d-flex gap-3 mb-2">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="perm-access-mode" id="perm-full-access" checked onchange="toggleModuleCheckboxesVisibility()">
+                  <label class="form-check-label small" for="perm-full-access">Accès complet (tous les modules)</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="perm-access-mode" id="perm-restricted-access" onchange="toggleModuleCheckboxesVisibility()">
+                  <label class="form-check-label small" for="perm-restricted-access">Accès restreint</label>
+                </div>
+              </div>
+              <div class="row g-2 p-2 bg-light rounded-3 border d-none" id="module-permissions-checkboxes">
+                <div class="col-6">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="perm-scanner">
+                    <label class="form-check-label small" for="perm-scanner">Scanner Diagnostique</label>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="perm-moteur">
+                    <label class="form-check-label small" for="perm-moteur">Moteur & Niveaux</label>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="perm-suspension">
+                    <label class="form-check-label small" for="perm-suspension">Suspension & Train</label>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="perm-tole">
+                    <label class="form-check-label small" for="perm-tole">Tôle & Carrosserie</label>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="perm-kilometrage">
+                    <label class="form-check-label small" for="perm-kilometrage">Kilométrage & Conformation</label>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="perm-general">
+                    <label class="form-check-label small" for="perm-general">Observations Générales</label>
+                  </div>
+                </div>
+                <div class="col-12">
+                  <hr class="my-1">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="perm-reports">
+                    <label class="form-check-label small fw-bold" for="perm-reports">Accès à la page Rapports</label>
+                  </div>
+                </div>
+              </div>
+            </div>
             <div class="mb-3">
               <label class="form-label fw-medium text-dark">Statut du compte</label>
               <select id="edit-user-status" class="form-select rounded-3">
@@ -261,9 +321,6 @@
         ? `<span class="badge bg-success-subtle text-success px-2 py-1 rounded-pill">Actif</span>`
         : `<span class="badge bg-danger-subtle text-danger px-2 py-1 rounded-pill">Inactif</span>`;
 
-      const safeName = (u.fullName || '').replace(/'/g, "\\'");
-      const safePhone = (u.phone || '').replace(/'/g, "\\'");
-      const safeRole = (u.role || '').replace(/'/g, "\\'");
 
       const row = `
         <tr>
@@ -273,7 +330,7 @@
           <td><span class="badge bg-light text-dark border px-2 py-1">${u.role || 'user'}</span></td>
           <td>${statusBadge}</td>
           <td class="pe-3 text-end text-nowrap">
-            <button class="btn btn-sm btn-light border rounded-2 text-primary me-1" title="Modifier" onclick="openEditModal(${u.id}, '${safeName}', '${safePhone}', '${safeRole}', ${u.isActive})">
+            <button class="btn btn-sm btn-light border rounded-2 text-primary me-1" title="Modifier" onclick="openEditModal(${u.id})">
               <i class="bi bi-pencil"></i>
             </button>
             <button class="btn btn-sm btn-light border rounded-2 text-danger" title="Désactiver" onclick="openDeleteModal(${u.id})">
@@ -319,13 +376,62 @@
     renderTable(filtered);
   }
 
-  function openEditModal(id, name, phone, role, isActive) {
-    document.getElementById('edit-user-id').value = id;
-    document.getElementById('edit-user-fullname').value = name;
-    document.getElementById('edit-user-phone').value = phone;
-    document.getElementById('edit-user-role').value = role;
-    document.getElementById('edit-user-status').value = (isActive === 1 || isActive === true) ? "1" : "0";
+  const ALL_MODULE_KEYS = ['scanner', 'moteur', 'suspension', 'tole', 'kilometrage', 'general', 'reports'];
+
+  function toggleModulePermissionsVisibility() {
+    const role = document.getElementById('edit-user-role').value;
+    const section = document.getElementById('module-permissions-section');
+    if (section) section.classList.toggle('d-none', role !== 'TECHNICIAN');
+  }
+
+  function toggleModuleCheckboxesVisibility() {
+    const restricted = document.getElementById('perm-restricted-access')?.checked;
+    const checkboxesBox = document.getElementById('module-permissions-checkboxes');
+    if (checkboxesBox) checkboxesBox.classList.toggle('d-none', !restricted);
+  }
+
+  function populateModulePermissions(allowedModules) {
+    let list = null;
+    if (Array.isArray(allowedModules)) {
+      list = allowedModules;
+    } else if (typeof allowedModules === 'string' && allowedModules) {
+      try { list = JSON.parse(allowedModules); } catch (e) { list = null; }
+    }
+
+    const fullAccessRadio = document.getElementById('perm-full-access');
+    const restrictedRadio = document.getElementById('perm-restricted-access');
+
+    if (!list) {
+      if (fullAccessRadio) fullAccessRadio.checked = true;
+      ALL_MODULE_KEYS.forEach(key => {
+        const cb = document.getElementById('perm-' + key);
+        if (cb) cb.checked = true;
+      });
+    } else {
+      if (restrictedRadio) restrictedRadio.checked = true;
+      ALL_MODULE_KEYS.forEach(key => {
+        const cb = document.getElementById('perm-' + key);
+        if (cb) cb.checked = list.includes(key);
+      });
+    }
+
+    toggleModuleCheckboxesVisibility();
+  }
+
+  function openEditModal(id) {
+    const user = usersCache.find(u => Number(u.id) === Number(id));
+    if (!user) return;
+
+    document.getElementById('edit-user-id').value = user.id;
+    document.getElementById('edit-user-fullname').value = user.fullName || '';
+    document.getElementById('edit-user-phone').value = user.phone || '';
+    document.getElementById('edit-user-role').value = user.role || '';
+    document.getElementById('edit-user-status').value = (user.isActive === 1 || user.isActive === true) ? "1" : "0";
     document.getElementById('edit-user-password').value = '';
+
+    populateModulePermissions(user.allowedModules);
+    toggleModulePermissionsVisibility();
+
     new bootstrap.Modal(document.getElementById('editUserModal')).show();
   }
 
@@ -384,12 +490,20 @@
     editUserForm?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const userId = document.getElementById('edit-user-id').value;
+      const role = document.getElementById('edit-user-role').value;
+
+      let allowedModules = null;
+      if (role === 'TECHNICIAN' && document.getElementById('perm-restricted-access')?.checked) {
+        allowedModules = ALL_MODULE_KEYS.filter(key => document.getElementById('perm-' + key)?.checked);
+      }
+
       const payload = {
         fullName: document.getElementById('edit-user-fullname').value,
         phone: document.getElementById('edit-user-phone').value,
-        role: document.getElementById('edit-user-role').value,
+        role: role,
         isActive: document.getElementById('edit-user-status').value === "1",
-        password: document.getElementById('edit-user-password').value
+        password: document.getElementById('edit-user-password').value,
+        allowedModules: allowedModules
       };
 
       try {
