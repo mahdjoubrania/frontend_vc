@@ -143,7 +143,7 @@
               <i class="bi bi-grid-1x2 me-2"></i> Tableau de bord
             </a>
           </li>
-          <li class="nav-item">
+          <li class="nav-item" id="nav-item-reports">
             <a href="reports.html" class="nav-link text-secondary">
               <i class="bi bi-file-earmark-bar-graph me-2"></i> Rapports 
             </a>
@@ -178,7 +178,7 @@
         </div>
         <div class="col-md-6" id="selected-rdv-info">
           <div class="p-2 border rounded bg-light">
-            <small class="text-muted d-block">Client: <b id="info-client-name">--</b></small>
+            <small class="text-muted d-block">Client: <b id="info-client-name">--</b> | Tél: <span id="info-client-phone">--</span></small>
             <small class="text-muted d-block">Véhicule: <b id="info-vehicle-name">--</b> | Matricule: <span id="info-vehicle-plate">--</span> | VIN: <span id="info-vehicle-vin">--</span></small>
           </div>
         </div>
@@ -199,7 +199,7 @@
     
     <!-- Scanner -->
     <div class="col-md-4">
-      <div class="card h-100 shadow-sm border-0 text-center p-4 module-card" onclick="openModule('scanner')">
+      <div class="card h-100 shadow-sm border-0 text-center p-4 module-card" data-module="scanner" onclick="openModule('scanner')">
         <div class="display-4 text-primary mb-3"><i class="fa-solid fa-laptop-code"></i></div>
         <h5 class="fw-bold">Scanner Diagnostique</h5>
         <p class="text-muted small mb-0">Codes DTC, calculateur, voyants allumés.</p>
@@ -208,7 +208,7 @@
 
     <!-- Moteur -->
     <div class="col-md-4">
-      <div class="card h-100 shadow-sm border-0 text-center p-4 module-card" onclick="openModule('moteur')">
+      <div class="card h-100 shadow-sm border-0 text-center p-4 module-card" data-module="moteur" onclick="openModule('moteur')">
         <div class="display-4 text-warning mb-3"><i class="fa-solid fa-car-battery"></i></div>
         <h5 class="fw-bold">Moteur & Niveaux</h5>
         <p class="text-muted small mb-0">Niveaux d'huile, fuites, bruits, fumée d'échappement.</p>
@@ -217,7 +217,7 @@
 
     <!-- Suspension -->
     <div class="col-md-4">
-      <div class="card h-100 shadow-sm border-0 text-center p-4 module-card" onclick="openModule('suspension')">
+      <div class="card h-100 shadow-sm border-0 text-center p-4 module-card" data-module="suspension" onclick="openModule('suspension')">
         <div class="display-4 text-info mb-3"><i class="fa-solid fa-truck-monster"></i></div>
         <h5 class="fw-bold">Suspension & Train</h5>
         <p class="text-muted small mb-0">Amortisseurs, rotules, pneumatiques, corrosion.</p>
@@ -226,7 +226,7 @@
 
     <!-- Tôle (Elements & Drawing) -->
     <div class="col-md-4">
-      <div class="card h-100 shadow-sm border-0 text-center p-4 module-card" onclick="openModule('tole')">
+      <div class="card h-100 shadow-sm border-0 text-center p-4 module-card" data-module="tole" onclick="openModule('tole')">
         <div class="display-4 text-danger mb-3"><i class="fa-solid fa-spray-can"></i></div>
         <h5 class="fw-bold">Tôle & Carrosserie</h5>
         <p class="text-muted small mb-0">Éléments de carrosserie et schéma interactif (Canvas).</p>
@@ -235,7 +235,7 @@
 
     <!-- Kilométrage -->
     <div class="col-md-4">
-      <div class="card h-100 shadow-sm border-0 text-center p-4 module-card" onclick="openModule('kilometrage')">
+      <div class="card h-100 shadow-sm border-0 text-center p-4 module-card" data-module="kilometrage" onclick="openModule('kilometrage')">
         <div class="display-4 text-success mb-3"><i class="fa-solid fa-gauge"></i></div>
         <h5 class="fw-bold">Kilométrage & Conformation</h5>
         <p class="text-muted small mb-0">Relevé de kilométrage affiché et conformité.</p>
@@ -244,7 +244,7 @@
 
     <!-- Observations Générales & Rapport Mécanique -->
     <div class="col-md-4">
-      <div class="card h-100 shadow-sm border-0 text-center p-4 module-card" onclick="openModule('general')">
+      <div class="card h-100 shadow-sm border-0 text-center p-4 module-card" data-module="general" onclick="openModule('general')">
         <div class="display-4 mb-3" style="color: #6f42c1;">
           <i class="fa-solid fa-clipboard-check"></i>
         </div>
@@ -265,7 +265,7 @@
     </button>
   </div>
   <div class="card border-0 shadow-sm rounded-4 p-4 bg-white" id="module-content-body">
-
+    <!-- يتم إدراج نموذج الفحص هنا عبر الجافاسكربت -->
   </div>
 </div> 
 

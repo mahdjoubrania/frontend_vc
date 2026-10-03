@@ -96,7 +96,56 @@ function getAuthUser() {
 document.addEventListener('DOMContentLoaded', () => {
   initUIComponents();
   loadAppointments();
+  applyModulePermissions();
 });
+
+// جلب صلاحيات التقني الحالي وتطبيقها على الواجهة
+// (إخفاء/تعطيل الوحدات الممنوعة + إخفاء رابط Rapports لو ما عنده صلاحية)
+async function applyModulePermissions() {
+  const token = getAuthToken();
+  if (!token) return;
+
+  try {
+    const res = await fetch(`${API_URL}/auth/me`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!res.ok) return;
+
+    const result = await res.json();
+    if (!result.success || !result.data) return;
+
+    const allowedModules = result.data.allowedModules;
+
+    // null = وصول كامل (الوضع الافتراضي) -> ما نسوي أي تعطيل
+    let list = null;
+    if (Array.isArray(allowedModules)) {
+      list = allowedModules;
+    } else if (typeof allowedModules === 'string' && allowedModules) {
+      try { list = JSON.parse(allowedModules); } catch (e) { list = null; }
+    }
+    if (!list) return;
+
+    // تعطيل بطاقات الوحدات الممنوعة (نخليها مرئية بس معطّلة، أوضح للتقني من الإخفاء الكامل)
+    document.querySelectorAll('.module-card[data-module]').forEach(card => {
+      const moduleKey = card.getAttribute('data-module');
+      if (!list.includes(moduleKey)) {
+        card.classList.add('opacity-50');
+        card.style.pointerEvents = 'none';
+        card.style.cursor = 'not-allowed';
+        card.setAttribute('title', "Accès non autorisé pour ce module / غير مسموح بالوصول لهذه الوحدة");
+        card.onclick = null;
+      }
+    });
+
+    // إخفاء رابط Rapports بالكامل لو ما عنده صلاحية "reports"
+    if (!list.includes('reports')) {
+      const reportsNavItem = document.getElementById('nav-item-reports');
+      if (reportsNavItem) reportsNavItem.style.display = 'none';
+    }
+  } catch (err) {
+    console.error('Erreur applyModulePermissions:', err);
+  }
+}
 
 function initUIComponents() {
   const sidebar = document.getElementById('sidebar');
