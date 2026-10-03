@@ -105,6 +105,8 @@
               <div>
                 <small class="text-muted d-block mb-1">Clients Absents (No-Show)</small>
                 <h3 class="fw-bold mb-0 text-dark" id="count-noshow">0</h3>
+                <small class="text-muted" id="pct-noshow"></small>
+                <small id="trend-noshow"></small>
               </div>
               <div class="bg-warning-subtle text-warning p-3 rounded-circle">
                 <i class="bi bi-person-x-fill fs-4"></i>
@@ -118,6 +120,8 @@
               <div>
                 <small class="text-muted d-block mb-1">Rendez-vous Annulés</small>
                 <h3 class="fw-bold mb-0 text-dark" id="count-canceled">0</h3>
+                <small class="text-muted" id="pct-canceled"></small>
+                <small id="trend-canceled"></small>
               </div>
               <div class="bg-danger-subtle text-danger p-3 rounded-circle">
                 <i class="bi bi-calendar-x-fill fs-4"></i>
@@ -131,6 +135,8 @@
               <div>
                 <small class="text-muted d-block mb-1">Services Incomplets</small>
                 <h3 class="fw-bold mb-0 text-dark" id="count-incomplete">0</h3>
+                <small class="text-muted" id="pct-incomplete"></small>
+                <small id="trend-incomplete"></small>
               </div>
               <div class="bg-secondary-subtle text-secondary p-3 rounded-circle">
                 <i class="bi bi-exclamation-triangle-fill fs-4"></i>
@@ -184,6 +190,28 @@
             </div>
             <div style="position: relative; height: 300px; width: 100%;">
               <canvas id="statusPieChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row: Raisons d'annulation + Répartition par jour de semaine -->
+      <div class="row g-4 mt-1">
+        <div class="col-12 col-lg-6">
+          <div class="card border-0 shadow-sm p-4 rounded-4 bg-white h-100">
+            <h5 class="fw-bold text-dark mb-1">Principales Raisons d'Annulation</h5>
+            <small class="text-muted d-block mb-3">Motifs les plus fréquents sur la période sélectionnée</small>
+            <div id="cancel-reasons-list">
+              <div class="text-center text-muted py-3">Chargement...</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 col-lg-6">
+          <div class="card border-0 shadow-sm p-4 rounded-4 bg-white h-100">
+            <h5 class="fw-bold text-dark mb-1">Répartition par Jour de la Semaine</h5>
+            <small class="text-muted d-block mb-3">Absences et annulations selon le jour</small>
+            <div style="position: relative; height: 220px;">
+              <canvas id="dowChart"></canvas>
             </div>
           </div>
         </div>
@@ -274,10 +302,112 @@
         document.getElementById('count-canceled').innerText = data.canceled || 0;
         document.getElementById('count-incomplete').innerText = data.incomplete || 0;
 
+        renderPercentages(data);
+        renderTrends(data.trends || {});
+        renderCancelReasons(data.cancelReasons || []);
+        renderDowChart(data.dayOfWeekDistribution || []);
+
         renderCharts(data, period);
       } catch (err) {
         console.error('Erreur API:', err);
       }
+    }
+
+    let dowChartInstance = null;
+
+    // 1. النسبة المئوية من إجمالي المواعيد بالفترة المحددة
+    function renderPercentages(data) {
+      const total = data.total || 0;
+      const pct = (count) => total > 0 ? `${count} من ${total} (${((count / total) * 100).toFixed(1)}%)` : '--';
+
+      const elNoShow = document.getElementById('pct-noshow');
+      const elCanceled = document.getElementById('pct-canceled');
+      const elIncomplete = document.getElementById('pct-incomplete');
+      if (elNoShow) elNoShow.innerText = pct(data.noShow || 0);
+      if (elCanceled) elCanceled.innerText = pct(data.canceled || 0);
+      if (elIncomplete) elIncomplete.innerText = pct(data.incomplete || 0);
+    }
+
+    // 3. سهم المقارنة بالفترة السابقة (null = ما فيه بيانات سابقة للمقارنة)
+    function renderTrends(trends) {
+      const renderOne = (id, value) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (value === null || value === undefined) {
+          el.innerHTML = '';
+          return;
+        }
+        const isUp = value > 0;
+        const isFlat = value === 0;
+        const icon = isFlat ? 'bi-dash' : (isUp ? 'bi-arrow-up-short' : 'bi-arrow-down-short');
+        const colorClass = isFlat ? 'text-muted' : (isUp ? 'text-danger' : 'text-success'); // ارتفاع الإلغاء/الغياب سلبي
+        el.innerHTML = `<span class="${colorClass} fw-semibold"><i class="bi ${icon}"></i> ${Math.abs(value)}% vs période précédente</span>`;
+      };
+      renderOne('trend-noshow', trends.noShow);
+      renderOne('trend-canceled', trends.canceled);
+      renderOne('trend-incomplete', trends.incomplete);
+    }
+
+    // 2. أكثر أسباب الإلغاء/الغياب تكراراً
+    function renderCancelReasons(reasons) {
+      const container = document.getElementById('cancel-reasons-list');
+      if (!container) return;
+
+      if (!reasons || reasons.length === 0) {
+        container.innerHTML = `<div class="text-center text-muted py-3">Aucun motif enregistré sur cette période.</div>`;
+        return;
+      }
+
+      const maxCount = Math.max(...reasons.map(r => r.count || 0), 1);
+      container.innerHTML = reasons.map(r => {
+        const pct = Math.round(((r.count || 0) / maxCount) * 100);
+        return `
+          <div class="mb-3">
+            <div class="d-flex justify-content-between mb-1">
+              <span class="fw-semibold text-dark fs-14">${(r.reason || 'Non précisé').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</span>
+              <span class="fw-bold text-dark fs-14">${r.count}</span>
+            </div>
+            <div class="progress" style="height: 6px; border-radius: 10px;">
+              <div class="progress-bar bg-danger" style="width: ${pct}%; border-radius: 10px;"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // 5. التوزيع حسب يوم الأسبوع
+    function renderDowChart(distribution) {
+      const ctx = document.getElementById('dowChart');
+      if (!ctx) return;
+
+      if (dowChartInstance) dowChartInstance.destroy();
+
+      dowChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: distribution.map(d => d.day),
+          datasets: [
+            {
+              label: 'Absents (No-Show)',
+              data: distribution.map(d => d.noShow),
+              backgroundColor: '#f59e0b'
+            },
+            {
+              label: 'Annulés',
+              data: distribution.map(d => d.canceled),
+              backgroundColor: '#ef4444'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { stacked: true },
+            y: { stacked: true, beginAtZero: true, ticks: { precision: 0, stepSize: 1 } }
+          }
+        }
+      });
     }
 
     function renderCharts(data, period) {
@@ -395,7 +525,18 @@
         const headers = { 'Content-Type': 'application/json' };
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
-        const res = await fetch('https://romantic-enjoyment-production-f458.up.railway.app/api/admin/cancelled-appointments', { headers });
+        // نفس الفترة المختارة فوق بالرسم البياني — بدل ما يجيب كل التاريخ دايماً
+        const select = document.getElementById('rdv-period-select');
+        const period = select?.value || '15days';
+        const startDate = document.getElementById('rdv-start-date')?.value;
+        const endDate = document.getElementById('rdv-end-date')?.value;
+
+        let url = `${API_URL}/admin/cancelled-appointments?period=${period}`;
+        if (period === 'custom' && startDate && endDate) {
+          url += `&startDate=${startDate}&endDate=${endDate}`;
+        }
+
+        const res = await fetch(url, { headers });
 
         if (res.ok) {
           const cancelledEvents = await res.json();
@@ -424,9 +565,14 @@
             const badgeClass = isNoShow ? 'bg-warning-subtle text-warning' : 'bg-danger-subtle text-danger';
             const statusLabel = isNoShow ? 'Absent (No-Show)' : 'Annulé';
 
+            const repeatCount = evt.client_cancel_count || 1;
+            const repeatBadge = repeatCount > 1
+              ? `<br><span class="badge bg-danger-subtle text-danger mt-1" title="Historique complet du client"><i class="bi bi-exclamation-triangle-fill"></i> Récidiviste (×${repeatCount})</span>`
+              : '';
+
             const row = `
               <tr>
-                <td class="ps-3 fw-semibold text-dark">${clientName}</td>
+                <td class="ps-3 fw-semibold text-dark">${clientName}${repeatBadge}</td>
                 <td>${phone}</td>
                 <td><span class="badge bg-light text-dark border px-2 py-1">${vehicle}</span></td>
                 <td>${formattedDate}</td>
@@ -460,6 +606,7 @@
         } else {
           customDiv?.classList.add('d-none');
           initAnalytics();
+          loadCancelledAppointments();
         }
       });
 
@@ -471,7 +618,10 @@
     });
   }
 
-      document.getElementById('rdv-apply-btn')?.addEventListener('click', initAnalytics);
+      document.getElementById('rdv-apply-btn')?.addEventListener('click', () => {
+        initAnalytics();
+        loadCancelledAppointments();
+      });
 
       // Overlay Sidebar
       let overlay = document.querySelector('.sidebar-overlay');
