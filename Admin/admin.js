@@ -298,7 +298,7 @@ function renderRecentTickets(tickets) {
         <td><div class="fw-semibold text-dark">${clientName}</div></td>
         <td>${vehicleName}</td>
         <td>${formatDateTime(ticket.appointment_date)}</td>
-        <td><span class="badge ${getStatusBadgeClass(ticket.status)} px-2 py-1">${ticket.status || 'PENDING'}</span></td>
+        <td><span class="badge ${getStatusBadgeClass(ticket.status)} px-2 py-1">${getStatusLabel(ticket.status)}</span></td>
         <td class="fw-bold text-dark">${ticket.total_amount ? Number(ticket.total_amount).toLocaleString() + ' DZD' : '-'}</td>
       </tr>
     `;
@@ -310,10 +310,32 @@ function getStatusBadgeClass(status) {
   switch (status?.toUpperCase()) {
     case 'COMPLETED': return 'bg-success-subtle text-success';
     case 'PENDING': return 'bg-warning-subtle text-warning';
+    case 'READY_FOR_WORKSHOP': return 'bg-info-subtle text-info';
+    case 'IN_WORKSHOP':
+    case 'IN_PROGRESS': return 'bg-primary-subtle text-primary';
     case 'CANCELLED':
     case 'CANCELED':
-    case 'NO_SHOW': return 'bg-danger-subtle text-danger';
-    default: return 'bg-primary-subtle text-primary';
+    case 'ANNULE':
+    case 'NO_SHOW':
+    case 'ABSENT': return 'bg-danger-subtle text-danger';
+    default: return 'bg-secondary-subtle text-secondary';
+  }
+}
+
+// ترجمة حالة الموعد لنص فرنسي مفهوم بدل القيمة الخام من قاعدة البيانات
+function getStatusLabel(status) {
+  switch (status?.toUpperCase()) {
+    case 'COMPLETED': return 'Terminé';
+    case 'PENDING': return 'En attente';
+    case 'READY_FOR_WORKSHOP': return 'Prêt (Atelier)';
+    case 'IN_WORKSHOP':
+    case 'IN_PROGRESS': return 'En cours';
+    case 'CANCELLED':
+    case 'CANCELED':
+    case 'ANNULE': return 'Annulé';
+    case 'NO_SHOW':
+    case 'ABSENT': return 'Absent';
+    default: return status || 'En attente';
   }
 }
 
