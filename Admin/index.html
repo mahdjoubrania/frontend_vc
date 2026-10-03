@@ -101,58 +101,81 @@
       </div>
 
     <!-- Stat Cards (KPIs) -->
-<div class="row g-3 mb-4">
+<div class="row g-3 mb-2">
   <div class="col-12 col-md-6 col-lg-3">
     <div class="card p-3 shadow-sm border-0 rounded-4 bg-white">
       <div class="d-flex justify-content-between align-items-center mb-3">
-        <span class="text-muted fs-14 fw-semibold">Utilisateurs</span>
-        <div class="icon-shape bg-success-subtle text-success p-2 rounded-3">
-          <i class="bi bi-people-fill fs-5"></i>
-        </div>
-      </div>
-      <h3 class="fw-bold mb-1 text-dark" id="total-users-count">0</h3>
-      <small class="text-muted">Total enregistrés</small>
-    </div>
-  </div>
-
-  <div class="col-12 col-md-6 col-lg-3">
-    <div class="card p-3 shadow-sm border-0 rounded-4 bg-white">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <span class="text-muted fs-14 fw-semibold">Réceptionnistes</span>
+        <span class="text-muted fs-14 fw-semibold">Aujourd'hui</span>
         <div class="icon-shape bg-primary-subtle text-primary p-2 rounded-3">
-          <i class="bi bi-person-workspace fs-5"></i>
+          <i class="bi bi-calendar-check-fill fs-5"></i>
         </div>
       </div>
-      <h3 class="fw-bold mb-1 text-dark" id="reception-count">0</h3>
-      <small class="text-muted">Agents d'accueil</small>
+      <h3 class="fw-bold mb-1 text-dark" id="today-appointments-count">0</h3>
+      <small class="text-muted">Rendez-vous</small>
     </div>
   </div>
 
   <div class="col-12 col-md-6 col-lg-3">
     <div class="card p-3 shadow-sm border-0 rounded-4 bg-white">
       <div class="d-flex justify-content-between align-items-center mb-3">
-        <span class="text-muted fs-14 fw-semibold">Techniciens</span>
-        <div class="icon-shape bg-warning-subtle text-warning p-2 rounded-3">
+        <span class="text-muted fs-14 fw-semibold">En Atelier</span>
+        <div class="icon-shape bg-info-subtle text-info p-2 rounded-3">
           <i class="bi bi-tools fs-5"></i>
         </div>
       </div>
-      <h3 class="fw-bold mb-1 text-dark" id="tech-count">0</h3>
-      <small class="text-muted">Inspecteurs véhicules</small>
+      <h3 class="fw-bold mb-1 text-dark" id="in-workshop-count">0</h3>
+      <small class="text-muted">En ce moment</small>
     </div>
   </div>
 
   <div class="col-12 col-md-6 col-lg-3">
     <div class="card p-3 shadow-sm border-0 rounded-4 bg-white">
       <div class="d-flex justify-content-between align-items-center mb-3">
-        <span class="text-muted fs-14 fw-semibold">Administrateurs</span>
-        <div class="icon-shape bg-secondary-subtle text-dark p-2 rounded-3">
-          <i class="bi bi-shield-lock-fill fs-5"></i>
+        <span class="text-muted fs-14 fw-semibold">Terminés</span>
+        <div class="icon-shape bg-success-subtle text-success p-2 rounded-3">
+          <i class="bi bi-check-circle-fill fs-5"></i>
         </div>
       </div>
-      <h3 class="fw-bold mb-1 text-dark" id="admin-count">0</h3>
-      <small class="text-muted">Gestionnaires système</small>
+      <h3 class="fw-bold mb-1 text-dark" id="completed-today-count">0</h3>
+      <small class="text-muted">Aujourd'hui</small>
     </div>
   </div>
+
+  <div class="col-12 col-md-6 col-lg-3">
+    <div class="card p-3 shadow-sm border-0 rounded-4 bg-white">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <span class="text-muted fs-14 fw-semibold">Revenu</span>
+        <div class="icon-shape bg-warning-subtle text-warning p-2 rounded-3">
+          <i class="bi bi-cash-coin fs-5"></i>
+        </div>
+      </div>
+      <h3 class="fw-bold mb-1 text-dark" id="revenue-today-amount">0 DZD</h3>
+      <small class="text-muted">Encaissé aujourd'hui</small>
+    </div>
+  </div>
+</div>
+
+<!-- ملخص صغير لأعداد المستخدمين (كانت 4 بطاقات رئيسية، صارت سطر ثانوي) -->
+<div class="d-flex flex-wrap gap-3 mb-4 px-1" style="font-size: 12.5px;">
+  <span class="text-muted"><i class="bi bi-people-fill me-1"></i><b id="total-users-count" class="text-dark">0</b> Utilisateurs</span>
+  <span class="text-muted">—</span>
+  <span class="text-muted"><b id="reception-count" class="text-dark">0</b> Réceptionnistes</span>
+  <span class="text-muted"><b id="tech-count" class="text-dark">0</b> Techniciens</span>
+  <span class="text-muted"><b id="admin-count" class="text-dark">0</b> Administrateurs</span>
+</div>
+
+<!-- بانر إجمالي المبلغ المتبقي (غير محصّل) عبر كل المواعيد النشطة -->
+<div class="card border-0 shadow-sm rounded-4 p-3 mb-4 d-flex flex-row align-items-center justify-content-between" style="background: #fef2f2 !important; border: 1px solid #fecaca !important;">
+  <div class="d-flex align-items-center gap-3">
+    <div class="icon-shape bg-danger-subtle text-danger p-2 rounded-3">
+      <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+    </div>
+    <div>
+      <div class="fw-bold text-dark fs-14">Montant total à percevoir</div>
+      <small class="text-muted">Somme des soldes restants sur tous les rendez-vous actifs</small>
+    </div>
+  </div>
+  <h4 class="fw-bold text-danger mb-0" id="outstanding-total-amount">0 DZD</h4>
 </div>
 
 
@@ -198,6 +221,30 @@
     </div>
   </div>
 </div>
+
+      <!-- تنبيهات تشغيلية: تجاوز الساعة بالورشة + فحوصات مكتملة بدون دفع كامل -->
+      <div class="card border-0 shadow-sm rounded-4 p-4 mt-4">
+        <h5 class="fw-bold text-dark mb-3"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>Alertes Opérationnelles</h5>
+        <div class="row g-4">
+          <div class="col-md-6">
+            <h6 class="fw-bold text-dark mb-2 fs-14"><i class="bi bi-clock-history text-danger me-1"></i> Dépassement en atelier (+1h)</h6>
+            <div id="alert-overdue-list"><div class="text-muted small py-2">Chargement...</div></div>
+          </div>
+          <div class="col-md-6">
+            <h6 class="fw-bold text-dark mb-2 fs-14"><i class="bi bi-cash-stack text-warning me-1"></i> Terminés avec solde impayé</h6>
+            <div id="alert-unpaid-list"><div class="text-muted small py-2">Chargement...</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- لوحة أداء التقنيين: عدد الوحدات المنفَّذة فعلياً لكل تقني -->
+      <div class="card border-0 shadow-sm rounded-4 p-4 mt-4">
+        <h5 class="fw-bold text-dark mb-1">Performance des Techniciens</h5>
+        <small class="text-muted d-block mb-3">Nombre de modules de vérification effectués, par technicien</small>
+        <div id="technician-performance-list">
+          <div class="text-center text-muted py-3">Chargement...</div>
+        </div>
+      </div>
 
       <!-- قسم جدول المواعيد الأخيرة -->
       <div class="card border-0 shadow-sm rounded-4 p-4 mt-4">

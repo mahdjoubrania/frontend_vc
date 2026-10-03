@@ -51,7 +51,7 @@ async function loadDashboardSummary() {
     if (res.ok) {
       const data = await res.json();
       
-      // 2. تحديث بطاقات الإحصائيات (KPI Cards)
+      // 2. تحديث السطر الثانوي لأعداد المستخدمين
       if (data.users) {
         const totalUsersElem = document.getElementById('total-users-count') || document.getElementById('total-users');
         if (totalUsersElem) totalUsersElem.innerText = data.users.totalUsers || 0;
@@ -64,6 +64,20 @@ async function loadDashboardSummary() {
           document.getElementById('admin-count').innerText = data.users.adminCount || 0;
       }
 
+      // 2bis. تحديث بطاقات نبض اليوم (KPI Cards الرئيسية الجديدة)
+      if (data.todayStats) {
+        if (document.getElementById('today-appointments-count'))
+          document.getElementById('today-appointments-count').innerText = data.todayStats.todayAppointments || 0;
+        if (document.getElementById('in-workshop-count'))
+          document.getElementById('in-workshop-count').innerText = data.todayStats.inWorkshopNow || 0;
+        if (document.getElementById('completed-today-count'))
+          document.getElementById('completed-today-count').innerText = data.todayStats.completedToday || 0;
+        if (document.getElementById('revenue-today-amount'))
+          document.getElementById('revenue-today-amount').innerText = Number(data.todayStats.revenueToday || 0).toLocaleString() + ' DZD';
+        if (document.getElementById('outstanding-total-amount'))
+          document.getElementById('outstanding-total-amount').innerText = Number(data.todayStats.outstandingTotal || 0).toLocaleString() + ' DZD';
+      }
+
       // 3. رسم مخطط الإيرادات
       if (data.revenue) {
         rawRevenueData = data.revenue;
@@ -74,6 +88,12 @@ async function loadDashboardSummary() {
       if (data.inspectionTypes) {
         initTypeChart(data.inspectionTypes);
       }
+
+      // 4bis. لوحة أداء التقنيين
+      renderTechnicianPerformance(data.technicianPerformance || []);
+
+      // 4ter. التنبيهات التشغيلية
+      renderOperationalAlerts(data.alerts || {});
     }
 
     // 5. جلب جدول المواعيد الأخيرة
@@ -203,6 +223,9 @@ function renderRevenueChart(labels, totalPrixData, versementData) {
 
   if (revenueChartInstance) revenueChartInstance.destroy();
 
+  // محسوب مباشرة من الفرق بين السعر الكلي والمدفوع — ما يحتاج أي بيانات إضافية من الباك‌إند
+  const resteData = totalPrixData.map((prix, i) => Math.max(0, (prix || 0) - (versementData[i] || 0)));
+
   revenueChartInstance = new Chart(ctx, {
     type: 'line',
     data: {
@@ -227,6 +250,17 @@ function renderRevenueChart(labels, totalPrixData, versementData) {
           tension: 0.4,
           borderWidth: 3,
           pointRadius: 4
+        },
+        {
+          label: 'Reste à percevoir (DZD)',
+          data: resteData,
+          borderColor: '#f87171',
+          backgroundColor: 'rgba(248, 113, 113, 0.08)',
+          borderDash: [6, 4],
+          fill: true,
+          tension: 0.4,
+          borderWidth: 2,
+          pointRadius: 3
         }
       ]
     },
@@ -275,6 +309,84 @@ function initTypeChart(inspectionTypes) {
       cutout: '70%'
     }
   });
+}
+
+function renderTechnicianPerformance(performanceList) {
+  const container = document.getElementById('technician-performance-list');
+  if (!container) return;
+
+  if (!performanceList || performanceList.length === 0) {
+    container.innerHTML = `<div class="text-center text-muted py-3">Aucune donnée de performance disponible.</div>`;
+    return;
+  }
+
+  const maxCount = Math.max(...performanceList.map(p => p.modulesCompleted || 0), 1);
+  const colors = ['#2563eb', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4'];
+
+  container.innerHTML = performanceList.map((p, i) => {
+    const pct = Math.round(((p.modulesCompleted || 0) / maxCount) * 100);
+    const color = colors[i % colors.length];
+    const initial = (p.technicianName || '?').charAt(0).toUpperCase();
+
+    return `
+      <div class="d-flex align-items-center gap-3 mb-3">
+        <div class="avatar bg-primary text-white rounded-circle flex-shrink-0" style="background: ${color} !important; width: 34px; height: 34px; font-size: 13px;">${initial}</div>
+        <div class="flex-grow-1">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="fw-semibold text-dark fs-14">${escapeHtmlAdmin(p.technicianName)}</span>
+            <span class="fw-bold text-dark fs-14">${p.modulesCompleted} module${p.modulesCompleted > 1 ? 's' : ''}</span>
+          </div>
+          <div class="progress" style="height: 6px; border-radius: 10px;">
+            <div class="progress-bar" style="width: ${pct}%; background-color: ${color} !important; border-radius: 10px;"></div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// تنظيف بسيط لمنع حقن HTML بأسماء التقنيين
+function escapeHtmlAdmin(str) {
+  return String(str ?? '').replace(/[&<>"']/g, (ch) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[ch]));
+}
+
+function renderOperationalAlerts(alerts) {
+  const overdueList = document.getElementById('alert-overdue-list');
+  const unpaidList = document.getElementById('alert-unpaid-list');
+  if (!overdueList || !unpaidList) return;
+
+  const overdue = alerts.overdueWorkshop || [];
+  const unpaid = alerts.unpaidCompleted || [];
+
+  overdueList.innerHTML = overdue.length === 0
+    ? `<div class="text-muted small py-2"><i class="bi bi-check-circle me-1"></i>Aucun dépassement</div>`
+    : overdue.map(item => {
+        const hours = Math.floor((item.minutesElapsed || 0) / 60);
+        const mins = (item.minutesElapsed || 0) % 60;
+        return `
+          <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+            <div>
+              <div class="fw-semibold text-dark fs-14">${escapeHtmlAdmin(item.client_name || 'Client')}</div>
+              <small class="text-muted">${escapeHtmlAdmin(item.vehicle_name || '')}</small>
+            </div>
+            <span class="badge bg-danger-subtle text-danger">+${hours}h${String(mins).padStart(2, '0')}</span>
+          </div>
+        `;
+      }).join('');
+
+  unpaidList.innerHTML = unpaid.length === 0
+    ? `<div class="text-muted small py-2"><i class="bi bi-check-circle me-1"></i>Aucun impayé</div>`
+    : unpaid.map(item => `
+        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+          <div>
+            <div class="fw-semibold text-dark fs-14">${escapeHtmlAdmin(item.client_name || 'Client')}</div>
+            <small class="text-muted">${escapeHtmlAdmin(item.vehicle_name || '')}</small>
+          </div>
+          <span class="badge bg-warning-subtle text-warning">${Number(item.remaining || 0).toLocaleString()} DZD</span>
+        </div>
+      `).join('');
 }
 
 function renderRecentTickets(tickets) {
