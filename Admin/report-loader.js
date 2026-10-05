@@ -38,14 +38,19 @@ document.addEventListener("DOMContentLoaded", async () => {
             'Content-Type': 'application/json'
         };
 
+        // نسجّل رمز حالة كل محاولة ليظهر سبب الفشل بدل رسالة عامة
+        const attempts = [];
         let response = await fetch(`${API_URL}/inspection/tole-report/${id}`, { headers });
+        attempts.push(['tole-report', response.status]);
 
         if (!response.ok) {
             response = await fetch(`${API_URL}/inspection/tole/${id}`, { headers });
+            attempts.push(['tole', response.status]);
         }
         
         if (!response.ok) {
             response = await fetch(`${API_URL}/inspection/details/${id}`, { headers });
+            attempts.push(['details', response.status]);
         }
 
         const result = await response.json();
@@ -54,8 +59,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (data && (data.id || data.inspection_id || data.client_name || data.brand || data.model)) {
             renderFullReport(data);
         } else {
-            console.error("Data structure mismatched:", data);
-            alert("Rapport introuvable ou données incomplètes.");
+            console.error("Data structure mismatched:", data, attempts);
+            const detail = attempts.map(([name, status]) => `${name}: ${status}`).join(' · ');
+            const expired = attempts.some(([, status]) => status === 401);
+            alert(
+                (expired
+                    ? "Session expirée : veuillez vous reconnecter."
+                    : "Rapport introuvable ou données incomplètes.") +
+                `\n\nDétail technique : ${detail}`
+            );
         }
         
     } catch (err) {
@@ -104,8 +116,31 @@ function renderCarImagesGallery(data) {
     }).join('');
 }
 
+// ===== زر "Modifier" للأدمن فقط =====
+// تلميح واجهة فقط: يُعرض الزر لو التوكن الحالي لأدمن صالح. الصلاحية الفعلية تُفرض بالسيرفر.
+// نقرأ التوكن مباشرة (آخر تسجيل دخول) لأن مفاتيح الجلسات القديمة قد تحمل توكن مستخدم سابق.
+function isAdminSession() {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) return false;
+        const b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+        const payload = JSON.parse(atob(b64));
+        return payload.role === 'ADMIN' && (!payload.exp || payload.exp * 1000 > Date.now());
+    } catch (e) {
+        return false;
+    }
+}
+
+function setupAdminEditButton(inspectionId) {
+    const btn = document.getElementById('admin-edit-btn');
+    if (!btn || !inspectionId || !isAdminSession()) return;
+    btn.href = `../Admin/report-edit.html?id=${encodeURIComponent(inspectionId)}`;
+    btn.classList.remove('d-none');
+}
+
 // 4. عرض بيانات التقرير بالكامل
 function renderFullReport(data) {
+    setupAdminEditButton(data.id);
     // 0. معرض الصور الخمسة المرسومة (Tôle & Carrosserie) — الصفحة الأخيرة
     renderCarImagesGallery(data);
 

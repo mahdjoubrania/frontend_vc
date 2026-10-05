@@ -207,9 +207,14 @@ async function fetchAndRenderReports() {
           <td><span class="badge bg-light text-dark border">${escapeHtml(report.technician_name || 'Technicien')}</span></td>
           <td>${reportDate}</td>
           <td class="text-end">
-            <button onclick="printReport(${report.id})" class="btn btn-sm btn-outline-primary shadow-sm">
-              <i class="bi bi-printer-fill me-1"></i> Voir / Imprimer
-            </button>
+            <div class="d-inline-flex gap-2">
+              <button onclick="printReport(${report.id})" class="btn btn-sm btn-outline-primary shadow-sm">
+                <i class="bi bi-printer-fill me-1"></i> Voir / Imprimer
+              </button>
+              <a href="report-edit.html?id=${Number(report.id)}" class="btn btn-sm btn-outline-warning shadow-sm" title="Modifier ce rapport (administrateur)">
+                <i class="bi bi-pencil-square me-1"></i> Modifier
+              </a>
+            </div>
           </td>
         </tr>`;
     }).join('');

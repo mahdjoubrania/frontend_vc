@@ -4,67 +4,198 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VerifCar - Planning & RDV</title>
-    <link href="../img/IMG_7697.png" rel="icon">
+  <link href="../img/IMG_7697.png" rel="icon">
   <link href="../img/IMG_7697.png" rel="apple-touch-icon">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
   <link rel="stylesheet" href="style.css">
   <style>
-    .fc {
-      font-family: 'Inter', sans-serif;
-      --fc-border-color: #f1f5f9;
-      --fc-today-bg-color: #eff6ff;
+    /* ============ ألوان الحالات (مصدر واحد للألوان بكل الصفحة) ============ */
+    :root {
+      --st-pending: #f59e0b;
+      --st-ready: #0ea5e9;
+      --st-progress: #3b82f6;
+      --st-done: #22c55e;
+      --st-cancelled: #ef4444;
     }
+
+    /* ============ FullCalendar: المظهر العام ============ */
+    .fc {
+      font-family: inherit;
+      --fc-border-color: #eef2f7;
+      --fc-today-bg-color: #f3f8ff;
+      --fc-page-bg-color: #ffffff;
+      --fc-neutral-bg-color: #f8fafc;
+      --fc-now-indicator-color: #ef4444;
+      --fc-more-link-bg-color: transparent;
+      --fc-button-bg-color: #ffffff;
+      --fc-button-border-color: #e2e8f0;
+      --fc-button-text-color: #334155;
+      --fc-button-hover-bg-color: #f1f5f9;
+      --fc-button-hover-border-color: #cbd5e1;
+      --fc-button-active-bg-color: #2563eb;
+      --fc-button-active-border-color: #2563eb;
+    }
+    .fc .fc-toolbar { gap: 10px; margin-bottom: 1rem !important; }
     .fc .fc-toolbar-title {
       font-size: 1.25rem !important;
-      font-weight: 700 !important;
+      font-weight: 800 !important;
       color: #0f172a;
+      letter-spacing: -0.3px;
     }
-    .fc .fc-button-primary {
-      background-color: #3b82f6 !important;
-      border-color: #3b82f6 !important;
-      border-radius: 8px !important;
-      font-weight: 500 !important;
-      font-size: 0.875rem !important;
-    }
-    .fc .fc-button-primary:hover {
-      background-color: #2563eb !important;
-    }
-    .fc .fc-button-primary:not(:disabled).fc-button-active {
-      background-color: #0f172a !important;
-      border-color: #0f172a !important;
-    }
-    .fc .fc-col-header-cell {
-      background-color: #f8fafc;
-      padding: 10px 0 !important;
-      font-weight: 600;
-      font-size: 0.85rem;
-      color: #64748b;
-    }
-    .fc-event {
-      border: none !important;
-      border-radius: 6px !important;
-      padding: 4px 8px !important;
-      font-size: 0.82rem !important;
-      font-weight: 500 !important;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-      cursor: pointer;
-    }
-    .fc-daygrid-event {
-      white-space: normal !important;
-      margin-top: 2px !important;
-      padding: 4px 6px !important;
-      border-radius: 6px !important;
-    }
-    .fc-event-title {
-      font-size: 0.82rem !important;
+    .fc .fc-toolbar-title::first-letter { text-transform: uppercase; }
+    .fc .fc-button {
+      border-radius: 10px !important;
       font-weight: 600 !important;
+      font-size: 0.82rem !important;
+      padding: 0.45rem 0.85rem !important;
+      box-shadow: none !important;
     }
-    .fc-daygrid-day-number {
+    .fc .fc-button-group > .fc-button { border-radius: 0 !important; }
+    .fc .fc-button-group > .fc-button:first-child { border-radius: 10px 0 0 10px !important; }
+    .fc .fc-button-group > .fc-button:last-child { border-radius: 0 10px 10px 0 !important; }
+    .fc .fc-button-primary:not(:disabled).fc-button-active,
+    .fc .fc-button-primary:not(:disabled):active {
+      color: #ffffff !important;
+    }
+    .fc .fc-button-primary:disabled { opacity: 0.5; }
+
+    /* رؤوس الأيام */
+    .fc .fc-col-header-cell { background: #f8fafc; border-color: #eef2f7; }
+    .fc .fc-col-header-cell-cushion {
+      padding: 10px 4px !important;
+      color: #64748b;
+      font-size: 0.72rem;
       font-weight: 700;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      text-decoration: none !important;
+    }
+
+    /* أرقام الأيام (واليوم الحالي بدائرة) */
+    .fc .fc-daygrid-day-number {
+      font-weight: 700;
+      font-size: 0.82rem;
       color: #1e293b;
-      padding: 8px !important;
+      padding: 6px 8px !important;
+      text-decoration: none !important;
+    }
+    .fc .fc-day-other .fc-daygrid-day-top { opacity: 0.4; }
+    .fc .fc-day-today .fc-daygrid-day-number {
+      background: #2563eb;
+      color: #ffffff !important;
+      border-radius: 999px;
+      min-width: 26px;
+      height: 26px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin: 4px;
+      padding: 0 6px !important;
+    }
+    .fc .fc-daygrid-day-frame { min-height: 112px; }
+
+    /* أيام الراحة (الخميس والجمعة) بتظليل خفيف */
+    .fc .fc-day-rest {
+      background-image: repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(148, 163, 184, 0.09) 8px, rgba(148, 163, 184, 0.09) 16px);
+    }
+
+    /* ============ بطاقات المواعيد ============ */
+    /* مقصورة على أحداث الشبكة (شهر/أسبوع/يوم) — لا تمس صفوف عرض Agenda */
+    .fc-h-event, .fc-v-event {
+      border-style: solid !important;
+      border-width: 0 0 0 3px !important;
+      border-radius: 7px !important;
+      box-shadow: none !important;
+      cursor: pointer;
+      transition: transform 0.12s ease, box-shadow 0.12s ease;
+    }
+    .fc-h-event:hover, .fc-v-event:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12) !important; }
+    .fc-list-event { cursor: pointer; }
+    .fc-daygrid-event { white-space: nowrap !important; margin: 1px 3px !important; }
+    .fc-daygrid-block-event .fc-event-main { padding: 2px 6px; overflow: hidden; }
+
+    .st-pending   { --fc-event-bg-color: #fef3c7; --fc-event-border-color: var(--st-pending);   --fc-event-text-color: #92400e; }
+    .st-ready     { --fc-event-bg-color: #e0f2fe; --fc-event-border-color: var(--st-ready);     --fc-event-text-color: #075985; }
+    .st-progress  { --fc-event-bg-color: #dbeafe; --fc-event-border-color: var(--st-progress);  --fc-event-text-color: #1e40af; }
+    .st-done      { --fc-event-bg-color: #dcfce7; --fc-event-border-color: var(--st-done);      --fc-event-text-color: #166534; }
+    .st-cancelled { --fc-event-bg-color: #fee2e2; --fc-event-border-color: var(--st-cancelled); --fc-event-text-color: #991b1b; }
+
+    .rdv-chip { display: flex; align-items: center; gap: 5px; min-width: 0; font-size: 0.74rem; line-height: 1.55; }
+    .rdv-chip .t { font-weight: 800; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+    .rdv-chip .n { font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    /* السيارة تتقلّص أولاً (حتى تختفي) كي يبقى اسم العميل مقروءاً في الخلايا الضيقة */
+    .rdv-chip .v { opacity: 0.7; min-width: 0; flex-shrink: 1000; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .rdv-card { display: flex; flex-direction: column; gap: 1px; min-width: 0; font-size: 0.76rem; line-height: 1.35; padding: 1px 2px; overflow: hidden; }
+    .rdv-card .t { font-weight: 800; font-variant-numeric: tabular-nums; }
+    .rdv-card .n { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .rdv-card .v { opacity: 0.75; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .fc .fc-daygrid-more-link { font-size: 0.72rem; font-weight: 700; color: #2563eb; padding: 1px 8px; border-radius: 6px; }
+    .fc .fc-daygrid-more-link:hover { background: #eff6ff; text-decoration: none; }
+    .fc .fc-popover { z-index: 1040 !important; border-radius: 12px; border-color: #e2e8f0; box-shadow: 0 12px 30px rgba(15, 23, 42, 0.14); }
+    .fc .fc-popover-header { background: #f8fafc; font-weight: 700; border-radius: 12px 12px 0 0; }
+    .fc .fc-list-day-cushion { background: #f8fafc !important; }
+    .fc .fc-list-event:hover td { background: #f8fafc !important; }
+
+    /* ============ بطاقات المؤشرات ============ */
+    .kpi-card small.label { font-size: 0.78rem; font-weight: 600; color: #64748b; }
+    .kpi-card h3 { font-size: 1.7rem; }
+    .kpi-card .sub { font-size: 0.76rem; color: #94a3b8; }
+
+    /* ============ بطاقة التقويم ============ */
+    .calendar-card:hover { transform: none !important; box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.025) !important; }
+    .calendar-loading {
+      position: absolute; inset: 0; z-index: 6;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255, 255, 255, 0.72);
+      border-radius: 12px;
+    }
+
+    /* ============ الفلاتر ============ */
+    .status-pill {
+      --c: #64748b;
+      display: inline-flex; align-items: center; gap: 7px;
+      border: 1px solid #e2e8f0; background: #ffffff; color: #334155;
+      border-radius: 999px; padding: 5px 12px;
+      font-size: 0.8rem; font-weight: 600; cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .status-pill .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
+    .status-pill .count { background: #f1f5f9; border-radius: 999px; padding: 0 8px; font-size: 0.72rem; font-weight: 700; color: #475569; }
+    .status-pill:hover { border-color: var(--c); }
+    .status-pill[aria-pressed="false"] { opacity: 0.45; background: #f8fafc; }
+    .status-pill[aria-pressed="false"] .dot { background: #cbd5e1; }
+
+    .search-wrap { position: relative; min-width: 260px; }
+    .search-wrap i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; pointer-events: none; }
+    .search-wrap input { padding-left: 34px; border-radius: 10px; border-color: #e2e8f0; }
+
+    /* ============ نافذة التفاصيل ============ */
+    .st-badge-pending   { background: #fef3c7; color: #92400e; }
+    .st-badge-ready     { background: #e0f2fe; color: #075985; }
+    .st-badge-progress  { background: #dbeafe; color: #1e40af; }
+    .st-badge-done      { background: #dcfce7; color: #166534; }
+    .st-badge-cancelled { background: #fee2e2; color: #991b1b; }
+    .pay-paid    { background: #dcfce7; color: #166534; }
+    .pay-partial { background: #fef3c7; color: #92400e; }
+    .pay-unpaid  { background: #fee2e2; color: #991b1b; }
+    .pay-none    { background: #f1f5f9; color: #475569; }
+    .detail-row { display: flex; align-items: flex-start; gap: 14px; padding: 9px 0; }
+    .detail-row > i { font-size: 1.15rem; color: #94a3b8; margin-top: 2px; width: 22px; text-align: center; }
+    .detail-row small { display: block; color: #94a3b8; font-size: 0.74rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+    .detail-row strong { color: #0f172a; font-size: 0.92rem; }
+
+    /* ============ الطباعة (ورقة العمل اليومية) ============ */
+    @media print {
+      .sidebar, .sidebar-overlay, .no-print, #mobile-sidebar-toggle,
+      .fc-toolbar-chunk:first-child, .fc-toolbar-chunk:last-child { display: none !important; }
+      .main-content { margin: 0 !important; width: 100% !important; padding: 0 !important; }
+      body { background: #ffffff !important; }
+      .calendar-card { box-shadow: none !important; border: 0 !important; padding: 0 !important; }
+      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     }
   </style>
 </head>
@@ -72,7 +203,7 @@
 <body class="bg-light">
 
   <div id="dashboard-section" class="d-flex">
-    
+
     <!-- Sidebar -->
     <aside class="sidebar p-3 d-flex flex-column justify-content-between">
       <div>
@@ -83,8 +214,8 @@
             <small class="text-muted fs-12">v1.0 - Admin</small>
           </div>
         </div>
-         
-          <button class="btn-close d-lg-none" id="sidebar-close-btn"></button>
+
+        <button class="btn-close d-lg-none" id="sidebar-close-btn"></button>
         <div class="menu-label">WORKSPACE</div>
         <ul class="nav nav-pills flex-column mb-3">
           <li class="nav-item"><a href="index.html" class="nav-link text-secondary"><i class="bi bi-grid-1x2 me-2"></i> Tableau de bord</a></li>
@@ -100,7 +231,7 @@
         </ul>
       </div>
 
-            <div class="user-profile p-2 rounded d-flex align-items-center justify-content-between border-top pt-3">
+      <div class="user-profile p-2 rounded d-flex align-items-center justify-content-between border-top pt-3">
         <div class="d-flex align-items-center gap-2">
           <div class="avatar bg-primary text-white rounded-circle" id="admin-avatar">--</div>
           <div>
@@ -113,92 +244,202 @@
     </aside>
 
     <main class="main-content flex-grow-1 p-4">
-      <header class="d-flex justify-content-between align-items-center mb-4">
-  <div class="d-flex align-items-center gap-2">
-    <button class="btn btn-white border shadow-sm btn-sm d-lg-none" id="mobile-sidebar-toggle">
-      <i class="bi bi-list fs-5"></i>
-    </button>
-    <div class="text-muted fs-14">Workspace > <span class="fw-bold text-dark">Planning & RDV</span></div>
-  </div>
-</header>
+      <header class="d-flex justify-content-between align-items-center mb-4 no-print">
+        <div class="d-flex align-items-center gap-2">
+          <button class="btn btn-white border shadow-sm btn-sm d-lg-none" id="mobile-sidebar-toggle">
+            <i class="bi bi-list fs-5"></i>
+          </button>
+          <div class="text-muted fs-14">Workspace > <span class="fw-bold text-dark">Planning & RDV</span></div>
+        </div>
+      </header>
 
-      <div class="mb-4">
-        <h2 class="fw-bold text-dark">Planning des Rendez-vous</h2>
-        <p class="text-muted">Consultez les créneaux libres et gérez les rendez-vous d'inspection.</p>
+      <!-- عنوان الصفحة + الإجراءات -->
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+        <div>
+          <h2 class="fw-bold text-dark mb-1">Planning des Rendez-vous</h2>
+          <p class="text-muted mb-0">Consultez les créneaux, filtrez par statut et gérez les rendez-vous d'inspection.</p>
+        </div>
+        <div class="d-flex align-items-center gap-2 no-print">
+          <small class="text-muted me-1" id="last-updated"></small>
+          <button type="button" id="refresh-btn" class="btn btn-light border rounded-3 fw-semibold btn-sm px-3">
+            <i class="bi bi-arrow-clockwise me-1"></i> Actualiser
+          </button>
+          <button type="button" id="print-btn" class="btn btn-light border rounded-3 fw-semibold btn-sm px-3">
+            <i class="bi bi-printer me-1"></i> Imprimer
+          </button>
+        </div>
       </div>
 
-      <div class="card border-0 shadow-sm p-4 rounded-4 bg-white">
-        <div id="calendar-container" style="min-height: 650px;"></div>
+      <!-- مؤشرات الفترة المعروضة -->
+      <div class="row g-3 mb-4 no-print">
+        <div class="col-6 col-xl-3">
+          <div class="card kpi-card p-3 border-0 shadow-sm rounded-4 bg-white h-100">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <small class="label d-block mb-1">Aujourd'hui</small>
+                <h3 class="fw-bold mb-1 text-dark" id="kpi-today">0</h3>
+                <span class="sub" id="kpi-today-sub">--</span>
+              </div>
+              <div class="icon-shape bg-primary-subtle text-primary rounded-3"><i class="bi bi-calendar-check-fill fs-5"></i></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-xl-3">
+          <div class="card kpi-card p-3 border-0 shadow-sm rounded-4 bg-white h-100">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <small class="label d-block mb-1">Période affichée</small>
+                <h3 class="fw-bold mb-1 text-dark" id="kpi-period">0</h3>
+                <span class="sub" id="kpi-period-sub">--</span>
+              </div>
+              <div class="icon-shape bg-info-subtle text-info rounded-3"><i class="bi bi-calendar-range-fill fs-5"></i></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-xl-3">
+          <div class="card kpi-card p-3 border-0 shadow-sm rounded-4 bg-white h-100">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <small class="label d-block mb-1">CA prévisionnel</small>
+                <h3 class="fw-bold mb-1 text-dark" id="kpi-revenue">0 DZD</h3>
+                <span class="sub" id="kpi-revenue-sub">--</span>
+              </div>
+              <div class="icon-shape bg-success-subtle text-success rounded-3"><i class="bi bi-cash-coin fs-5"></i></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-xl-3">
+          <div class="card kpi-card p-3 border-0 shadow-sm rounded-4 bg-white h-100">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <small class="label d-block mb-1">Taux d'annulation</small>
+                <h3 class="fw-bold mb-1 text-dark" id="kpi-cancel">0%</h3>
+                <span class="sub" id="kpi-cancel-sub">--</span>
+              </div>
+              <div class="icon-shape bg-danger-subtle text-danger rounded-3"><i class="bi bi-calendar-x-fill fs-5"></i></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- التقويم -->
+      <div class="card calendar-card border-0 shadow-sm p-4 rounded-4 bg-white">
+
+        <div class="d-flex flex-wrap gap-3 align-items-center justify-content-between mb-3 no-print">
+          <div class="d-flex flex-wrap align-items-center gap-2" id="status-filters" role="group" aria-label="Filtrer par statut">
+            <button type="button" class="status-pill" data-group="pending" style="--c: #f59e0b" aria-pressed="true"><span class="dot"></span>En attente<span class="count" id="count-pending">0</span></button>
+            <button type="button" class="status-pill" data-group="ready" style="--c: #0ea5e9" aria-pressed="true"><span class="dot"></span>Prêt (Atelier)<span class="count" id="count-ready">0</span></button>
+            <button type="button" class="status-pill" data-group="progress" style="--c: #3b82f6" aria-pressed="true"><span class="dot"></span>En cours<span class="count" id="count-progress">0</span></button>
+            <button type="button" class="status-pill" data-group="done" style="--c: #22c55e" aria-pressed="true"><span class="dot"></span>Terminés<span class="count" id="count-done">0</span></button>
+            <button type="button" class="status-pill" data-group="cancelled" style="--c: #ef4444" aria-pressed="true"><span class="dot"></span>Annulés<span class="count" id="count-cancelled">0</span></button>
+            <button type="button" id="reset-filters-btn" class="btn btn-link btn-sm text-decoration-none d-none">Réinitialiser</button>
+          </div>
+          <div class="search-wrap">
+            <i class="bi bi-search"></i>
+            <input type="search" id="search-input" class="form-control form-control-sm" placeholder="Client, véhicule, téléphone, VIN…" autocomplete="off" aria-label="Rechercher un rendez-vous">
+          </div>
+        </div>
+
+        <div id="outside-hours-note" class="alert alert-warning py-2 px-3 small d-none no-print" role="status">
+          <i class="bi bi-exclamation-triangle me-1"></i><span id="outside-hours-text"></span>
+        </div>
+
+        <div id="calendar-error" class="alert alert-danger d-none align-items-center justify-content-between gap-2 no-print" role="alert">
+          <span id="calendar-error-text">Erreur</span>
+          <span class="d-flex gap-2">
+            <a id="calendar-error-login" href="../Auth/index.html" class="btn btn-sm btn-outline-danger d-none">Se reconnecter</a>
+            <button type="button" id="calendar-error-retry" class="btn btn-sm btn-danger">Réessayer</button>
+          </span>
+        </div>
+
+        <div class="position-relative">
+          <div id="calendar-loading" class="calendar-loading d-none">
+            <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Chargement...</span></div>
+          </div>
+          <div id="calendar-container" style="min-height: 560px;"></div>
+        </div>
       </div>
     </main>
   </div>
 
-<!-- Modal Détails RDV -->
- <div class="modal fade" id="eventDetailModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content rounded-4 border-0 shadow">
-      <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2">
-          <i class="bi bi-calendar-event text-primary fs-4"></i>
-          Détails du Rendez-vous
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body p-4">
-        <div class="d-flex align-items-center gap-3 mb-3 p-3 bg-light rounded-3">
-          <div class="avatar bg-primary text-white rounded-circle p-2 fs-5 fw-bold d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;" id="modal-avatar">
-            CL
-          </div>
+  <!-- Modal Détails RDV -->
+  <div class="modal fade" id="eventDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-header border-0 pb-0 align-items-start">
           <div>
-            <h6 class="fw-bold mb-0 text-dark fs-5" id="modal-client-name">-</h6>
-            <span id="modal-status-badge" class="badge bg-warning-subtle text-warning px-2 py-1">-</span>
+            <small class="text-muted fw-semibold">Rendez-vous</small>
+            <h5 class="modal-title fw-bold text-dark" id="modal-title">#RDV-0</h5>
+          </div>
+          <span id="modal-status-badge" class="badge st-badge-pending px-3 py-2 ms-3">-</span>
+          <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        </div>
+
+        <div class="modal-body p-4">
+          <div class="d-flex align-items-center gap-3 mb-3 p-3 bg-light rounded-3">
+            <div class="avatar bg-primary text-white rounded-circle fs-5 fw-bold d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;" id="modal-avatar">CL</div>
+            <div style="min-width: 0;">
+              <h6 class="fw-bold mb-0 text-dark fs-5" id="modal-client-name">-</h6>
+              <span class="text-muted" id="modal-phone-info">-</span>
+            </div>
+          </div>
+
+          <div>
+            <div class="detail-row">
+              <i class="bi bi-car-front"></i>
+              <div>
+                <small>Véhicule</small>
+                <strong id="modal-vehicle-info">-</strong>
+                <span class="d-block text-muted font-monospace small" id="modal-vin-info"></span>
+              </div>
+            </div>
+            <div class="detail-row">
+              <i class="bi bi-tools"></i>
+              <div><small>Service / Inspection</small><strong id="modal-service-info">-</strong></div>
+            </div>
+            <div class="detail-row">
+              <i class="bi bi-clock"></i>
+              <div><small>Date et heure prévues</small><strong id="modal-date-info">-</strong></div>
+            </div>
+            <div class="detail-row d-none" id="modal-started-row">
+              <i class="bi bi-box-arrow-in-right"></i>
+              <div><small>Entrée en atelier</small><strong id="modal-started-info">-</strong></div>
+            </div>
+            <div class="detail-row d-none" id="modal-completed-row">
+              <i class="bi bi-check2-circle"></i>
+              <div><small>Clôturé le</small><strong id="modal-completed-info">-</strong></div>
+            </div>
+            <div class="detail-row d-none" id="modal-reason-row">
+              <i class="bi bi-chat-left-text"></i>
+              <div><small>Motif d'annulation</small><strong id="modal-reason-info">-</strong></div>
+            </div>
+          </div>
+
+          <!-- الدفع -->
+          <div class="mt-2 p-3 border rounded-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <small class="text-muted fw-semibold text-uppercase">Paiement</small>
+              <span id="modal-payment-badge" class="badge pay-none px-2 py-1">-</span>
+            </div>
+            <div class="progress mb-2" style="height: 8px; border-radius: 10px;">
+              <div id="modal-payment-bar" class="progress-bar bg-success" style="width: 0%; border-radius: 10px;"></div>
+            </div>
+            <div class="d-flex justify-content-between small">
+              <span class="text-muted">Total : <strong class="text-dark" id="modal-total">0 DZD</strong></span>
+              <span class="text-muted">Versé : <strong class="text-dark" id="modal-versement">0 DZD</strong></span>
+              <span class="text-muted">Reste : <strong class="text-dark" id="modal-remaining">0 DZD</strong></span>
+            </div>
           </div>
         </div>
 
-        <div class="list-group list-group-flush border-0">
-          <div class="list-group-item d-flex align-items-center border-0 px-0 py-2">
-            <i class="bi bi-telephone text-muted fs-5 me-3"></i>
-            <div>
-              <small class="text-muted d-block">Téléphone</small>
-              <strong class="text-dark" id="modal-phone-info">-</strong>
-            </div>
-          </div>
-          <div class="list-group-item d-flex align-items-center border-0 px-0 py-2">
-            <i class="bi bi-car-front text-muted fs-5 me-3"></i>
-            <div>
-              <small class="text-muted d-block">Véhicule & VIN</small>
-              <strong class="text-dark" id="modal-vehicle-info">-</strong>
-            </div>
-          </div>
-          <div class="list-group-item d-flex align-items-center border-0 px-0 py-2">
-            <i class="bi bi-tools text-muted fs-5 me-3"></i>
-            <div>
-              <small class="text-muted d-block">Service / Inspection</small>
-              <strong class="text-dark" id="modal-service-info">-</strong>
-            </div>
-          </div>
-          <div class="list-group-item d-flex align-items-center border-0 px-0 py-2">
-            <i class="bi bi-clock text-muted fs-5 me-3"></i>
-            <div>
-              <small class="text-muted d-block">Date et Heure</small>
-              <strong class="text-dark" id="modal-date-info">-</strong>
-            </div>
-          </div>
-          <div class="list-group-item d-flex align-items-center border-0 px-0 py-2">
-            <i class="bi bi-cash-stack text-muted fs-5 me-3"></i>
-            <div>
-              <small class="text-muted d-block">Paiement (Total / Versement)</small>
-              <strong class="text-dark" id="modal-payment-info">-</strong>
-            </div>
-          </div>
+        <div class="modal-footer border-0 pt-0">
+          <a id="modal-call-btn" class="btn btn-outline-primary rounded-3 d-none" href="#"><i class="bi bi-telephone me-1"></i> Appeler</a>
+          <a id="modal-wa-btn" class="btn btn-outline-success rounded-3 d-none" href="#" target="_blank" rel="noopener noreferrer"><i class="bi bi-whatsapp me-1"></i> WhatsApp</a>
+          <button type="button" class="btn btn-light rounded-3 px-4" data-bs-dismiss="modal">Fermer</button>
         </div>
-      </div>
-      <div class="modal-footer border-0 pt-0">
-        <button type="button" class="btn btn-light rounded-3 px-4" data-bs-dismiss="modal">Fermer</button>
       </div>
     </div>
   </div>
-</div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
@@ -206,206 +447,535 @@
 
 <script>
 const API_URL = 'https://romantic-enjoyment-production-f458.up.railway.app/api';
+const AUTO_REFRESH_MS = 120000;   // تحديث صامت كل دقيقتين
+// الدوام من السبت إلى الأربعاء، من 09:00 إلى 17:00 — الخميس والجمعة راحة
+// (أرقام الأيام: 0=الأحد، 1=الاثنين، 2=الثلاثاء، 3=الأربعاء، 4=الخميس، 5=الجمعة، 6=السبت)
+const REST_DAYS = [4, 5];
+const WORK_DAYS = [0, 1, 2, 3, 4, 5, 6].filter(d => !REST_DAYS.includes(d));
+const WEEK_START_DAY = 6;         // الأسبوع يبدأ يوم السبت
+const BUSINESS_START = '09:00';   // بداية الدوام (يُظلَّل ما قبلها وما بعد النهاية في عرض الأسبوع/اليوم)
+const BUSINESS_END = '17:00';     // نهاية الدوام
+const GRID_MIN_HOUR = 9;          // بداية شبكة الأسبوع/اليوم
+const GRID_MAX_HOUR = 18;         // نهاية الشبكة: آخر موعد يبدأ 17:00 ويدوم ساعة، فلا نقصّ عند 17:00 كي لا يختفي
+const TIME_FMT = { hour: '2-digit', minute: '2-digit', hour12: false };
+
 let calendar = null;
+let allEvents = [];               // كل المواعيد المحمّلة (قبل الفلاتر)
+let lastLoadedAt = 0;
+let searchTerm = '';
 
-// 1. عرض بيانات المسؤول في Sidebar
-function loadAdminProfile() {
-  const userSessionRaw = localStorage.getItem('verifcar_admin_user');
-  const userSession = userSessionRaw ? JSON.parse(userSessionRaw) : null;
+// <helpers>  دوال نقية بدون DOM (قابلة للاختبار)
+const STATUS_GROUPS = {
+  pending:   { label: 'En attente',     cls: 'st-pending' },
+  ready:     { label: 'Prêt (Atelier)', cls: 'st-ready' },
+  progress:  { label: 'En cours',       cls: 'st-progress' },
+  done:      { label: 'Terminé',        cls: 'st-done' },
+  cancelled: { label: 'Annulé',         cls: 'st-cancelled' }
+};
+const activeGroups = new Set(Object.keys(STATUS_GROUPS));
 
-  if (userSession) {
-    const adminFullName = userSession.fullName || userSession.full_name || 'Admin';
-    if (document.getElementById('admin-name')) {
-      document.getElementById('admin-name').innerText = adminFullName;
-    }
-    if (document.getElementById('admin-avatar')) {
-      document.getElementById('admin-avatar').innerText = adminFullName.charAt(0).toUpperCase();
-    }
-  } else {
-    if (document.getElementById('admin-name')) document.getElementById('admin-name').innerText = 'Administrateur';
-    if (document.getElementById('admin-avatar')) document.getElementById('admin-avatar').innerText = 'AD';
+function statusToGroup(status) {
+  switch (String(status || '').toUpperCase()) {
+    case 'COMPLETED': return 'done';
+    case 'READY_FOR_WORKSHOP': return 'ready';
+    case 'IN_WORKSHOP':
+    case 'IN_PROGRESS':
+    case 'INCOMPLETE': return 'progress';
+    case 'CANCELLED':
+    case 'CANCELED':
+    case 'ANNULE':
+    case 'NO_SHOW':
+    case 'ABSENT': return 'cancelled';
+    default: return 'pending';
   }
 }
 
-function initCalendar() {
-  const calendarEl = document.getElementById('calendar-container');
-  if (!calendarEl) return;
+// يحذف الكلمات الافتراضية غير المفيدة ("Inconnu" / "Non Spécifié") من اسم السيارة
+function cleanVehicle(name) {
+  return String(name ?? '')
+    .replace(/non\s+sp[ée]cifi[ée]/gi, '')
+    .replace(/\binconnu\b/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
-  const isMobile = window.innerWidth < 768;
+function pad2(n) { return String(n).padStart(2, '0'); }
+function localDateStr(d) { return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; }
 
-  calendar = new FullCalendar.Calendar(calendarEl, {
-    // إجبار المعاينة البداية وتثبيت تاريخ 1 أوغسطس 2026
-    
-    initialView: isMobile ? 'listMonth' : 'dayGridMonth',
-    initialDate: '2026-09-01',
-    locale: 'fr',
-    displayEventTime: true,
-    eventDisplay: 'block',
-    headerToolbar: isMobile ? {
-      left: 'prev,next today',
-      center: 'title',
-      right: 'listMonth,dayGridMonth'
-    } : {
-      left: 'prev,next today',
-      center: 'title',
-      right: 'dayGridMonth,timeGridWeek,timeGridDay'
-    },
-    eventClick: function(info) {
-      const event = info.event;
-      const props = event.extendedProps;
+// يحوّل أي صيغة تاريخ من الباك‌إند إلى نص محلي بدون منطقة زمنية (يمنع أي إزاحة بالساعات)
+function toNaiveISO(raw) {
+  if (!raw) return null;
+  const s = String(raw).trim().replace(' ', 'T').replace(/Z$/i, '').replace(/\.\d+$/, '');
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(s)) return s.length === 16 ? s + ':00' : s;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s + 'T00:00:00';
+  const d = new Date(raw);
+  if (isNaN(d.getTime())) return null;
+  return `${localDateStr(d)}T${pad2(d.getHours())}:${pad2(d.getMinutes())}:00`;
+}
 
-      document.getElementById('modal-client-name').innerText = props.clientName || event.title || 'N/A';
-      document.getElementById('modal-phone-info').innerText = props.phone || 'N/A';
-      
-      const vehicle = props.vehicle && props.vehicle.trim() !== '' ? props.vehicle : 'N/A';
-      const vin = props.vin ? ` (${props.vin})` : '';
-      document.getElementById('modal-vehicle-info').innerText = `${vehicle}${vin}`;
-      
-      document.getElementById('modal-service-info').innerText = props.serviceType || 'Inspection';
-      
-      const total = props.totalAmount ? Number(props.totalAmount).toLocaleString() + ' DZD' : '0 DZD';
-      const versement = props.versement ? Number(props.versement).toLocaleString() + ' DZD' : '0 DZD';
-      document.getElementById('modal-payment-info').innerText = `${total} (Avance: ${versement})`;
+// بحث غير حسّاس للحروف الكبيرة والتشكيل (Éric = eric)
+function normalizeText(s) {
+  return String(s ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
 
-      const initials = (props.clientName || 'CL').substring(0, 2).toUpperCase();
-      document.getElementById('modal-avatar').innerText = initials;
+// رقم واتساب بالصيغة الدولية (الجزائر: 0770… -> 213770…)
+function waNumber(phone) {
+  let d = String(phone ?? '').replace(/\D/g, '');
+  if (!d) return null;
+  if (d.startsWith('00')) d = d.slice(2);
+  else if (d.startsWith('0')) d = '213' + d.slice(1);
+  return d.length >= 11 ? d : null;
+}
 
-      if (event.start) {
-        document.getElementById('modal-date-info').innerText = new Date(event.start).toLocaleString('fr-FR', {
-          dateStyle: 'medium',
-          timeStyle: 'short'
-        });
+function initials(name) {
+  const words = String(name ?? '').trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return 'CL';
+  const second = words[1] ? words[1][0] : (words[0][1] || '');
+  return (words[0][0] + second).toUpperCase();
+}
+
+function paymentState(total, versement) {
+  total = Number(total) || 0;
+  versement = Number(versement) || 0;
+  const remaining = Math.max(0, total - versement);
+  const percent = total > 0 ? Math.min(100, Math.round((versement / total) * 100)) : 0;
+  let key = 'none';
+  if (total > 0) key = versement >= total ? 'paid' : (versement > 0 ? 'partial' : 'unpaid');
+  return { key, remaining, percent };
+}
+
+function formatEvent(evt) {
+  const start = toNaiveISO(evt.appointment_date || evt.appointmentDate || evt.date_rdv || evt.date);
+  if (!start) return null;
+
+  const id = evt.id ?? evt.ticket_number;
+  const clientName = String(evt.client_name || evt.clientName || evt.fullName || '').trim() || 'Client';
+  const vehicle = cleanVehicle(evt.vehicle_info || evt.vehicle_name || evt.vehicle || evt.car_model);
+  const status = String(evt.status || 'PENDING').toUpperCase();
+  const group = statusToGroup(status);
+  const phone = String(evt.phone || evt.client_phone || evt.telephone || '').trim();
+  const vin = String(evt.VIN || evt.vin || evt.vin_code || '').trim();
+  let plate = String(evt.license_plate || '').trim();
+  if (/non\s+sp[ée]cifi[ée]/i.test(plate) || plate === vin) plate = '';   // الباك‌إند يعيد VIN أو "Non Spécifié" كبديل
+  const serviceType = String(evt.service_type || evt.serviceType || evt.service_name || '').trim() || 'Inspection';
+
+  return {
+    id: String(id),
+    title: vehicle ? `${clientName} - ${vehicle}` : clientName,
+    start,
+    allDay: false,
+    classNames: [STATUS_GROUPS[group].cls],
+    extendedProps: {
+      status, group, clientName, phone, vehicle, vin, plate, serviceType,
+      totalAmount: Number(evt.total_amount ?? evt.totalAmount ?? evt.price) || 0,
+      versement: Number(evt.versement ?? evt.deposit ?? evt.advance) || 0,
+      cancelReason: String(evt.cancel_reason || '').trim(),
+      startedAt: toNaiveISO(evt.started_at),
+      completedAt: toNaiveISO(evt.completed_at),
+      search: normalizeText([clientName, vehicle, phone, vin, plate, serviceType, `rdv-${id}`, `#${id}`].join(' '))
+    }
+  };
+}
+
+// إحصائيات الفترة المعروضة (مجموع أرقام فقط، بلا أي DOM)
+function computeStats(events, rangeStart, rangeEnd, todayStr) {
+  const groups = { pending: 0, ready: 0, progress: 0, done: 0, cancelled: 0 };
+  const today = { total: 0, done: 0, remaining: 0 };
+  let periodTotal = 0, expected = 0, collected = 0;
+
+  events.forEach(e => {
+    const g = e.extendedProps.group;
+    if (e.start.slice(0, 10) === todayStr) {
+      today.total++;
+      if (g === 'done') today.done++;
+      else if (g !== 'cancelled') today.remaining++;
+    }
+    const d = new Date(e.start);
+    if (d >= rangeStart && d < rangeEnd) {
+      periodTotal++;
+      groups[g]++;
+      if (g !== 'cancelled') {
+        expected += e.extendedProps.totalAmount;
+        collected += e.extendedProps.versement;
       }
-
-      const statusEl = document.getElementById('modal-status-badge');
-      const status = (props.status || 'PENDING').toUpperCase();
-      if (status === 'COMPLETED' || status === 'CONFIRMED') {
-        statusEl.className = 'badge bg-success-subtle text-success px-2 py-1';
-        statusEl.innerText = 'Terminé';
-      } else if (status === 'CANCELLED' || status === 'NO_SHOW') {
-        statusEl.className = 'badge bg-danger-subtle text-danger px-2 py-1';
-        statusEl.innerText = 'Annulé';
-      } else {
-        statusEl.className = 'badge bg-warning-subtle text-warning px-2 py-1';
-        statusEl.innerText = 'En attente';
-      }
-
-      const modal = new bootstrap.Modal(document.getElementById('eventDetailModal'));
-      modal.show();
     }
   });
 
-  calendar.render();
-  loadCalendarEvents();
+  const cancelRate = periodTotal > 0 ? Math.round((groups.cancelled / periodTotal) * 1000) / 10 : 0;
+  return { today, periodTotal, groups, expected, collected, cancelRate };
 }
-// 3. جلب البيانات من الـ Backend وعرضها على التقويم
-async function loadCalendarEvents() {
+
+// عدد المواعيد التي لا تظهر في عرض الأسبوع/اليوم لأنها خارج ساعات الشبكة
+function countOutsideHours(events, rangeStart, rangeEnd, minHour, maxHour) {
+  return events.filter(e => {
+    const d = new Date(e.start);
+    if (!(d >= rangeStart && d < rangeEnd)) return false;
+    const h = d.getHours() + d.getMinutes() / 60;
+    return h < minHour || h >= maxHour;
+  }).length;
+}
+// </helpers>
+
+/* ============================ أدوات DOM ============================ */
+const $ = (id) => document.getElementById(id);
+function setText(id, text) { const el = $(id); if (el) el.textContent = text; }
+const money = (n) => `${Number(n || 0).toLocaleString('fr-FR')} DZD`;
+const isMobile = () => window.innerWidth < 768;
+
+function getAuthToken() {
+  const direct = localStorage.getItem('token');
+  if (direct) return direct;
+  try {
+    const session = JSON.parse(localStorage.getItem('verifcar_admin_user') || 'null');
+    return session?.token || '';
+  } catch (e) { return ''; }
+}
+
+function loadAdminProfile() {
+  let session = null;
+  try { session = JSON.parse(localStorage.getItem('verifcar_admin_user') || 'null'); } catch (e) {}
+  const name = session ? (session.fullName || session.full_name || 'Admin') : 'Administrateur';
+  setText('admin-name', name);
+  setText('admin-avatar', session ? name.charAt(0).toUpperCase() : 'AD');
+}
+
+/* ============================ التقويم ============================ */
+function headerToolbarFor(mobile) {
+  return mobile
+    ? { left: 'prev,next today', center: 'title', right: 'listMonth,dayGridMonth' }
+    : { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek' };
+}
+
+function matchesFilters(e) {
+  if (!activeGroups.has(e.extendedProps.group)) return false;
+  if (searchTerm && !e.extendedProps.search.includes(searchTerm)) return false;
+  return true;
+}
+
+function buildEventContent(arg) {
+  const p = arg.event.extendedProps;
+  const view = arg.view.type;
+  const make = (tag, cls, text) => {
+    const el = document.createElement(tag);
+    if (cls) el.className = cls;
+    el.textContent = text;
+    return el;
+  };
+
+  if (view.startsWith('list')) {
+    return { domNodes: [document.createTextNode(arg.event.title)] };
+  }
+
+  const wrap = document.createElement('div');
+  if (view === 'dayGridMonth') {
+    wrap.className = 'rdv-chip';
+    wrap.appendChild(make('span', 't', arg.timeText));
+    wrap.appendChild(make('span', 'n', p.clientName));
+    if (p.vehicle) wrap.appendChild(make('span', 'v', p.vehicle));
+  } else {
+    wrap.className = 'rdv-card';
+    wrap.appendChild(make('span', 't', arg.timeText));
+    wrap.appendChild(make('span', 'n', p.clientName));
+    if (p.vehicle) wrap.appendChild(make('span', 'v', p.vehicle));
+  }
+  return { domNodes: [wrap] };
+}
+
+function initCalendar() {
+  const calendarEl = $('calendar-container');
+  if (!calendarEl) return;
+
+  calendar = new FullCalendar.Calendar(calendarEl, {
+    initialView: isMobile() ? 'listMonth' : 'dayGridMonth',
+    locale: 'fr',
+    firstDay: WEEK_START_DAY,
+    height: 'auto',
+    fixedWeekCount: false,
+    navLinks: true,
+    nowIndicator: true,
+    dayMaxEvents: 4,
+    eventMaxStack: 3,
+    eventDisplay: 'block',
+    eventInteractive: true,
+    displayEventTime: true,
+    eventTimeFormat: TIME_FMT,
+    slotLabelFormat: TIME_FMT,
+    slotMinTime: `${pad2(GRID_MIN_HOUR)}:00:00`,
+    slotMaxTime: `${pad2(GRID_MAX_HOUR)}:00:00`,
+    scrollTime: `${pad2(GRID_MIN_HOUR)}:00:00`,
+    businessHours: { daysOfWeek: WORK_DAYS, startTime: BUSINESS_START, endTime: BUSINESS_END },
+    slotDuration: '00:30:00',
+    allDaySlot: false,
+    slotEventOverlap: false,
+    defaultTimedEventDuration: '01:00:00',
+    buttonText: { today: "Aujourd'hui", month: 'Mois', week: 'Semaine', day: 'Jour', list: 'Agenda' },
+    noEventsText: 'Aucun rendez-vous à afficher',
+    moreLinkContent: (a) => `+${a.num} autres`,
+    headerToolbar: headerToolbarFor(isMobile()),
+    views: {
+      timeGridWeek: { dayHeaderFormat: { weekday: 'short', day: 'numeric', month: 'numeric' } },
+      timeGridDay: { dayHeaderFormat: { weekday: 'long', day: 'numeric', month: 'long' } }
+    },
+    dayCellClassNames: (arg) => REST_DAYS.includes(arg.date.getDay()) ? ['fc-day-rest'] : [],
+    events: (info, success) => success(allEvents.filter(matchesFilters)),
+    eventContent: buildEventContent,
+    eventDidMount: (info) => {
+      const p = info.event.extendedProps;
+      info.el.setAttribute('title', `${info.timeText || ''} · ${p.clientName}${p.vehicle ? ' · ' + p.vehicle : ''} · ${STATUS_GROUPS[p.group].label}`);
+    },
+    eventClick: (info) => { info.jsEvent?.preventDefault(); openEventModal(info.event); },
+    datesSet: () => updateStatsUI()
+  });
+
+  calendar.render();
+}
+
+/* ============================ المؤشرات ============================ */
+function updateStatsUI() {
+  if (!calendar || !calendar.view) return;
+  const v = calendar.view;
+  const s = computeStats(allEvents, v.currentStart, v.currentEnd, localDateStr(new Date()));
+
+  setText('kpi-today', s.today.total);
+  setText('kpi-today-sub', s.today.total === 0 ? 'Aucun rendez-vous' : `${s.today.done} terminé(s) · ${s.today.remaining} à traiter`);
+
+  setText('kpi-period', s.periodTotal);
+  setText('kpi-period-sub', v.title || '');
+
+  setText('kpi-revenue', money(s.expected));
+  setText('kpi-revenue-sub', `Encaissé : ${money(s.collected)}`);
+
+  setText('kpi-cancel', `${s.cancelRate}%`);
+  setText('kpi-cancel-sub', `${s.groups.cancelled} annulé(s) sur ${s.periodTotal}`);
+
+  Object.keys(STATUS_GROUPS).forEach(g => setText(`count-${g}`, s.groups[g]));
+  updateOutsideHoursNote();
+}
+
+// تنبيه يظهر فقط بعرض الأسبوع/اليوم لو فيه مواعيد خارج ساعات الدوام المعروضة (كي لا تختفي بصمت)
+function updateOutsideHoursNote() {
+  const note = $('outside-hours-note');
+  if (!note || !calendar || !calendar.view) return;
+  const v = calendar.view;
+  const n = String(v.type).startsWith('timeGrid')
+    ? countOutsideHours(allEvents.filter(matchesFilters), v.currentStart, v.currentEnd, GRID_MIN_HOUR, GRID_MAX_HOUR)
+    : 0;
+  note.classList.toggle('d-none', n === 0);
+  if (n > 0) {
+    setText('outside-hours-text', `${n} rendez-vous hors des horaires ${pad2(GRID_MIN_HOUR)}:00–${pad2(GRID_MAX_HOUR)}:00 ne sont pas affichés dans cette vue (visibles en vue Mois ou Agenda).`);
+  }
+}
+
+/* ============================ الفلاتر ============================ */
+function onFiltersChanged() {
+  if (calendar) calendar.refetchEvents();
+  updateOutsideHoursNote();
+  const filtering = activeGroups.size < Object.keys(STATUS_GROUPS).length || searchTerm !== '';
+  $('reset-filters-btn')?.classList.toggle('d-none', !filtering);
+}
+
+function bindFilters() {
+  document.querySelectorAll('.status-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const g = btn.dataset.group;
+      if (activeGroups.has(g)) activeGroups.delete(g); else activeGroups.add(g);
+      btn.setAttribute('aria-pressed', activeGroups.has(g) ? 'true' : 'false');
+      onFiltersChanged();
+    });
+  });
+
+  const search = $('search-input');
+  let timer = null;
+  search?.addEventListener('input', () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      searchTerm = normalizeText(search.value.trim());
+      onFiltersChanged();
+    }, 150);
+  });
+
+  $('reset-filters-btn')?.addEventListener('click', () => {
+    Object.keys(STATUS_GROUPS).forEach(g => activeGroups.add(g));
+    document.querySelectorAll('.status-pill').forEach(btn => btn.setAttribute('aria-pressed', 'true'));
+    searchTerm = '';
+    if (search) search.value = '';
+    onFiltersChanged();
+  });
+}
+
+function bindToolbarButtons() {
+  $('refresh-btn')?.addEventListener('click', () => loadAppointments());
+  $('print-btn')?.addEventListener('click', () => window.print());
+  $('calendar-error-retry')?.addEventListener('click', () => loadAppointments());
+}
+
+/* ============================ جلب البيانات ============================ */
+function setLoading(on) { $('calendar-loading')?.classList.toggle('d-none', !on); }
+
+function showError(message, needLogin = false) {
+  setText('calendar-error-text', message);
+  $('calendar-error-login')?.classList.toggle('d-none', !needLogin);
+  const box = $('calendar-error');
+  if (box) { box.classList.remove('d-none'); box.classList.add('d-flex'); }
+}
+function hideError() {
+  const box = $('calendar-error');
+  if (box) { box.classList.add('d-none'); box.classList.remove('d-flex'); }
+}
+
+async function loadAppointments({ silent = false } = {}) {
   if (!calendar) return;
+  if (!silent) setLoading(true);
 
   try {
-    const userSessionRaw = localStorage.getItem('verifcar_admin_user');
-    const userSession = userSessionRaw ? JSON.parse(userSessionRaw) : null;
-    const token = userSession?.token || localStorage.getItem('token');
-
     const headers = { 'Content-Type': 'application/json' };
+    const token = getAuthToken();
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
     const res = await fetch(`${API_URL}/admin/appointments`, { headers });
 
-    if (res.ok) {
-      const responseData = await res.json();
-      // قراءة البيانات سواء كانت مصفوفة مباشرة أو داخل data / appointments
-      const rawEvents = Array.isArray(responseData) ? responseData : (responseData.data || responseData.appointments || []);
-      
-      calendar.removeAllEvents();
-
-      const formattedEvents = rawEvents.map(evt => {
-        // قراءة التاريخ بأي اسم حقل وارد من الـ Database
-        const rawDate = evt.appointment_date || evt.appointmentDate || evt.date_rdv || evt.date;
-        let validStart = rawDate;
-
-        if (rawDate && !isNaN(Date.parse(rawDate))) {
-          validStart = new Date(rawDate).toISOString();
-        }
-
-        const clientName = evt.client_name || evt.clientName || evt.fullName || 'RDV Client';
-        const vehicleInfo = evt.vehicle_info || evt.vehicle_name || evt.vehicle || evt.car_model || '';
-        const status = (evt.status || 'PENDING').toUpperCase();
-
-        // تحديد اللون حسب الحالة
-        let bg = '#f59e0b'; // أصفر (En attente)
-        if (status === 'COMPLETED' || status === 'CONFIRMED') bg = '#10b981'; // أخضر (Terminé)
-        if (status === 'CANCELLED' || status === 'NO_SHOW') bg = '#ef4444'; // أحمر (Annulé)
-
-        return {
-          id: evt.id || evt.ticket_number,
-          title: vehicleInfo ? `${clientName} - ${vehicleInfo}` : clientName,
-          start: validStart,
-          allDay: false,
-          backgroundColor: bg,
-          borderColor: bg,
-          textColor: '#ffffff',
-          extendedProps: {
-            clientName: clientName,
-            phone: evt.phone || evt.client_phone || evt.telephone,
-            vehicle: vehicleInfo,
-            vin: evt.vin || evt.vin_code,
-            serviceType: evt.service_type || evt.serviceType || evt.service_name || 'Inspection',
-            totalAmount: evt.total_amount || evt.totalAmount || evt.price,
-            versement: evt.versement || evt.deposit || evt.advance,
-            status: status
-          }
-        };
-      });
-
-      // إضافة المواعيد إلى التقويم
-      calendar.addEventSource(formattedEvents);
-    } else {
-      console.error('Erreur API Appointments:', res.status);
+    if (res.status === 401 || res.status === 403) {
+      if (!silent) showError('Session expirée ou accès refusé. Veuillez vous reconnecter.', true);
+      return;
     }
+    if (!res.ok) {
+      if (!silent) showError(`Erreur serveur (${res.status}). Impossible de charger les rendez-vous.`);
+      return;
+    }
+
+    const data = await res.json();
+    const raw = Array.isArray(data) ? data : (data.data || data.appointments || []);
+    allEvents = raw.map(formatEvent).filter(Boolean);
+    lastLoadedAt = Date.now();
+
+    hideError();
+    calendar.refetchEvents();
+    updateStatsUI();
+
+    const now = new Date();
+    setText('last-updated', `Mis à jour à ${pad2(now.getHours())}:${pad2(now.getMinutes())}`);
   } catch (err) {
-    console.error('Erreur de chargement des événements:', err);
+    console.error('Erreur de chargement des rendez-vous:', err);
+    if (!silent) showError('Impossible de contacter le serveur. Vérifiez votre connexion.');
+  } finally {
+    if (!silent) setLoading(false);
   }
 }
 
-// 4. تشغيل عند تحميل الصفحة
-document.addEventListener('DOMContentLoaded', () => {
-  loadAdminProfile();
-  initCalendar();
+/* ============================ نافذة التفاصيل ============================ */
+function capitalizeFirst(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
 
-  const logoutBtn = document.getElementById('logout-btn');
-  if (logoutBtn) {
-    logoutBtn.addEventListener('click', () => {
-      localStorage.removeItem('verifcar_admin_user');
-      window.location.href = '../Auth/index.html';
-    });
-  }
+function formatLongDate(date) {
+  return capitalizeFirst(date.toLocaleString('fr-FR', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
+  }));
+}
+function formatShortDate(naiveISO) {
+  return new Date(naiveISO).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
 
-  // إدارة القائمة الجانبية للشاشات الصغيرة
+function openEventModal(event) {
+  const p = event.extendedProps;
+  const group = STATUS_GROUPS[p.group];
+
+  setText('modal-title', `#RDV-${event.id}`);
+  const badge = $('modal-status-badge');
+  badge.className = `badge st-badge-${p.group} px-3 py-2 ms-3`;
+  badge.textContent = group.label;
+
+  setText('modal-client-name', p.clientName);
+  setText('modal-avatar', initials(p.clientName));
+  setText('modal-phone-info', p.phone || 'Téléphone non renseigné');
+
+  setText('modal-vehicle-info', [p.vehicle || 'Véhicule non précisé', p.plate].filter(Boolean).join(' · '));
+  setText('modal-vin-info', p.vin ? `VIN : ${p.vin}` : '');
+  setText('modal-service-info', p.serviceType);
+  if (event.start) setText('modal-date-info', formatLongDate(event.start));
+
+  const toggleRow = (rowId, textId, value) => {
+    $(rowId)?.classList.toggle('d-none', !value);
+    if (value) setText(textId, value);
+  };
+  toggleRow('modal-started-row', 'modal-started-info', p.startedAt ? formatShortDate(p.startedAt) : '');
+  toggleRow('modal-completed-row', 'modal-completed-info', p.completedAt ? formatShortDate(p.completedAt) : '');
+  toggleRow('modal-reason-row', 'modal-reason-info', p.group === 'cancelled' ? (p.cancelReason || 'Non précisé') : '');
+
+  const pay = paymentState(p.totalAmount, p.versement);
+  const payLabels = { paid: 'Payé', partial: 'Partiel', unpaid: 'Impayé', none: 'Non défini' };
+  const payBadge = $('modal-payment-badge');
+  payBadge.className = `badge pay-${pay.key} px-2 py-1`;
+  payBadge.textContent = payLabels[pay.key];
+  const bar = $('modal-payment-bar');
+  bar.style.width = `${pay.percent}%`;
+  bar.className = `progress-bar ${pay.key === 'paid' ? 'bg-success' : (pay.key === 'partial' ? 'bg-warning' : 'bg-danger')}`;
+  setText('modal-total', money(p.totalAmount));
+  setText('modal-versement', money(p.versement));
+  setText('modal-remaining', money(pay.remaining));
+
+  const callBtn = $('modal-call-btn');
+  const waBtn = $('modal-wa-btn');
+  const wa = waNumber(p.phone);
+  callBtn.classList.toggle('d-none', !p.phone);
+  if (p.phone) callBtn.setAttribute('href', `tel:${p.phone.replace(/[^\d+]/g, '')}`);
+  waBtn.classList.toggle('d-none', !wa);
+  if (wa) waBtn.setAttribute('href', `https://wa.me/${wa}`);
+
+  bootstrap.Modal.getOrCreateInstance($('eventDetailModal')).show();
+}
+
+/* ============================ الشريط الجانبي والتشغيل ============================ */
+function initSidebar() {
   let overlay = document.querySelector('.sidebar-overlay');
   if (!overlay) {
     overlay = document.createElement('div');
     overlay.className = 'sidebar-overlay';
     document.body.appendChild(overlay);
   }
-
   const sidebar = document.querySelector('.sidebar');
-  const toggleBtn = document.getElementById('mobile-sidebar-toggle');
-  const closeBtn = document.getElementById('sidebar-close-btn');
+  const open = () => { sidebar?.classList.add('show'); overlay.classList.add('show'); };
+  const close = () => { sidebar?.classList.remove('show'); overlay.classList.remove('show'); };
 
-  function openSidebar() {
-    sidebar?.classList.add('show');
-    overlay?.classList.add('show');
-  }
+  $('mobile-sidebar-toggle')?.addEventListener('click', open);
+  $('sidebar-close-btn')?.addEventListener('click', close);
+  overlay.addEventListener('click', close);
 
-  function closeSidebar() {
-    sidebar?.classList.remove('show');
-    overlay?.classList.remove('show');
-  }
+  $('logout-btn')?.addEventListener('click', () => {
+    localStorage.removeItem('verifcar_admin_user');
+    localStorage.removeItem('token');
+    window.location.href = '../Auth/index.html';
+  });
+}
 
-  toggleBtn?.addEventListener('click', openSidebar);
-  closeBtn?.addEventListener('click', closeSidebar);
-  overlay?.addEventListener('click', closeSidebar);
+document.addEventListener('DOMContentLoaded', () => {
+  loadAdminProfile();
+  initCalendar();
+  bindFilters();
+  bindToolbarButtons();
+  initSidebar();
+  loadAppointments();
+
+  // تحديث صامت دوري + عند الرجوع للتبويب بعد غياب
+  setInterval(() => {
+    if (document.visibilityState === 'visible') loadAppointments({ silent: true });
+  }, AUTO_REFRESH_MS);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && Date.now() - lastLoadedAt > 60000) loadAppointments({ silent: true });
+  });
+
+  // تبديل العرض تلقائياً عند الانتقال بين الهاتف والحاسوب
+  let wasMobile = isMobile();
+  let resizeTimer = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      const nowMobile = isMobile();
+      if (calendar && nowMobile !== wasMobile) {
+        wasMobile = nowMobile;
+        calendar.setOption('headerToolbar', headerToolbarFor(nowMobile));
+        calendar.changeView(nowMobile ? 'listMonth' : 'dayGridMonth');
+      }
+    }, 250);
+  });
 });
 </script>
 
