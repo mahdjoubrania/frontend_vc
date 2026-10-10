@@ -44,9 +44,10 @@
         <div class="menu-label">RECEPTION</div>
         <ul class="nav nav-pills flex-column mb-3">
           <li class="nav-item"><a href="index.html" class="nav-link text-secondary"><i class="bi bi-grid-1x2 me-2"></i> Tableau de bord</a></li>
-          <li class="nav-item"><a href="clients.html" class="nav-link text-secondary"><i class="bi bi-car-front me-2"></i> Clients & Véhicules</a></li>
+          <li class="nav-item"><a href="calendar.html" class="nav-link text-secondary"><i class="bi bi-calendar-week me-2"></i> Planning & RDV</a></li>
+          <li class="nav-item"><a href="toutsrnd.html" class="nav-link active"><i class="bi bi-calendar-check me-2"></i> Les Rendez-vous</a></li>
+          <li class="nav-item"><a href="clients.html" class="nav-link text-secondary"><i class="bi bi-car-front me-2"></i> Clients &amp; Véhicules</a></li>
           <li class="nav-item"><a href="rapports.html" class="nav-link text-secondary"><i class="bi bi-file-earmark-bar-graph me-2"></i> Rapports d'Inspection</a></li>
-           <li class="nav-item"><a href="toutsrnd.html" class="nav-link active"><i class="bi bi-file-earmark-bar-graph me-2"></i> Les Rendez-vous</a></li>
         </ul>
       </div>
 
@@ -78,24 +79,34 @@
         <!-- Main Data Card -->
         <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 bg-white">
           <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
-            <h5 class="fw-bold text-dark mb-0 fs-6 fs-md-5">Rendez-vous</h5>
+            <div class="d-flex align-items-center gap-2">
+              <h5 class="fw-bold text-dark mb-0 fs-6 fs-md-5">Rendez-vous</h5>
+              <span class="badge bg-light text-dark border" id="result-count">0</span>
+            </div>
 
-            <div class="d-flex flex-column flex-sm-row gap-2 align-items-stretch align-items-sm-center">
-              <div class="btn-group btn-group-sm w-100 w-sm-auto" role="group">
-                <button type="button" class="btn btn-outline-primary active px-3" id="btn-view-table" onclick="toggleView('table')">
-                  <i class="bi bi-table me-1"></i> Tableau
-                </button>
-                <button type="button" class="btn btn-outline-primary px-3" id="btn-view-calendar" onclick="toggleView('calendar')">
-                  <i class="bi bi-calendar3 me-1"></i> Calendrier
-                </button>
-              </div>
-
-              <div class="input-group input-group-sm search-box w-100" style="max-width: 300px;">
+            <div class="d-flex flex-column flex-lg-row gap-2 align-items-stretch align-items-lg-center">
+              <select id="filter-period" class="form-select form-select-sm" style="min-width: 150px;" aria-label="Période">
+                <option value="all">Toute la période</option>
+                <option value="today">Aujourd'hui</option>
+                <option value="week">Cette semaine</option>
+                <option value="month">Ce mois</option>
+              </select>
+              <select id="filter-status" class="form-select form-select-sm" style="min-width: 150px;" aria-label="Statut">
+                <option value="all">Tous les statuts</option>
+                <option value="pending">En attente</option>
+                <option value="progress">En cours</option>
+                <option value="done">Terminés</option>
+                <option value="cancelled">Annulés</option>
+              </select>
+              <div class="input-group input-group-sm search-box w-100" style="max-width: 280px;">
                 <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-search"></i></span>
-                <input type="text" id="search-input" class="form-control bg-light border-start-0" placeholder="Rechercher client, véhicule...">
+                <input type="text" id="search-input" class="form-control bg-light border-start-0" placeholder="Rechercher client, véhicule..." autocomplete="off">
               </div>
+              <a href="calendar.html" class="btn btn-outline-primary btn-sm px-3 text-nowrap"><i class="bi bi-calendar-week me-1"></i> Planning</a>
             </div>
           </div>
+
+          <div id="load-error" class="alert alert-warning py-2 small d-none" role="alert"></div>
 
           <!-- Table View -->
           <div id="view-table-container" class="table-responsive">
@@ -105,8 +116,10 @@
                   <th>CLIENT</th>
                   <th>TÉLÉPHONE</th>
                   <th>VÉHICULE / MATRICULE</th>
-                  <th>HEURE</th>
-                  <th>TYPE</th>
+                  <th>DATE &amp; HEURE</th>
+                  <th>PRESTATION</th>
+                  <th>STATUT</th>
+                  <th>PAIEMENT</th>
                   <th class="text-end">ACTIONS</th>
                 </tr>
               </thead>
@@ -116,16 +129,8 @@
             </table>
           </div>
 
-          <!-- Calendar View Container -->
-          <div id="view-calendar-container" class="d-none mt-3">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <button class="btn btn-sm btn-outline-secondary px-3" onclick="changeMonth(-1)"><i class="bi bi-chevron-left me-1"></i> Précédent</button>
-              <h6 class="fw-bold mb-0 text-capitalize text-dark" id="calendar-month-year"></h6>
-              <button class="btn btn-sm btn-outline-secondary px-3" onclick="changeMonth(1)">Suivant <i class="bi bi-chevron-right ms-1"></i></button>
-            </div>
-            <div class="calendar-grid" id="calendar-grid">
-              <!-- Dynamic Calendar -->
-            </div>
+          <div class="text-center mt-3 d-none" id="load-more-box">
+            <button type="button" class="btn btn-outline-secondary btn-sm px-4" id="load-more-btn">Afficher plus</button>
           </div>
 
         </div>

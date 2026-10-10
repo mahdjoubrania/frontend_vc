@@ -41,9 +41,10 @@
         <div class="menu-label">RECEPTION</div>
         <ul class="nav nav-pills flex-column mb-3">
           <li class="nav-item"><a href="index.html" class="nav-link text-secondary"><i class="bi bi-grid-1x2 me-2"></i> Tableau de bord</a></li>
-          <li class="nav-item"><a href="clients.html" class="nav-link active"><i class="bi bi-car-front me-2"></i> Clients & Véhicules</a></li>
+          <li class="nav-item"><a href="calendar.html" class="nav-link text-secondary"><i class="bi bi-calendar-week me-2"></i> Planning & RDV</a></li>
+          <li class="nav-item"><a href="toutsrnd.html" class="nav-link text-secondary"><i class="bi bi-calendar-check me-2"></i> Les Rendez-vous</a></li>
+          <li class="nav-item"><a href="clients.html" class="nav-link active"><i class="bi bi-car-front me-2"></i> Clients &amp; Véhicules</a></li>
           <li class="nav-item"><a href="rapports.html" class="nav-link text-secondary"><i class="bi bi-file-earmark-bar-graph me-2"></i> Rapports d'Inspection</a></li>
-          <li class="nav-item"><a href="toutsrnd.html" class="nav-link text-secondary"><i class="bi bi-file-earmark-bar-graph me-2"></i> Les Rendez-vous</a></li>
         </ul>
       </div>
 
@@ -312,31 +313,26 @@
 
   // فحص الجلسة والصلاحية (ADMIN أو RECEPTION) + تعبئة اسم/صورة المستخدم
   function checkAuth() {
-    const rawUser = localStorage.getItem('verifcar_reception_user')
-                 || localStorage.getItem('verifcar_user')
-                 || localStorage.getItem('verifcar_admin_user');
-    const token = getAuthToken();
-    const allowedRoles = ['ADMIN', 'RECEPTION'];
-
-    if (!rawUser || !token) {
-      alert('Accès non autorisé.');
-      window.location.href = '../Auth/index.html';
-      return;
+    // نختار أول جلسة بدور مسموح (وليس أول مفتاح موجود: قد يكون جلسة قديمة لدور آخر) ونتحمّل الجلسة التالفة
+    let userSession = null;
+    for (const key of ['verifcar_reception_user', 'verifcar_user', 'verifcar_admin_user']) {
+      try {
+        const candidate = JSON.parse(localStorage.getItem(key) || 'null');
+        if (candidate && ['ADMIN', 'RECEPTION'].includes(String(candidate.role || '').toUpperCase())) { userSession = candidate; break; }
+      } catch (e) { /* جلسة تالفة: نتجاهلها */ }
     }
 
-    const userSession = JSON.parse(rawUser);
-    const userRole = (userSession.role || '').toUpperCase();
-
-    if (!allowedRoles.includes(userRole)) {
+    if (!userSession || !getAuthToken()) {
       alert('Accès non autorisé.');
       window.location.href = '../Auth/index.html';
-      return;
+      return false;
     }
 
     const fullName = userSession.fullName || userSession.full_name || 'Utilisateur';
     if (document.getElementById('admin-name')) document.getElementById('admin-name').innerText = fullName;
     if (document.getElementById('admin-avatar')) document.getElementById('admin-avatar').innerText = fullName.charAt(0).toUpperCase();
     if (document.getElementById('mobile-avatar')) document.getElementById('mobile-avatar').innerText = fullName.charAt(0).toUpperCase();
+    return true;
   }
 
   // عرض الجدول وتعديل عرض السيارات لإضافة زر تعديل السيارة
@@ -663,7 +659,7 @@
 
   // الأحداث المربوطة بالصفحة
   document.addEventListener('DOMContentLoaded', () => {
-    checkAuth();
+    if (!checkAuth()) return;
     loadClientsData();
 
     // البحث

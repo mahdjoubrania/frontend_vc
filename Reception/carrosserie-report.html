@@ -43,6 +43,8 @@
         .info-card-title { font-size: 12px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; border-bottom: 1.5px solid #e2e8f0; padding-bottom: 4px; }
         
         .section-header { font-size: 13px; font-weight: 800; color: #0f172a; background: #e2e8f0 !important; padding: 6px 10px; border-left: 5px solid #dc2626 !important; border-radius: 0 6px 6px 0; margin: 12px 0 10px 0; }
+        .tech-byline { font-size: 9px; color: #94a3b8; font-weight: 600; margin: -7px 0 8px 2px; }
+        .tech-byline i { margin-left: 3px; }
 
         .custom-table { width: 100%; border-collapse: separate; border-spacing: 0; margin-bottom: 10px; border-radius: 6px; overflow: hidden; border: 1px solid #cbd5e1; }
         .custom-table th { background-color: #0f172a !important; color: #ffffff !important; font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 6px 4px; text-align: center; }
@@ -132,6 +134,9 @@
         <button class="btn btn-danger shadow fw-bold px-4 rounded-pill" onclick="window.print()">
             <i class="bi bi-printer-fill me-2"></i> Imprimer Rapport Complet (4 Pages)
         </button>
+        <a id="admin-edit-btn" href="#" class="btn btn-warning shadow fw-bold px-4 rounded-pill ms-2 d-none">
+            <i class="bi bi-pencil-square me-2"></i> Modifier
+        </a>
     </div>
 
     <!-- PAGE 1: PAGE DE GARDE - RAPPORT FINAL -->
@@ -159,7 +164,7 @@
                 <div class="col-6">
                     <div class="cover-info-row"><i class="bi bi-car-front"></i><div><small>Marque &amp; Modèle</small><b id="car-brand-model">--</b></div></div>
                     <div class="cover-info-row"><i class="bi bi-upc-scan"></i><div><small>VIN / Châssis</small><b id="car-vin" class="font-monospace">--</b></div></div>
-                    <div class="cover-info-row"><i class="bi bi-speedometer2"></i><div><small>Kilométrage affiché</small><b id="km-value">--</b> <span id="km-conformite-badge"></span></div></div>
+                    <div class="cover-info-row"><i class="bi bi-speedometer2"></i><div><small>Kilométrage affiché</small><b id="km-value">--</b> <span id="km-conformite-badge"></span><br><span class="tech-byline" id="kilometrage-tech-byline" style="margin:2px 0 0 0;"></span></div></div>
                 </div>
                 <div class="col-6">
                     <div class="cover-info-row"><i class="bi bi-calendar-event"></i><div><small>Date d'inspection</small><b id="rep-date">--</b></div></div>
@@ -170,10 +175,24 @@
             </div>
         </div>
 
+        <div class="cover-status-banner ok" id="cover-status-banner">
+            <div class="cover-status-icon"><i class="bi bi-check-lg" id="cover-status-icon-inner"></i></div>
+            <div>
+                <div class="cover-status-label">ÉTAT GÉNÉRAL DU VÉHICULE</div>
+                <div class="cover-status-value" id="cover-status-value">--</div>
+            </div>
+            <div class="cover-status-desc" id="cover-status-desc">--</div>
+        </div>
+
         <div class="cover-checks-title"><i class="bi bi-ui-checks-grid me-2"></i>Types de contrôles effectués</div>
         <div class="row g-2" id="cover-checks-grid"></div>
 
-        <div class="report-footer">Page 1 / 4 — SARL POLIWAXL — Oran, Algérie</div>
+        <div class="cover-notes-box">
+            <div class="cover-notes-title"><i class="bi bi-journal-text me-2"></i>Notes générales</div>
+            <p id="cover-notes-text">--</p>
+        </div>
+
+        <div class="report-footer">Page 1 / 4 — VERIFCAR SARL — Oran, Algérie</div>
     </div>
 
     <!-- PAGE 2: SCANNER DIAGNOSTIQUE + MOTEUR & NIVEAUX -->
@@ -188,6 +207,7 @@
         </div>
 
         <div class="section-header">2. SCANNER DIAGNOSTIQUE</div>
+        <div class="tech-byline" id="scanner-tech-byline"></div>
         <div class="info-card">
             <div class="row g-2" style="font-size: 11.5px;">
                 <div class="col-6"><strong>Statut Calculateur :</strong> <span id="scanner-calculateur-badge">--</span></div>
@@ -202,9 +222,10 @@
         </div>
 
         <div class="section-header">3. MOTEUR & NIVEAUX</div>
+        <div class="tech-byline" id="moteur-tech-byline"></div>
         <div class="info-card">
             <div class="row g-2" style="font-size: 11.5px;">
-                
+                <div class="col-6"><strong>Niveau d'Huile :</strong> <span id="moteur-huile" class="fw-bold">--</span></div>
                 <div class="col-6"><strong>Fumée d'Échappement :</strong> <span id="moteur-fumee" class="fw-bold">--</span></div>
                 <div class="col-4"><strong>Fuite Huile :</strong> <span id="moteur-fuite-huile-badge">--</span></div>
                 <div class="col-4"><strong>Fuite Liquide Refroid. :</strong> <span id="moteur-fuite-liquide-badge">--</span></div>
@@ -219,9 +240,11 @@
 
         
         <div class="section-header">4. OBSERVATIONS GÉNÉRALES & RAPPORT MÉCANIQUE</div>
+        <div class="tech-byline" id="general-tech-byline"></div>
         <div class="info-card">
             <div class="row g-2 mb-2" style="font-size: 11.5px;">
                 <div class="col-6"><strong>Nombre de clés :</strong> <span id="car-keys">--</span></div>
+                <div class="col-6"><strong>Équipements de secours :</strong> <span id="equip-secours">--</span></div>
                 <div class="col-12"><strong>Notes Kilométrage :</strong> <span id="km-notes" class="text-muted">--</span></div>
             </div>
             <div style="font-size: 11.5px;">
@@ -230,7 +253,7 @@
             </div>
         </div>
 
-        <div class="report-footer">Page 2 / 4 —  SARL POLIWAX — Oran, Algérie</div>
+        <div class="report-footer">Page 2 / 4 — VERIFCAR SARL — Oran, Algérie</div>
     </div>
 
     <!-- PAGE 3: SUSPENSION & TRAIN + STRUCTURE -->
@@ -245,6 +268,7 @@
         </div>
 
         <div class="section-header">5. SUSPENSION & TRAIN (PNEUS / JANTES)</div>
+        <div class="tech-byline" id="suspension-tech-byline"></div>
         <table class="custom-table text-center">
             <thead>
                 <tr>
@@ -269,6 +293,7 @@
         </div>
 
         <div class="section-header">6. CONTRÔLE STRUCTUREL / ACCIDENT</div>
+        <div class="tech-byline" id="tole-tech-byline"></div>
         <table class="custom-table">
             <thead>
                 <tr>
@@ -290,7 +315,7 @@
             <div id="ai-structure-summary" class="text-muted mt-1" style="font-size: 10.5px;"><span class="spinner-border spinner-border-sm me-1"></span> Analyse en cours...</div>
         </div>
 
-        <div class="report-footer">Page 3 / 4 — SARL POLIWAX — Oran, Algérie</div>
+        <div class="report-footer">Page 3 / 4 — VERIFCAR SARL — Oran, Algérie</div>
     </div>
 
     <!-- PAGE 4: SCHÉMA VISUEL + SIGNATURES -->
@@ -331,7 +356,7 @@
             </div>
         </div>
 
-        <div class="report-footer">Page 4 / 4 — SARL POLIWAX — Oran, Algérie</div>
+        <div class="report-footer">Page 4 / 4 — VERIFCAR SARL — Oran, Algérie</div>
     </div>
 
     <script src="report-loader.js"></script>

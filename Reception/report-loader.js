@@ -38,14 +38,19 @@ document.addEventListener("DOMContentLoaded", async () => {
             'Content-Type': 'application/json'
         };
 
+        // نسجّل رمز حالة كل محاولة ليظهر سبب الفشل بدل رسالة عامة
+        const attempts = [];
         let response = await fetch(`${API_URL}/inspection/tole-report/${id}`, { headers });
+        attempts.push(['tole-report', response.status]);
 
         if (!response.ok) {
             response = await fetch(`${API_URL}/inspection/tole/${id}`, { headers });
+            attempts.push(['tole', response.status]);
         }
         
         if (!response.ok) {
             response = await fetch(`${API_URL}/inspection/details/${id}`, { headers });
+            attempts.push(['details', response.status]);
         }
 
         const result = await response.json();
@@ -54,8 +59,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (data && (data.id || data.inspection_id || data.client_name || data.brand || data.model)) {
             renderFullReport(data);
         } else {
-            console.error("Data structure mismatched:", data);
-            alert("Rapport introuvable ou données incomplètes.");
+            console.error("Data structure mismatched:", data, attempts);
+            const detail = attempts.map(([name, status]) => `${name}: ${status}`).join(' · ');
+            const expired = attempts.some(([, status]) => status === 401);
+            alert(
+                (expired
+                    ? "Session expirée : veuillez vous reconnecter."
+                    : "Rapport introuvable ou données incomplètes.") +
+                `\n\nDétail technique : ${detail}`
+            );
         }
         
     } catch (err) {
@@ -104,8 +116,31 @@ function renderCarImagesGallery(data) {
     }).join('');
 }
 
+// ===== زر "Modifier" للأدمن فقط =====
+// تلميح واجهة فقط: يُعرض الزر لو التوكن الحالي لأدمن صالح. الصلاحية الفعلية تُفرض بالسيرفر.
+// نقرأ التوكن مباشرة (آخر تسجيل دخول) لأن مفاتيح الجلسات القديمة قد تحمل توكن مستخدم سابق.
+function isAdminSession() {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) return false;
+        const b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+        const payload = JSON.parse(atob(b64));
+        return payload.role === 'ADMIN' && (!payload.exp || payload.exp * 1000 > Date.now());
+    } catch (e) {
+        return false;
+    }
+}
+
+function setupAdminEditButton(inspectionId) {
+    const btn = document.getElementById('admin-edit-btn');
+    if (!btn || !inspectionId || !isAdminSession()) return;
+    btn.href = `../Admin/report-edit.html?id=${encodeURIComponent(inspectionId)}`;
+    btn.classList.remove('d-none');
+}
+
 // 4. عرض بيانات التقرير بالكامل
 function renderFullReport(data) {
+    setupAdminEditButton(data.id);
     // 0. معرض الصور الخمسة المرسومة (Tôle & Carrosserie) — الصفحة الأخيرة
     renderCarImagesGallery(data);
 
@@ -127,6 +162,12 @@ function renderFullReport(data) {
             : `<span class="status-badge ok"><i class="bi bi-check-circle-fill"></i> ${noLabel}</span>`;
     };
 
+    const setTechByline = (id, name) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.innerHTML = name ? `<i class="bi bi-person-check-fill"></i> Effectué par : ${name}` : '';
+    };
+
     // ===== PAGE 1: Page de garde =====
     const reportId = data.inspection_id || data.id || '--';
     setText('rep-code', `REF: REP-2026-${reportId}`);
@@ -141,7 +182,7 @@ function renderFullReport(data) {
     setText('car-vin', data.vin_number, 'Non renseigné');
     setText('km-value', data.kilometrage_affiche ? `${Number(data.kilometrage_affiche).toLocaleString()} KM` : null, 'Non contrôlé');
 
-    const kmConformiteMap = { REAL: ['ok', 'Réel'], SUSPECT: ['defect', 'Non Réel'], UNCERTAIN: ['defect', 'Incertain'] };
+    const kmConformiteMap = { REAL: ['ok', 'Réel'], SUSPECT: ['defect', 'Falsifié'], UNCERTAIN: ['defect', 'Incertain'] };
     const kmConfBadgeVal = (data.km_conformite || 'UNCERTAIN').toUpperCase();
     const kmBadgeInfo = kmConformiteMap[kmConfBadgeVal] || kmConformiteMap.UNCERTAIN;
     const kmBadgeEl = document.getElementById('km-conformite-badge');
@@ -220,6 +261,7 @@ function renderFullReport(data) {
     setText('scanner-voyants', data.voyants_allumes, 'Aucun');
     setText('scanner-dtc', data.dtc_codes, 'Aucun code détecté');
     setText('scanner-notes', data.scanner_notes, 'Aucune remarque');
+    setTechByline('scanner-tech-byline', data.scanner_technician_name);
 
     setText('moteur-huile', data.niveau_huile, 'Non contrôlé');
     setText('moteur-fumee', data.fumee_echappement, 'Aucune');
@@ -230,6 +272,7 @@ function renderFullReport(data) {
     const bruitEl = document.getElementById('moteur-bruit-badge');
     if (bruitEl) bruitEl.innerHTML = boolBadge(!!data.bruit_moteur);
     setText('moteur-notes', data.moteur_notes, 'Aucune remarque');
+    setTechByline('moteur-tech-byline', data.moteur_technician_name);
 
     // ===== PAGE 3: Suspension & Structure =====
     const tiresBody = document.getElementById('suspension-tires-body');
@@ -263,6 +306,7 @@ function renderFullReport(data) {
     const suspChocEl = document.getElementById('susp-choc-badge');
     if (suspChocEl) suspChocEl.innerHTML = boolBadge(!!data.traces_choc);
     setText('susp-notes', data.suspension_notes, 'Aucune remarque');
+    setTechByline('suspension-tech-byline', data.suspension_technician_name);
 
     const structBody = document.getElementById('struct-defects-body');
     if (structBody) {
@@ -285,9 +329,12 @@ function renderFullReport(data) {
     }
     setText('struct-conclusion', data.conclusion_structure, 'Aucun accident détecté');
     setText('struct-notes', data.tole_notes, 'Aucune remarque');
+    setTechByline('tole-tech-byline', data.tole_technician_name);
 
     // ===== PAGE 2: Observations Générales (rapport mécanique) =====
     setText('rapport-mecanique-text', data.rapport_mecanique, 'Aucune observation mécanique enregistrée.');
+    setTechByline('general-tech-byline', data.general_technician_name);
+    setTechByline('kilometrage-tech-byline', data.kilometrage_technician_name);
 
     // استدعاء تلخيص الذكاء الاصطناعي (يحدّث الملخصات بصفحة 2 و3)
     // نرسل نسخة خفيفة بدون elements_ext_json (يحتوي 5 صور base64 ضخمة غير مستخدمة بالـ prompt)

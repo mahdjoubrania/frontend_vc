@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VerifCar - Modifier un rapport</title>
+  <link href="../img/IMG_7697.png" rel="icon">
+  <link href="../img/IMG_7697.png" rel="apple-touch-icon">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .section-card .card-header { background: #fff; border-bottom: 1px solid #eef2f7; padding: 14px 20px; }
+    .section-card .section-icon { width: 36px; height: 36px; border-radius: 10px; background: #eff6ff; color: #2563eb; display: inline-flex; align-items: center; justify-content: center; }
+    .tech-badge { font-size: 0.74rem; font-weight: 600; border-radius: 999px; padding: 4px 10px; background: #f1f5f9; color: #475569; }
+    .tech-badge.missing { background: #fef3c7; color: #92400e; }
+    .field label { font-size: 0.78rem; font-weight: 600; color: #64748b; margin-bottom: 4px; }
+    .field.is-changed .form-control, .field.is-changed .form-select { border-color: #f59e0b; background-color: #fffbeb; }
+    .field.is-changed > label::after { content: ' • modifié'; color: #d97706; font-size: 0.7rem; font-weight: 700; }
+    .field .form-check-label { font-weight: 600; color: #334155; font-size: 0.88rem; }
+    .row-label { font-size: 0.85rem; font-weight: 700; color: #0f172a; align-self: center; }
+    .group-row { padding: 10px 0; border-bottom: 1px dashed #eef2f7; }
+    .group-row:last-child { border-bottom: 0; }
+    .save-bar { position: sticky; bottom: 14px; z-index: 30; background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12); padding: 12px 18px; }
+    .history-entry { border: 1px solid #eef2f7; border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
+    .history-entry ul { margin: 6px 0 0; padding-left: 18px; font-size: 0.84rem; }
+    .val-old { color: #b91c1c; text-decoration: line-through; }
+    .val-new { color: #166534; font-weight: 700; }
+    .review-table td, .review-table th { font-size: 0.85rem; vertical-align: top; }
+  </style>
+</head>
+<body class="bg-light">
+
+  <div id="dashboard-section" class="d-flex">
+
+    <!-- Sidebar -->
+    <aside class="sidebar p-3 d-flex flex-column justify-content-between">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-4 px-2">
+          <img src="../img/IMG_7697.png" alt="VérifCar Logo" style="max-height: 45px; object-fit: contain;">
+          <div><h6 class="fw-bold mb-0 text-dark">VerifCar</h6><small class="text-muted fs-12">v1.0 - Admin</small></div>
+        </div>
+        <button class="btn-close d-lg-none" id="sidebar-close-btn"></button>
+
+        <div class="menu-label">WORKSPACE</div>
+        <ul class="nav nav-pills flex-column mb-3">
+          <li class="nav-item"><a href="index.html" class="nav-link text-secondary"><i class="bi bi-grid-1x2 me-2"></i> Tableau de bord</a></li>
+          <li class="nav-item"><a href="rdv-analytics.html" class="nav-link text-secondary"><i class="bi bi-bar-chart-line me-2"></i> Statistiques RDV</a></li>
+          <li class="nav-item"><a href="calendar.html" class="nav-link text-secondary"><i class="bi bi-calendar-week me-2"></i> Planning & RDV</a></li>
+        </ul>
+
+        <div class="menu-label">GESTION</div>
+        <ul class="nav nav-pills flex-column">
+          <li class="nav-item"><a href="clients.html" class="nav-link text-secondary"><i class="bi bi-car-front me-2"></i> Clients & Véhicules</a></li>
+          <li class="nav-item"><a href="reports.html" class="nav-link active"><i class="bi bi-file-earmark-bar-graph me-2"></i> Rapports D'Inspection</a></li>
+          <li class="nav-item"><a href="users.html" class="nav-link text-secondary"><i class="bi bi-people me-2"></i> Utilisateurs Système</a></li>
+        </ul>
+      </div>
+
+      <div class="user-profile p-2 rounded d-flex align-items-center justify-content-between border-top pt-3">
+        <div class="d-flex align-items-center gap-2">
+          <div class="avatar bg-primary text-white rounded-circle" id="admin-avatar">--</div>
+          <div>
+            <h6 class="mb-0 fw-bold fs-14" id="admin-name">Chargement...</h6>
+            <small class="text-muted fs-12">Administrateur</small>
+          </div>
+        </div>
+        <button id="logout-btn" class="btn btn-link text-danger p-0 fs-5" title="Déconnexion"><i class="bi bi-box-arrow-right"></i></button>
+      </div>
+    </aside>
+
+    <main class="main-content flex-grow-1 p-4">
+      <header class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center gap-2">
+          <button class="btn btn-white border shadow-sm btn-sm d-lg-none" id="mobile-sidebar-toggle" type="button"><i class="bi bi-list fs-5"></i></button>
+          <div class="text-muted fs-14">Workspace > <a href="reports.html" class="text-muted text-decoration-none">Rapports</a> > <span class="fw-bold text-dark">Modifier</span></div>
+        </div>
+      </header>
+
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+        <div>
+          <h2 class="fw-bold text-dark mb-1" id="page-title">Modifier le rapport</h2>
+          <p class="text-muted mb-0">Corrigez les données du rapport. Chaque modification est enregistrée dans l'historique.</p>
+        </div>
+        <div class="d-flex gap-2">
+          <a href="reports.html" class="btn btn-light border rounded-3 fw-semibold btn-sm px-3"><i class="bi bi-arrow-left me-1"></i> Retour</a>
+          <a id="view-report-btn" href="#" target="_blank" rel="noopener" class="btn btn-outline-primary rounded-3 fw-semibold btn-sm px-3 d-none"><i class="bi bi-printer me-1"></i> Voir le rapport</a>
+        </div>
+      </div>
+
+      <div id="page-alert"></div>
+
+      <div id="loading-box" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Chargement...</span></div>
+      </div>
+
+      <div id="editor" class="d-none">
+        <!-- ملخص التقرير -->
+        <div class="card border-0 shadow-sm rounded-4 p-3 mb-4">
+          <div class="row g-3 align-items-center">
+            <div class="col-md-3"><small class="text-muted d-block">Rapport</small><strong id="sum-ref" class="text-primary">--</strong> <span id="sum-status" class="badge ms-1">--</span></div>
+            <div class="col-md-3"><small class="text-muted d-block">Client</small><strong id="sum-client">--</strong><div class="small text-muted" id="sum-phone"></div></div>
+            <div class="col-md-4"><small class="text-muted d-block">Véhicule</small><strong id="sum-vehicle">--</strong><div class="small text-muted font-monospace" id="sum-vin"></div></div>
+            <div class="col-md-2"><small class="text-muted d-block">Date</small><strong id="sum-date">--</strong></div>
+          </div>
+        </div>
+
+        <div id="sections"></div>
+
+        <!-- سجل التعديلات -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+          <div class="card-header bg-white border-0 pt-3 pb-0 px-4 d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold text-dark mb-0"><i class="bi bi-clock-history me-2 text-primary"></i>Historique des modifications</h5>
+          </div>
+          <div class="card-body px-4" id="history-list"><div class="text-muted small">Chargement...</div></div>
+        </div>
+
+        <!-- شريط الحفظ -->
+        <div class="save-bar d-flex flex-wrap justify-content-between align-items-center gap-2" id="save-bar">
+          <div class="small"><i class="bi bi-pencil-square me-1 text-muted"></i><span id="dirty-text" class="text-muted">Aucune modification</span></div>
+          <div class="d-flex gap-2">
+            <button type="button" id="reset-btn" class="btn btn-light border rounded-3 fw-semibold btn-sm px-3" disabled>Annuler les modifications</button>
+            <button type="button" id="save-btn" class="btn btn-primary rounded-3 fw-semibold btn-sm px-4" disabled><i class="bi bi-check2-circle me-1"></i> Enregistrer</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- نافذة مراجعة التغييرات قبل الحفظ -->
+  <div class="modal fade" id="reviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold"><i class="bi bi-eye me-2 text-primary"></i>Vérifier avant d'enregistrer</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted small mb-3">Ces modifications modifieront le rapport imprimé et seront consignées dans l'historique (auteur, date, anciennes et nouvelles valeurs). Le résumé IA sera régénéré.</p>
+          <div class="table-responsive">
+            <table class="table table-sm review-table align-middle">
+              <thead><tr><th>Section</th><th>Champ</th><th>Avant</th><th>Après</th></tr></thead>
+              <tbody id="review-body"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Continuer l'édition</button>
+          <button type="button" id="confirm-save-btn" class="btn btn-primary rounded-3 px-4"><i class="bi bi-check2-circle me-1"></i> Confirmer et enregistrer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="auth-guard.js"></script>
+
+<script>
+const API_URL = 'https://romantic-enjoyment-production-f458.up.railway.app/api';
+
+/* ========================= تعريف الأقسام (يطابق قائمة الباك‌إند البيضاء) ========================= */
+const STATUS_OPTS = [['Conforme', 'Conforme'], ['Défaut', 'Défaut']];
+const TIRE_LABELS = { avg: 'Avant gauche (AVG)', avd: 'Avant droit (AVD)', arg: 'Arrière gauche (ARG)', ard: 'Arrière droit (ARD)' };
+const STRUCT_LABELS = { longerons: 'Longerons', traverses: 'Traverses', passage_roues: 'Passage de roues', fond_coffre: 'Fond coffre', chassis: 'Châssis', optique: 'Optique', vitre: 'Vitre' };
+
+const SECTIONS = [
+  { key: 'scanner', title: 'Scanner Diagnostique', icon: 'bi-cpu-fill', rows: [
+    { fields: [
+      { name: 'calculateur_status', label: 'Statut du calculateur', type: 'select', col: 'col-md-6', options: [['OK', 'OK — Aucune erreur majeure'], ['DEFAUT', 'DÉFAUT — Anomalie détectée']] },
+      { name: 'voyants_allumes', label: 'Voyants allumés', type: 'text', col: 'col-md-6' } ] },
+    { fields: [{ name: 'dtc_codes', label: "Codes d'erreurs DTC", type: 'textarea', rows: 2, col: 'col-12' }] },
+    { fields: [{ name: 'notes', label: 'Notes', type: 'textarea', rows: 2, col: 'col-12' }] }
+  ]},
+  { key: 'moteur', title: 'Moteur & Niveaux', icon: 'bi-gear-fill', rows: [
+    { fields: [
+      { name: 'niveau_huile', label: "Niveau d'huile", type: 'select', col: 'col-md-6', options: [['OK', 'OK'], ['BAS', 'BAS'], ['ANORMAL', 'ANORMAL']] },
+      { name: 'fumee_echappement', label: "Fumée d'échappement", type: 'select', col: 'col-md-6', options: [['AUCUNE', 'AUCUNE'], ['BLANCHE', 'BLANCHE'], ['NOIRE', 'NOIRE'], ['BLEUE', 'BLEUE']] } ] },
+    { fields: [
+      { name: 'fuite_huile', label: "Fuite d'huile", type: 'bool', col: 'col-md-4' },
+      { name: 'fuite_liquide_refroidissement', label: 'Fuite de liquide de refroidissement', type: 'bool', col: 'col-md-4' },
+      { name: 'bruit_moteur', label: 'Bruit anormal du moteur', type: 'bool', col: 'col-md-4' } ] },
+    { fields: [{ name: 'notes', label: 'Notes', type: 'textarea', rows: 2, col: 'col-12' }] }
+  ]},
+  { key: 'suspension', title: 'Suspension & Train', icon: 'bi-truck-front-fill', rows: [
+    ...Object.keys(TIRE_LABELS).map(p => ({ label: TIRE_LABELS[p], fields: [
+      { name: `usure_pneu_${p}`, label: 'État du pneu', type: 'select', col: 'col-6 col-md-2', options: STATUS_OPTS },
+      { name: `obs_pneu_${p}`, label: 'Observation pneu', type: 'text', col: 'col-6 col-md-3' },
+      { name: `jante_${p}`, label: 'État de la jante', type: 'select', col: 'col-6 col-md-2', options: STATUS_OPTS },
+      { name: `jante_${p}_obs`, label: 'Observation jante', type: 'text', col: 'col-6 col-md-3' } ] })),
+    { fields: [
+      { name: 'corrosion_soubassement', label: 'Corrosion du soubassement', type: 'bool', col: 'col-md-6' },
+      { name: 'traces_choc', label: 'Traces de choc sous le véhicule', type: 'bool', col: 'col-md-6' } ] },
+    { fields: [{ name: 'notes', label: 'Notes', type: 'textarea', rows: 2, col: 'col-12' }] }
+  ]},
+  { key: 'tole', title: 'Tôle & Carrosserie (structure)', icon: 'bi-palette-fill',
+    hint: 'Les annotations dessinées sur les photos ne sont pas modifiables ici et restent inchangées.', rows: [
+    ...Object.keys(STRUCT_LABELS).map(k => ({ label: STRUCT_LABELS[k], fields: [
+      { name: `${k}_status`, label: 'Conformité', type: 'select', col: 'col-5 col-md-3', options: STATUS_OPTS },
+      { name: `${k}_obs`, label: 'Observation', type: 'text', col: 'col-7 col-md-7' } ] })),
+    { fields: [{ name: 'conclusion_structure', label: 'Conclusion structure', type: 'select', col: 'col-12', options: [
+      ['Aucun accident détecté', 'Aucun accident détecté'], ['Accident léger', 'Accident léger'], ['Accident réparé', 'Accident réparé'], ['Véhicule accidenté structurellement', 'Véhicule accidenté structurellement']] }] },
+    { fields: [{ name: 'notes', label: 'Notes complémentaires', type: 'textarea', rows: 3, col: 'col-12' }] }
+  ]},
+  { key: 'kilometrage', title: 'Kilométrage & Conformité', icon: 'bi-speedometer2', rows: [
+    { fields: [
+      { name: 'kilometrage_affiche', label: 'Kilométrage affiché (km)', type: 'number', col: 'col-md-6', min: 0, max: 9999999, required: true },
+      { name: 'conformite', label: 'Conformité du kilométrage', type: 'select', col: 'col-md-6', options: [['REAL', 'Réel'], ['SUSPECT', 'Non réel (suspect)'], ['UNCERTAIN', 'Incertain']] } ] },
+    { fields: [{ name: 'notes', label: 'Notes', type: 'textarea', rows: 2, col: 'col-12' }] }
+  ]},
+  { key: 'general', title: 'Observations Générales', icon: 'bi-clipboard2-check-fill', rows: [
+    { fields: [
+      { name: 'nombre_cles', label: 'Nombre de clés', type: 'number', col: 'col-md-4', min: 0, max: 20 },
+      { name: 'equipements_secour', label: 'Équipements de secours', type: 'text', col: 'col-md-8' } ] },
+    { fields: [{ name: 'rapport_mecanique', label: 'Rapport mécanique général', type: 'textarea', rows: 5, col: 'col-12' }] }
+  ]}
+];
+
+// فهرس سريع: section -> field -> تعريف الحقل (للمراجعة والسجل)
+const FIELD_META = {};
+SECTIONS.forEach(s => {
+  FIELD_META[s.key] = { _title: s.title };
+  s.rows.forEach(r => r.fields.forEach(f => {
+    const rowLabel = r.label ? `${r.label} — ` : '';
+    FIELD_META[s.key][f.name] = { ...f, fullLabel: rowLabel + f.label };
+  }));
+});
+
+/* ========================= حالة الصفحة ========================= */
+const state = { id: null, data: null, inputs: [], saving: false };
+
+/* ========================= أدوات ========================= */
+const $ = (id) => document.getElementById(id);
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
+
+function getAuthToken() {
+  const direct = localStorage.getItem('token');
+  if (direct) return direct;
+  try { return JSON.parse(localStorage.getItem('verifcar_admin_user') || 'null')?.token || ''; } catch (e) { return ''; }
+}
+async function api(path, options = {}) {
+  const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getAuthToken()}` };
+  const res = await fetch(`${API_URL}${path}`, { ...options, headers });
+  let body = null;
+  try { body = await res.json(); } catch (e) { /* ignore */ }
+  return { res, body };
+}
+
+function fmtDate(s, withTime = false) {
+  const m = String(s || '').match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/);
+  if (!m) return '--';
+  return `${m[3]}/${m[2]}/${m[1]}` + (withTime && m[4] ? ` ${m[4]}:${m[5]}` : '');
+}
+
+function showAlert(type, message, details = []) {
+  const box = $('page-alert');
+  box.textContent = '';
+  const a = el('div', `alert alert-${type} alert-dismissible fade show`);
+  a.setAttribute('role', 'alert');
+  a.appendChild(el('div', 'fw-semibold', message));
+  if (details.length) { const ul = el('ul', 'mb-0 mt-1 small'); details.forEach(d => ul.appendChild(el('li', '', d))); a.appendChild(ul); }
+  const close = el('button', 'btn-close'); close.type = 'button'; close.setAttribute('data-bs-dismiss', 'alert'); close.setAttribute('aria-label', 'Fermer');
+  a.appendChild(close);
+  box.appendChild(a);
+  a.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+function clearAlert() { $('page-alert').textContent = ''; }
+
+/* ========================= قراءة قيمة الحقل ========================= */
+// قيمة نصية مقارَنة بالقيمة الأصلية لتحديد التغيير
+function readValue(input) {
+  if (input.dataset.type === 'bool') return input.checked ? '1' : '0';
+  const v = input.value;
+  return (input.dataset.type === 'text' || input.dataset.type === 'textarea') ? v.trim() : v;
+}
+const isDirty = (input) => readValue(input) !== input.dataset.initial;
+const dirtyInputs = () => state.inputs.filter(isDirty);
+
+// القيمة المرسلة للباك‌إند بنوعها الصحيح
+function typedValue(input) {
+  const t = input.dataset.type;
+  if (t === 'bool') return input.checked;
+  if (t === 'number') return input.value.trim() === '' ? '' : Number(input.value);
+  return input.value.trim();
+}
+
+function displayValue(input, raw) {
+  const t = input.dataset.type;
+  if (t === 'bool') return raw === '1' ? 'Oui' : 'Non';
+  if (t === 'select') { const opt = [...input.options].find(o => o.value === raw); return opt ? opt.textContent : raw; }
+  return raw === '' ? '—' : raw;
+}
+
+/* ========================= بناء النموذج ========================= */
+function buildControl(sectionKey, def, value) {
+  const wrap = el('div', `${def.col || 'col-12'} field`);
+  const id = `f-${sectionKey}-${def.name}`;
+  let input;
+
+  if (def.type === 'bool') {
+    const sw = el('div', 'form-check form-switch mt-1');
+    input = el('input', 'form-check-input'); input.type = 'checkbox'; input.setAttribute('role', 'switch');
+    input.checked = Number(value) === 1;
+    const lab = el('label', 'form-check-label', def.label); lab.htmlFor = id;
+    sw.appendChild(input); sw.appendChild(lab); wrap.appendChild(sw);
+  } else {
+    const lab = el('label', '', def.label); lab.htmlFor = id; wrap.appendChild(lab);
+    if (def.type === 'select') {
+      input = el('select', 'form-select form-select-sm');
+      def.options.forEach(([v, text]) => { const o = el('option', '', text); o.value = v; input.appendChild(o); });
+      // قيمة قديمة غير موجودة بالقائمة: نحافظ عليها ولا نغيّرها بصمت
+      if (value !== null && value !== undefined && value !== '' && ![...input.options].some(o => o.value === String(value))) {
+        const o = el('option', '', `${value} (valeur actuelle)`); o.value = String(value); input.insertBefore(o, input.firstChild);
+      }
+      if (value !== null && value !== undefined && value !== '') input.value = String(value);
+    } else if (def.type === 'textarea') {
+      input = el('textarea', 'form-control form-control-sm'); input.rows = def.rows || 2; input.maxLength = 20000;
+      input.value = value ?? '';
+    } else if (def.type === 'number') {
+      input = el('input', 'form-control form-control-sm'); input.type = 'number'; input.step = '1'; input.min = def.min; input.max = def.max; input.inputMode = 'numeric';
+      input.value = value ?? '';
+    } else {
+      input = el('input', 'form-control form-control-sm'); input.type = 'text'; input.maxLength = 255;
+      input.value = value ?? '';
+    }
+    wrap.appendChild(input);
+    if (def.type === 'number') wrap.appendChild(el('div', 'invalid-feedback'));
+  }
+
+  input.id = id;
+  input.dataset.section = sectionKey;
+  input.dataset.field = def.name;
+  input.dataset.type = def.type;
+  input.dataset.initial = readValue(input);     // مرجع المقارنة بعد ضبط القيمة الفعلية
+
+  const onChange = () => { wrap.classList.toggle('is-changed', isDirty(input)); input.classList.remove('is-invalid'); updateSaveBar(); };
+  input.addEventListener('input', onChange);
+  input.addEventListener('change', onChange);
+
+  state.inputs.push(input);
+  return wrap;
+}
+
+function renderSections() {
+  state.inputs = [];
+  const container = $('sections');
+  container.textContent = '';
+  const data = state.data;
+
+  SECTIONS.forEach(sec => {
+    const info = data.sections[sec.key] || { exists: false, values: null };
+    const card = el('div', 'card section-card border-0 shadow-sm rounded-4 mb-4');
+    card.id = `sec-${sec.key}`;
+
+    const head = el('div', 'card-header d-flex flex-wrap justify-content-between align-items-center gap-2 rounded-top-4');
+    const title = el('div', 'd-flex align-items-center gap-2');
+    const icon = el('span', 'section-icon'); icon.appendChild(el('i', `bi ${sec.icon}`));
+    title.appendChild(icon); title.appendChild(el('h6', 'fw-bold mb-0 text-dark', sec.title));
+    head.appendChild(title);
+    const badge = el('span', info.exists ? 'tech-badge' : 'tech-badge missing',
+      info.exists ? (info.technicianName ? `Effectué par : ${info.technicianName}` : 'Technicien non renseigné') : 'Section non renseignée');
+    head.appendChild(badge);
+    card.appendChild(head);
+
+    const body = el('div', 'card-body px-4 py-3');
+    if (!info.exists) body.appendChild(el('div', 'alert alert-warning py-2 small', "Cette section n'a pas été remplie par le technicien. L'enregistrer la créera (sans nom de technicien)."));
+    if (sec.hint) body.appendChild(el('div', 'small text-muted mb-2', sec.hint));
+
+    sec.rows.forEach(r => {
+      const row = el('div', 'row g-2 group-row');
+      if (r.label) row.appendChild(el('div', 'col-12 col-md-2 row-label', r.label));
+      r.fields.forEach(def => row.appendChild(buildControl(sec.key, def, info.values ? info.values[def.name] : null)));
+      body.appendChild(row);
+    });
+    card.appendChild(body);
+    container.appendChild(card);
+  });
+  updateSaveBar();
+}
+
+function renderHeader() {
+  const h = state.data.header;
+  $('page-title').textContent = `Modifier le rapport #REP-${h.id}`;
+  $('sum-ref').textContent = `#REP-${h.id}`;
+  const st = $('sum-status');
+  st.textContent = h.status === 'COMPLETED' ? 'Terminé' : 'En cours';
+  st.className = `badge ms-1 ${h.status === 'COMPLETED' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning'}`;
+  $('sum-client').textContent = h.client_name || 'Non spécifié';
+  $('sum-phone').textContent = h.client_phone || '';
+  $('sum-vehicle').textContent = [h.brand, h.model].filter(Boolean).join(' ') || 'Non spécifié';
+  $('sum-vin').textContent = [h.plate, h.vin_number].filter(Boolean).join(' · ');
+  $('sum-date').textContent = fmtDate(h.created_at);
+  const view = $('view-report-btn');
+  view.href = `carrosserie-report.html?id=${encodeURIComponent(h.id)}`;
+  view.classList.remove('d-none');
+}
+
+/* ========================= شريط الحفظ ========================= */
+function updateSaveBar() {
+  const n = dirtyInputs().length;
+  $('dirty-text').textContent = n === 0 ? 'Aucune modification' : `${n} modification${n > 1 ? 's' : ''} non enregistrée${n > 1 ? 's' : ''}`;
+  $('dirty-text').className = n === 0 ? 'text-muted' : 'fw-semibold text-warning';
+  $('save-btn').disabled = n === 0 || state.saving;
+  $('reset-btn').disabled = n === 0 || state.saving;
+}
+
+/* ========================= التحقق قبل الإرسال ========================= */
+function validateDirty(inputs) {
+  let ok = true;
+  inputs.filter(i => i.dataset.type === 'number').forEach(input => {
+    const def = FIELD_META[input.dataset.section][input.dataset.field];
+    const v = input.value.trim();
+    let msg = '';
+    if (v === '' ) msg = 'Ce champ est obligatoire.';
+    else if (!/^\d+$/.test(v)) msg = 'Entrez un nombre entier positif.';
+    else if (Number(v) < def.min || Number(v) > def.max) msg = `Valeur comprise entre ${def.min} et ${def.max}.`;
+    input.classList.toggle('is-invalid', !!msg);
+    const fb = input.parentElement.querySelector('.invalid-feedback'); if (fb) fb.textContent = msg;
+    if (msg) ok = false;
+  });
+  if (!ok) { showAlert('danger', 'Corrigez les champs en rouge avant de continuer.'); document.querySelector('.is-invalid')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+  return ok;
+}
+
+function buildPayload(inputs) {
+  const sections = {};
+  inputs.forEach(i => { (sections[i.dataset.section] ||= {})[i.dataset.field] = typedValue(i); });
+  return { sections };
+}
+
+/* ========================= المراجعة ثم الحفظ ========================= */
+function openReview() {
+  clearAlert();
+  const inputs = dirtyInputs();
+  if (inputs.length === 0 || !validateDirty(inputs)) return;
+
+  const tbody = $('review-body');
+  tbody.textContent = '';
+  inputs.forEach(input => {
+    const meta = FIELD_META[input.dataset.section];
+    const tr = el('tr');
+    tr.appendChild(el('td', 'text-muted', meta._title));
+    tr.appendChild(el('td', 'fw-semibold', meta[input.dataset.field].fullLabel));
+    const before = el('td', 'val-old', displayValue(input, input.dataset.initial));
+    const after = el('td', 'val-new', displayValue(input, readValue(input)));
+    [before, after].forEach(td => td.style.maxWidth = '240px');
+    tr.appendChild(before); tr.appendChild(after);
+    tbody.appendChild(tr);
+  });
+  bootstrap.Modal.getOrCreateInstance($('reviewModal')).show();
+}
+
+async function doSave() {
+  const inputs = dirtyInputs();
+  if (inputs.length === 0 || state.saving) return;
+
+  state.saving = true; updateSaveBar();
+  const confirmBtn = $('confirm-save-btn');
+  confirmBtn.disabled = true;
+  const original = confirmBtn.innerHTML;
+  confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Enregistrement...';
+
+  try {
+    const { res, body } = await api(`/inspection/admin/${state.id}`, { method: 'PUT', body: JSON.stringify(buildPayload(inputs)) });
+    bootstrap.Modal.getOrCreateInstance($('reviewModal')).hide();
+
+    if (res.ok && body && body.success) {
+      showAlert(body.changed ? 'success' : 'info', body.changed ? 'Modifications enregistrées. Le résumé IA sera régénéré à la prochaine ouverture du rapport.' : (body.message || 'Aucune modification détectée.'));
+      state.saving = false;
+      await loadReport({ keepAlert: true });
+      await loadHistory();
+    } else if (res.status === 400) {
+      showAlert('danger', (body && body.error) || 'Données invalides.', (body && body.details) || []);
+    } else if (res.status === 401 || res.status === 403) {
+      showAlert('danger', 'Session expirée ou accès refusé. Veuillez vous reconnecter en tant qu\'administrateur.');
+    } else if (res.status === 404) {
+      showAlert('danger', 'Rapport introuvable.');
+    } else {
+      showAlert('danger', (body && body.error) || `Erreur serveur (${res.status}).`);
+    }
+  } catch (err) {
+    console.error(err);
+    bootstrap.Modal.getOrCreateInstance($('reviewModal')).hide();
+    showAlert('danger', 'Impossible de contacter le serveur. Vos modifications sont conservées, réessayez.');
+  } finally {
+    state.saving = false;
+    confirmBtn.disabled = false; confirmBtn.innerHTML = original;
+    updateSaveBar();
+  }
+}
+
+/* ========================= السجل ========================= */
+function fmtHistoryValue(section, field, v) {
+  if (v === null || v === undefined || v === '') return '—';
+  const meta = FIELD_META[section] && FIELD_META[section][field];
+  if (meta && meta.type === 'bool') return Number(v) === 1 ? 'Oui' : 'Non';
+  if (meta && meta.type === 'select') { const o = (meta.options || []).find(x => x[0] === v); if (o) return o[1]; }
+  const s = String(v);
+  return s.length > 140 ? s.slice(0, 140) + '…' : s;
+}
+
+function renderHistory(entries, notice) {
+  const box = $('history-list');
+  box.textContent = '';
+  if (notice === 'history_table_missing') {
+    box.appendChild(el('div', 'alert alert-warning small mb-0', "Le journal des modifications n'est pas encore installé : exécutez le script SQL « phase_report_edit_log.sql » avant de modifier un rapport."));
+    return;
+  }
+  if (!entries.length) { box.appendChild(el('div', 'text-muted small', 'Aucune modification enregistrée pour ce rapport.')); return; }
+
+  entries.forEach(e => {
+    const card = el('div', 'history-entry');
+    const top = el('div', 'd-flex justify-content-between flex-wrap gap-1');
+    top.appendChild(el('strong', '', e.adminName || 'Administrateur'));
+    top.appendChild(el('small', 'text-muted', fmtDate(e.editedAt, true)));
+    card.appendChild(top);
+
+    const ul = el('ul');
+    const changes = e.changes || {};
+    if (Array.isArray(changes._created) && changes._created.length) {
+      ul.appendChild(el('li', 'fst-italic text-muted', 'Section créée : ' + changes._created.map(k => (FIELD_META[k] && FIELD_META[k]._title) || k).join(', ')));
+    }
+    Object.keys(changes).filter(k => k !== '_created').forEach(section => {
+      Object.entries(changes[section]).forEach(([field, pair]) => {
+        const meta = FIELD_META[section] && FIELD_META[section][field];
+        const li = el('li');
+        li.appendChild(el('span', 'text-muted', `${(FIELD_META[section] && FIELD_META[section]._title) || section} › ${meta ? meta.fullLabel : field} : `));
+        li.appendChild(el('span', 'val-old', fmtHistoryValue(section, field, pair[0])));
+        li.appendChild(document.createTextNode(' → '));
+        li.appendChild(el('span', 'val-new', fmtHistoryValue(section, field, pair[1])));
+        ul.appendChild(li);
+      });
+    });
+    card.appendChild(ul);
+    box.appendChild(card);
+  });
+}
+
+async function loadHistory() {
+  try {
+    const { res, body } = await api(`/inspection/admin/${state.id}/history`);
+    if (res.ok && body && body.success) renderHistory(body.data || [], body.notice);
+    else $('history-list').textContent = "Impossible de charger l'historique.";
+  } catch (e) { $('history-list').textContent = "Impossible de charger l'historique."; }
+}
+
+/* ========================= تحميل التقرير ========================= */
+async function loadReport({ keepAlert = false } = {}) {
+  if (!keepAlert) clearAlert();
+  try {
+    const { res, body } = await api(`/inspection/admin/${state.id}`);
+    $('loading-box').classList.add('d-none');
+
+    if (res.status === 401 || res.status === 403) { showAlert('danger', 'Accès refusé : cette page est réservée à l\'administrateur. Veuillez vous reconnecter.'); return false; }
+    if (res.status === 404) { showAlert('danger', 'Rapport introuvable.'); return false; }
+    if (!res.ok || !body || !body.success) { showAlert('danger', (body && body.error) || `Erreur serveur (${res.status}).`); return false; }
+
+    state.data = body.data;
+    renderHeader();
+    renderSections();
+    $('editor').classList.remove('d-none');
+    return true;
+  } catch (err) {
+    console.error(err);
+    $('loading-box').classList.add('d-none');
+    showAlert('danger', 'Impossible de contacter le serveur. Vérifiez votre connexion.');
+    return false;
+  }
+}
+
+/* ========================= التشغيل ========================= */
+document.addEventListener('DOMContentLoaded', async () => {
+  const raw = new URLSearchParams(location.search).get('id');
+  const id = /^\d+$/.test(raw || '') ? Number(raw) : null;
+
+  // الشريط الجانبي + الخروج
+  let overlay = document.querySelector('.sidebar-overlay');
+  if (!overlay) { overlay = el('div', 'sidebar-overlay'); document.body.appendChild(overlay); }
+  const sidebar = document.querySelector('.sidebar');
+  $('mobile-sidebar-toggle')?.addEventListener('click', () => { sidebar?.classList.add('show'); overlay.classList.add('show'); });
+  const closeSb = () => { sidebar?.classList.remove('show'); overlay.classList.remove('show'); };
+  $('sidebar-close-btn')?.addEventListener('click', closeSb);
+  overlay.addEventListener('click', closeSb);
+  $('logout-btn')?.addEventListener('click', () => { localStorage.removeItem('verifcar_admin_user'); localStorage.removeItem('token'); window.location.href = '../Auth/index.html'; });
+
+  // أزرار الحفظ
+  $('save-btn').addEventListener('click', openReview);
+  $('confirm-save-btn').addEventListener('click', doSave);
+  $('reset-btn').addEventListener('click', () => { if (state.data) { renderSections(); clearAlert(); } });
+  window.addEventListener('beforeunload', (e) => { if (state.inputs.length && dirtyInputs().length > 0) { e.preventDefault(); e.returnValue = ''; } });
+
+  if (!id) {
+    $('loading-box').classList.add('d-none');
+    showAlert('danger', 'Identifiant de rapport manquant ou invalide. Ouvrez cette page depuis la liste des rapports.');
+    return;
+  }
+  state.id = id;
+  if (await loadReport()) await loadHistory();
+});
+</script>
+
+</body>
+</html>

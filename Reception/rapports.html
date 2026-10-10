@@ -18,7 +18,7 @@
       <div>
         <div class="d-flex align-items-center gap-2 mb-4 px-2">
           <img src="../img/IMG_7697.png" alt="VérifCar Logo" style="max-height: 45px; object-fit: contain;">
-          <div><h6 class="fw-bold mb-0 text-dark">VerifCar</h6><small class="text-muted fs-12">v1.0 - Admin</small></div>
+          <div><h6 class="fw-bold mb-0 text-dark">VerifCar</h6><small class="text-muted fs-12">v1.0 - Reception</small></div>
         </div>
         
           <button class="btn-close d-lg-none" id="sidebar-close-btn"></button>
@@ -26,9 +26,10 @@
         <div class="menu-label">RECEPTION</div>
         <ul class="nav nav-pills flex-column mb-3">
           <li class="nav-item"><a href="index.html" class="nav-link text-secondary"><i class="bi bi-grid-1x2 me-2"></i> Tableau de bord</a></li>
-          <li class="nav-item"><a href="clients.html" class="nav-link text-secondary"><i class="bi bi-car-front me-2"></i> Clients & Véhicules</a></li>
-          <li class="nav-item"><a href="rapports.html" class="nav-link active"><i class="bi bi-file-earmark-bar-graph me-2"></i> Rapports D'Inspection</a></li>
-           <li class="nav-item"><a href="toutsrnd.html" class="nav-link text-secondary"><i class="bi bi-file-earmark-bar-graph me-2"></i>les Rendez-vous</a></li>
+          <li class="nav-item"><a href="calendar.html" class="nav-link text-secondary"><i class="bi bi-calendar-week me-2"></i> Planning & RDV</a></li>
+          <li class="nav-item"><a href="toutsrnd.html" class="nav-link text-secondary"><i class="bi bi-calendar-check me-2"></i> Les Rendez-vous</a></li>
+          <li class="nav-item"><a href="clients.html" class="nav-link text-secondary"><i class="bi bi-car-front me-2"></i> Clients &amp; Véhicules</a></li>
+          <li class="nav-item"><a href="rapports.html" class="nav-link active"><i class="bi bi-file-earmark-bar-graph me-2"></i> Rapports d'Inspection</a></li>
         </ul>
       </div>
 
@@ -37,7 +38,7 @@
           <div class="avatar bg-primary text-white rounded-circle" id="admin-avatar">--</div>
           <div>
             <h6 class="mb-0 fw-bold fs-14" id="admin-name">Chargement...</h6>
-            <small class="text-muted fs-12">Reception</small>
+            <small class="text-muted fs-12">Réception</small>
           </div>
         </div>
         <button id="logout-btn" class="btn btn-link text-danger p-0 fs-5" title="Déconnexion"><i class="bi bi-box-arrow-right"></i></button>
@@ -53,7 +54,7 @@
     </button>
     <img src="../img/IMG_7697.png" alt="VerifCar Logo" style="max-height: 38px;">
   </div>
-  <div class="avatar bg-primary text-white rounded-circle shadow-sm d-flex align-items-center justify-content-center" style="width: 34px; height: 34px; font-size: 13px;">RC</div>
+  <div class="avatar bg-primary text-white rounded-circle shadow-sm d-flex align-items-center justify-content-center" style="width: 34px; height: 34px; font-size: 13px;" id="mobile-avatar">RC</div>
 </header>
 
       <div class="mb-4">
@@ -62,78 +63,47 @@
       </div>
 
       <div class="card border-0 shadow-sm p-4 rounded-4 bg-white">
-        <table class="table table-hover align-middle custom-table">
-          <thead>
-            <tr>
-              <th>N° RAPPORT</th>
-              <th>CLIENT</th>
-              <th>VÉHICULE</th>
-              <th>TECHNICIEN</th>
-              <th>DATE</th>
-              <th class="text-end">ACTIONS</th>
-            </tr>
-          </thead>
-          <tbody id="reports-table-body">
-            <tr><td colspan="6" class="text-center text-muted py-4">Chargement des rapports...</td></tr>
-          </tbody>
-        </table>
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
+          <div class="d-flex align-items-center gap-2">
+            <h5 class="fw-bold text-dark mb-0 fs-6">Rapports</h5>
+            <span class="badge bg-light text-dark border" id="result-count">0</span>
+          </div>
+          <div class="input-group input-group-sm search-box w-100" style="max-width: 300px;">
+            <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-search"></i></span>
+            <input type="text" id="search-input" class="form-control bg-light border-start-0" placeholder="Rechercher client, véhicule, n°..." autocomplete="off">
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle custom-table mb-0">
+            <thead>
+              <tr>
+                <th>N° RAPPORT</th>
+                <th>CLIENT</th>
+                <th>VÉHICULE</th>
+                <th>TECHNICIEN</th>
+                <th>STATUT</th>
+                <th>DATE</th>
+                <th class="text-end">ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody id="reports-table-body">
+              <tr><td colspan="7" class="text-center text-muted py-4">Chargement des rapports...</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </main>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="reception.js"></script>
-<script>
-   function loadAdminProfile() {
-    const userSessionRaw = localStorage.getItem('verifcar_reception_user')
-                         || localStorage.getItem('verifcar_user')
-                         || localStorage.getItem('verifcar_admin_user');
-    const userSession = userSessionRaw ? JSON.parse(userSessionRaw) : null;
+  <script>
+const API_URL = 'https://romantic-enjoyment-production-f458.up.railway.app/api';
+let reportsList = [];
+let searchTerm = '';
+let redirecting = false;
 
-    if (userSession) {
-      const adminFullName = userSession.fullName || userSession.full_name || 'Admin';
-      if (document.getElementById('admin-name')) {
-        document.getElementById('admin-name').innerText = adminFullName;
-      }
-      if (document.getElementById('admin-avatar')) {
-        document.getElementById('admin-avatar').innerText = adminFullName.charAt(0).toUpperCase();
-      }
-    } else {
-      if (document.getElementById('admin-name')) document.getElementById('admin-name').innerText = 'Administrateur';
-      if (document.getElementById('admin-avatar')) document.getElementById('admin-avatar').innerText = 'AD';
-    }
-  }
-
-  document.addEventListener('DOMContentLoaded', () => {
-
-    loadAdminProfile();
-    fetchAndRenderReports();
-  // إنشاء الطبقة الخلفية (Overlay) عند فتح القائمة في الهاتف
-  let overlay = document.querySelector('.sidebar-overlay');
-  if (!overlay) {
-    overlay = document.createElement('div');
-    overlay.className = 'sidebar-overlay';
-    document.body.appendChild(overlay);
-  }
-
-  const sidebar = document.querySelector('.sidebar');
-  const toggleBtn = document.getElementById('mobile-sidebar-toggle');
-  const closeBtn = document.getElementById('sidebar-close-btn');
-
-  function openSidebar() {
-    sidebar?.classList.add('show');
-    overlay?.classList.add('show');
-  }
-
-  function closeSidebar() {
-    sidebar?.classList.remove('show');
-    overlay?.classList.remove('show');
-  }
-
-  toggleBtn?.addEventListener('click', openSidebar);
-  closeBtn?.addEventListener('click', closeSidebar);
-  overlay?.addEventListener('click', closeSidebar);
-});
+const $ = (id) => document.getElementById(id);
+const getAuthToken = () => localStorage.getItem('token') || '';
 
 // تنظيف أي نص قبل إدراجه كـ innerHTML (يمنع حقن HTML)
 function escapeHtml(str) {
@@ -141,95 +111,135 @@ function escapeHtml(str) {
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   }[ch]));
 }
+function normalizeText(s) {
+  return String(s ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+// تاريخ السيرفر بلا إزاحة زمنية (new Date("YYYY-MM-DD HH:MM:SS") لا يعمل على Safari)
+function formatDateFr(raw) {
+  const m = String(raw || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : '--/--/----';
+}
+
+function getSession() {
+  for (const key of ['verifcar_reception_user', 'verifcar_user', 'verifcar_admin_user']) {
+    try {
+      const session = JSON.parse(localStorage.getItem(key) || 'null');
+      if (session && ['ADMIN', 'RECEPTION'].includes(String(session.role || '').toUpperCase())) return session;
+    } catch (e) { /* جلسة تالفة */ }
+  }
+  return null;
+}
+function redirectToLogin(message) {
+  if (redirecting) return;
+  redirecting = true;
+  if (message) alert(message);
+  window.location.href = '../Auth/index.html';
+}
+function checkAuth() {
+  const session = getSession();
+  if (!session || !getAuthToken()) { redirectToLogin('Accès non autorisé.'); return false; }
+  const name = session.fullName || session.full_name || 'Réception';
+  if ($('admin-name')) $('admin-name').textContent = name;
+  ['admin-avatar', 'mobile-avatar'].forEach((id) => { if ($(id)) $(id).textContent = name.charAt(0).toUpperCase(); });
+  return true;
+}
+
+function messageRow(iconClass, colorClass, html) {
+  return `<tr><td colspan="7" class="text-center ${colorClass} py-4"><i class="bi ${iconClass} fs-4 d-block mb-2"></i>${html}</td></tr>`;
+}
+
+function renderReports() {
+  const tableBody = $('reports-table-body');
+  const list = reportsList.filter((r) => !searchTerm || normalizeText([
+    `rep-${r.id}`, r.id, r.client_name, r.client_phone, r.brand, r.model, r.plate, r.technician_name
+  ].join(' ')).includes(searchTerm));
+
+  if ($('result-count')) $('result-count').textContent = list.length;
+
+  if (list.length === 0) {
+    tableBody.innerHTML = messageRow('bi-file-earmark-x', 'text-muted', searchTerm ? 'Aucun rapport ne correspond à cette recherche.' : 'Aucun rapport trouvé dans la base de données.');
+    return;
+  }
+
+  tableBody.innerHTML = list.map((report) => {
+    const id = Number(report.id);
+    const done = report.status === 'COMPLETED';
+    return `
+      <tr>
+        <td class="fw-bold text-primary">#REP-${id}</td>
+        <td>
+          <div class="fw-bold">${escapeHtml(report.client_name || 'Non spécifié')}</div>
+          <small class="text-muted">${escapeHtml(report.client_phone || '')}</small>
+        </td>
+        <td>
+          <div class="fw-bold">${escapeHtml(report.brand || '')} ${escapeHtml(report.model || '')}</div>
+          <small class="text-muted">${escapeHtml(report.plate || 'Sans immatriculation')}</small>
+        </td>
+        <td><span class="badge bg-light text-dark border">${escapeHtml(report.technician_name || 'Technicien')}</span></td>
+        <td><span class="badge ${done ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning-emphasis'}">${done ? 'Terminé' : 'En cours'}</span></td>
+        <td>${formatDateFr(report.created_at)}</td>
+        <td class="text-end">
+          <button onclick="printReport(${id})" class="btn btn-sm btn-outline-primary shadow-sm">
+            <i class="bi bi-printer-fill me-1"></i> Voir / Imprimer
+          </button>
+        </td>
+      </tr>`;
+  }).join('');
+}
 
 async function fetchAndRenderReports() {
-  const tableBody = document.getElementById('reports-table-body');
-  if (!tableBody) return;
-
+  const tableBody = $('reports-table-body');
   try {
-    const token = getAuthToken();
-    if (!token) {
-      tableBody.innerHTML = `
-        <tr><td colspan="6" class="text-center text-warning py-4">
-          <i class="bi bi-shield-lock fs-4 d-block mb-2"></i>
-          Accès non autorisé.<br>Veuillez vous connecter.
-        </td></tr>`;
+    const response = await fetch(`${API_URL}/inspection/all`, {
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getAuthToken()}` }
+    });
+
+    if (response.status === 401 || response.status === 403) {
+      tableBody.innerHTML = messageRow('bi-shield-lock', 'text-warning', 'Session expirée.<br>Veuillez vous reconnecter.');
       return;
     }
-
-    const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
-    const response = await fetch(`${API_URL}/inspection/all`, { method: 'GET', headers });
-    let result = {};
-    try { result = await response.json(); } catch (e) {}
-
-    if (response.status === 401) {
-      tableBody.innerHTML = `
-        <tr><td colspan="6" class="text-center text-warning py-4">
-          <i class="bi bi-shield-lock fs-4 d-block mb-2"></i>
-          Session expirée.<br>Veuillez vous reconnecter.
-        </td></tr>`;
-      return;
-    }
-
     if (!response.ok) {
-      tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">Erreur serveur (${response.status})</td></tr>`;
+      tableBody.innerHTML = messageRow('bi-exclamation-triangle', 'text-danger', `Erreur serveur (${response.status})`);
       return;
     }
 
-    const reportsList = Array.isArray(result) ? result : (result.data || []);
-
-    if (reportsList.length === 0) {
-      tableBody.innerHTML = `
-        <tr><td colspan="6" class="text-center text-muted py-4">
-          <i class="bi bi-file-earmark-x fs-4 d-block mb-2"></i>
-          Aucun rapport trouvé dans la base de données.
-        </td></tr>`;
-      return;
-    }
-
-    tableBody.innerHTML = reportsList.map(report => {
-      const reportDate = new Date(report.created_at || Date.now()).toLocaleDateString('fr-FR');
-      return `
-        <tr>
-          <td class="fw-bold text-primary">#REP-${report.id}</td>
-          <td>
-            <div class="fw-bold">${escapeHtml(report.client_name || 'Non spécifié')}</div>
-            <small class="text-muted">${escapeHtml(report.client_phone || '')}</small>
-          </td>
-          <td>
-            <div class="fw-bold">${escapeHtml(report.brand || '')} ${escapeHtml(report.model || '')}</div>
-            <small class="text-muted">${escapeHtml(report.plate || 'Sans immatriculation')}</small>
-          </td>
-          <td><span class="badge bg-light text-dark border">${escapeHtml(report.technician_name || 'Technicien')}</span></td>
-          <td>${reportDate}</td>
-          <td class="text-end">
-            <button onclick="printReport(${report.id})" class="btn btn-sm btn-outline-primary shadow-sm">
-              <i class="bi bi-printer-fill me-1"></i> Voir / Imprimer
-            </button>
-          </td>
-        </tr>`;
-    }).join('');
+    const result = await response.json();
+    reportsList = Array.isArray(result) ? result : (result.data || []);
+    renderReports();
   } catch (error) {
     console.error('Erreur lors du chargement des rapports:', error);
-    tableBody.innerHTML = `
-      <tr><td colspan="6" class="text-center text-danger py-4">
-        <i class="bi bi-wifi-off fs-4 d-block mb-2"></i> Erreur de connexion au serveur.
-      </td></tr>`;
+    tableBody.innerHTML = messageRow('bi-wifi-off', 'text-danger', 'Erreur de connexion au serveur.');
   }
 }
 
 function printReport(reportId) {
   if (!reportId) return;
-  const printWindow = window.open(`carrosserie-report.html?id=${reportId}`, '_blank');
-  if (printWindow) {
-    printWindow.focus();
-  } else {
-    alert('يرجى السماح بالنوافذ المنبثقة (Pop-ups) لفتح التقرير للطباعة.');
-  }
+  const printWindow = window.open(`carrosserie-report.html?id=${encodeURIComponent(reportId)}`, '_blank');
+  if (printWindow) printWindow.focus();
+  else alert("Veuillez autoriser les fenêtres pop-up pour ouvrir le rapport à imprimer.");
 }
 
-</script>
+document.addEventListener('DOMContentLoaded', () => {
+  if (!checkAuth()) return;
 
+  $('logout-btn')?.addEventListener('click', () => {
+    ['token', 'verifcar_reception_user', 'verifcar_user', 'verifcar_admin_user'].forEach((k) => localStorage.removeItem(k));
+    window.location.href = '../Auth/index.html';
+  });
+  $('search-input')?.addEventListener('input', (e) => { searchTerm = normalizeText(e.target.value.trim()); renderReports(); });
+
+  // القائمة الجانبية على الهاتف
+  let overlay = document.querySelector('.sidebar-overlay');
+  if (!overlay) { overlay = document.createElement('div'); overlay.className = 'sidebar-overlay'; document.body.appendChild(overlay); }
+  const sidebar = document.querySelector('.sidebar');
+  const closeSidebar = () => { sidebar?.classList.remove('show'); overlay.classList.remove('show'); };
+  $('mobile-sidebar-toggle')?.addEventListener('click', () => { sidebar?.classList.add('show'); overlay.classList.add('show'); });
+  $('sidebar-close-btn')?.addEventListener('click', closeSidebar);
+  overlay.addEventListener('click', closeSidebar);
+
+  fetchAndRenderReports();
+});
+  </script>
 
 </body>
 </html>

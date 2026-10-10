@@ -1,94 +1,114 @@
+/* =====================================================================
+   Réception — fiche de contrôle imprimable (prise.de.rendez-vous.html)
+   ===================================================================== */
 const API_URL = 'https://romantic-enjoyment-production-f458.up.railway.app/api';
 
-document.addEventListener('DOMContentLoaded', () => {
-  const rawUser = localStorage.getItem('verifcar_reception_user')
-               || localStorage.getItem('verifcar_user')
-               || localStorage.getItem('verifcar_admin_user');
-  const token = localStorage.getItem('token') || '';
+// <helpers>  دوال نقية بدون DOM (قابلة للاختبار)
+const pad2 = (n) => String(n).padStart(2, '0');
 
-  if (!rawUser || !token) {
+// نص تاريخ السيرفر -> Date محلي بلا إزاحة زمنية (new Date("YYYY-MM-DD HH:MM:SS") لا يعمل على Safari/iOS)
+function parseLocalAppointmentDate(dateStr) {
+  if (!dateStr) return null;
+  const parts = String(dateStr).split(/[- :T]/);
+  if (parts.length < 5) return null;
+  const [year, month, day, hours, minutes] = parts.map((p) => parseInt(p, 10));
+  if ([year, month, day, hours, minutes].some(Number.isNaN)) return null;
+  return new Date(year, month - 1, day, hours, minutes, 0);
+}
+
+// ورقة تُسلَّم للعميل: أرقام فرنسية ثابتة مهما كانت لغة متصفح الجهاز (toLocaleString() الافتراضي قد يطبع أرقاماً هندية عربية)
+const fmtMoney = (n) => `${Number(n || 0).toLocaleString('fr-FR')} DZD`;
+const fmtDate = (d) => `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}/${d.getFullYear()}`;
+const fmtTime = (d) => `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+
+// القيم الافتراضية من الخادم لا تُطبع كأنها بيانات حقيقية
+function cleanVehicleText(name) {
+  return String(name ?? '').replace(/non\s+sp[ée]cifi[ée]/gi, '').replace(/\binconnu\b/gi, '').replace(/\s+/g, ' ').trim();
+}
+function cleanPlateText(plate, vin) {
+  const p = String(plate ?? '').trim();
+  if (!p || /non\s+sp[ée]cifi[ée]/i.test(p) || (vin && p === String(vin).trim())) return '';
+  return p;
+}
+// </helpers>
+
+const $ = (id) => document.getElementById(id);
+const setText = (id, text) => { const el = $(id); if (el) el.textContent = text; };
+
+function getSession() {
+  for (const key of ['verifcar_reception_user', 'verifcar_user', 'verifcar_admin_user']) {
+    try {
+      const session = JSON.parse(localStorage.getItem(key) || 'null');
+      if (session && ['ADMIN', 'RECEPTION'].includes(String(session.role || '').toUpperCase())) return session;
+    } catch (e) { /* جلسة تالفة */ }
+  }
+  return null;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (!getSession() || !localStorage.getItem('token')) {
     alert('Accès non autorisé.');
     window.location.href = '../Auth/index.html';
     return;
   }
-
   loadAppointmentDetails();
 });
 
 async function loadAppointmentDetails() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const appointmentId = urlParams.get('id');
-
+  const appointmentId = new URLSearchParams(window.location.search).get('id');
   if (!appointmentId) {
-    alert('معرّف الموعد مفقود (ID Introuvable)');
+    alert('Identifiant du rendez-vous manquant.');
     return;
   }
 
   try {
-    const token = localStorage.getItem('token') || '';
     const res = await fetch(`${API_URL}/admin/appointments`, {
-      headers: { 'Authorization': `Bearer ${token}` }
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token') || ''}` }
     });
-    if (!res.ok) throw new Error('فشل جلب البيانات من السيرفر');
+    if (res.status === 401 || res.status === 403) {
+      alert('Session expirée. Veuillez vous reconnecter.');
+      window.location.href = '../Auth/index.html';
+      return;
+    }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
     const appointments = await res.json();
-    
-    // طباعة البيانات في الكونسول للفحص عند الحاجة
-    console.log("البيانات القادمة من السيرفر:", appointments);
-
-    const rdv = appointments.find(item => String(item.id) === String(appointmentId));
-
+    const rdv = (Array.isArray(appointments) ? appointments : []).find((item) => String(item.id) === String(appointmentId));
     if (!rdv) {
-      alert('لم يتم العثور على الموعد المطلوب');
+      alert('Rendez-vous introuvable.');
       return;
     }
 
     // 1. المرجع والتاريخ
-    document.getElementById('doc-ref').innerText = `VC-${String(rdv.id).padStart(4, '0')}`;
-    document.getElementById('doc-issue-date').innerText = new Date().toLocaleDateString('fr-FR');
+    setText('doc-ref', `VC-${String(rdv.id).padStart(4, '0')}`);
+    setText('doc-issue-date', fmtDate(new Date()));
 
-    // 2. اسم العميل ورقم الهاتف
-    const clientName = rdv.client_name || rdv.clientName || rdv.full_name || rdv.title || 'N/A';
-    const clientPhone = rdv.phone || rdv.client_phone || rdv.extendedProps?.phone || '--';
+    // 2. العميل والسيارة
+    setText('client-name', rdv.client_name || rdv.clientName || rdv.full_name || 'N/A');
+    setText('client-phone', rdv.phone || rdv.client_phone || '--');
+    setText('car-model', cleanVehicleText(rdv.vehicle_name) || 'Non renseigné');
+    setText('car-matricule', cleanPlateText(rdv.license_plate, rdv.VIN || rdv.vin) || 'Non renseignée');
+    setText('services-list', rdv.service_type || 'VÉRIFICATION COMPLÈTE');
 
-    // 3. نوع السيارة والترقيم (تغطية كل الاحتمالات)
-    const carModel = (rdv.vehicle_name && rdv.vehicle_name.trim() !== '' && rdv.vehicle_name !== '--') 
-  ? rdv.vehicle_name 
-  : (rdv.car_make_model || rdv.car_model || rdv.vehicle || 'Non Spécifié');
-    
-    const carMatricule = rdv.car_matricule || rdv.license_plate || rdv.vin || rdv.extendedProps?.vin || 'Non Spécifié';
-    const serviceType = rdv.service_type || rdv.extendedProps?.serviceType || 'VÉRIFICATION COMPLÈTE';
-
-    document.getElementById('client-name').innerText = clientName;
-    document.getElementById('client-phone').innerText = clientPhone;
-    document.getElementById('car-model').innerText = carModel;
-    document.getElementById('car-matricule').innerText = carMatricule;
-    document.getElementById('services-list').innerText = serviceType;
-
-    // 4. تاريخ الموعد والتوقيت
-    const rdvDateRaw = rdv.appointment_date || rdv.start || rdv.date;
-    if (rdvDateRaw) {
-      const dateObj = new Date(rdvDateRaw);
-      document.getElementById('rdv-date').innerText = dateObj.toLocaleDateString('fr-FR');
-      document.getElementById('rdv-time').innerText = dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    // 3. تاريخ الموعد والتوقيت
+    const rdvDate = parseLocalAppointmentDate(rdv.appointment_date || rdv.start || rdv.date);
+    if (rdvDate) {
+      setText('rdv-date', fmtDate(rdvDate));
+      setText('rdv-time', fmtTime(rdvDate));
     }
 
-    // 5. الأسعار والحسابات
-    const total = parseFloat(rdv.total_amount || rdv.total_price || rdv.totalAmount || rdv.extendedProps?.totalAmount) || 0;
-    const versement = parseFloat(rdv.versement || rdv.versement_amount || rdv.extendedProps?.versement) || 0;
-    const reste = total - versement;
+    // 4. الأسعار
+    const total = parseFloat(rdv.total_amount) || 0;
+    const versement = parseFloat(rdv.versement) || 0;
+    setText('price-total', fmtMoney(total));
+    setText('price-versement', fmtMoney(versement));
+    setText('price-reste', fmtMoney(Math.max(0, total - versement)));
 
-    document.getElementById('price-total').innerText = `${total.toLocaleString()} DZD`;
-    document.getElementById('price-versement').innerText = `${versement.toLocaleString()} DZD`;
-    document.getElementById('price-reste').innerText = `${reste.toLocaleString()} DZD`;
-
-    // 6. الملاحظات
-    if (document.getElementById('vehicle-remarks')) {
-      document.getElementById('vehicle-remarks').innerText = rdv.notes || rdv.vehicle_notes || rdv.extendedProps?.notes || 'Aucune remarque spécifique.';
-    }
+    // 5. الملاحظات (يُرجعها الخادم الآن؛ كانت الخانة تبقى فارغة دائماً)
+    setText('vehicle-remarks', (rdv.notes || '').trim() || 'Aucune remarque spécifique.');
 
   } catch (error) {
     console.error('Erreur lors du chargement de la fiche:', error);
-    alert('حدث خطأ أثناء تحميل بيانات الفاتورة.');
+    alert('Erreur lors du chargement des données de la fiche.');
   }
 }

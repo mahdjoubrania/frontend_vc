@@ -1,262 +1,248 @@
+/* =====================================================================
+   Réception — liste de tous les rendez-vous (toutsrnd.html)
+   ===================================================================== */
 const API_URL = 'https://romantic-enjoyment-production-f458.up.railway.app/api';
+const PAGE_SIZE = 50;
 
-let appointmentsData = [];
-let currentCalendarDate = new Date();
+let allAppointments = [];
+let visibleCount = PAGE_SIZE;
+const filters = { period: 'all', status: 'all', term: '' };
+let redirecting = false;
 
-// ==========================================
-// 1. INITIALIZATION & AUTH CHECK
-// ==========================================
-document.addEventListener('DOMContentLoaded', () => {
-  checkAuth();
-  loadAllAppointments();
-  setupEventListeners();
-});
-
-function getAuthToken() {
-  return localStorage.getItem('token') || '';
-}
-
-// تنظيف أي نص قبل إدراجه كـ innerHTML (يمنع حقن HTML من بيانات العملاء/المركبات)
+// <helpers>  دوال نقية بدون DOM (قابلة للاختبار)
 function escapeHtml(str) {
   return String(str ?? '').replace(/[&<>"']/g, (ch) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   }[ch]));
 }
-
-function checkAuth() {
-  const rawUser = localStorage.getItem('verifcar_reception_user') 
-               || localStorage.getItem('verifcar_user') 
-               || localStorage.getItem('verifcar_admin_user');
-  
-  const token = getAuthToken();
-  const allowedRoles = ['ADMIN', 'RECEPTION'];
-
-  if (!rawUser || !token) {
-    alert('Accès non autorisé.');
-    window.location.href = '../Auth/index.html';
-    return;
-  }
-
-  const userSession = JSON.parse(rawUser);
-  const userRole = (userSession.role || '').toUpperCase();
-
-  if (!allowedRoles.includes(userRole)) {
-    alert('Accès non autorisé.');
-    window.location.href = '../Auth/index.html';
-    return;
-  }
-
-  const nameEl = document.getElementById('admin-name') || document.getElementById('receptionist-name');
-  if (nameEl && (userSession.fullName || userSession.full_name)) {
-    nameEl.innerText = userSession.fullName || userSession.full_name;
-  }
-
-  const avatarEl = document.getElementById('admin-avatar');
-  if (avatarEl && (userSession.fullName || userSession.full_name)) {
-    const name = userSession.fullName || userSession.full_name;
-    avatarEl.innerText = name.charAt(0).toUpperCase();
-  }
+function normalizeText(s) {
+  return String(s ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
+function pad2(n) { return String(n).padStart(2, '0'); }
+function localDateStr(d) { return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; }
 
-// ==========================================
-// 2. FETCH ALL APPOINTMENTS DATA
-// ==========================================
-async function loadAllAppointments() {
-  try {
-    // استدعاء API لجلب جميع المواعيد المسجلة (من القديم إلى الجديد أو العكس حسب الـ Controller)
-    const res = await fetch(`${API_URL}/admin/appointments`, {
-      headers: {
-        'Authorization': `Bearer ${getAuthToken()}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (res.ok) {
-      appointmentsData = await res.json();
-      renderAppointmentsTable(appointmentsData);
-      renderCalendarView();
-    } else if (res.status === 401 || res.status === 403) {
-      alert('Session expirée. Veuillez vous reconnecter.');
-      window.location.href = '../Auth/index.html';
-    }
-  } catch (error) {
-    console.error('Erreur lors du chargement de tous les rendez-vous:', error);
-  }
-}
-
+// نص تاريخ السيرفر -> Date محلي بلا إزاحة زمنية (يعمل على Safari أيضاً)
 function parseLocalAppointmentDate(dateStr) {
   if (!dateStr) return null;
-  const parts = dateStr.split(/[- : T]/);
+  const parts = String(dateStr).split(/[- :T]/);
   if (parts.length < 5) return null;
-
-  const year = parseInt(parts[0], 10);
-  const month = parseInt(parts[1], 10) - 1;
-  const day = parseInt(parts[2], 10);
-  const hours = parseInt(parts[3], 10);
-  const minutes = parseInt(parts[4], 10);
-
-  return new Date(year, month, day, hours, minutes, 0);
+  const [year, month, day, hours, minutes] = parts.map((p) => parseInt(p, 10));
+  if ([year, month, day, hours, minutes].some(Number.isNaN)) return null;
+  return new Date(year, month - 1, day, hours, minutes, 0);
 }
 
-// ==========================================
-// 3. RENDER TABLE & CALENDAR
-// ==========================================
-function renderAppointmentsTable(data) {
-  const tbody = document.getElementById('rdv-table-body');
+function cleanVehicleText(name) {
+  return String(name ?? '').replace(/non\s+sp[ée]cifi[ée]/gi, '').replace(/\binconnu\b/gi, '').replace(/\s+/g, ' ').trim();
+}
+function cleanPlateText(plate, vin) {
+  const p = String(plate ?? '').trim();
+  if (!p || /non\s+sp[ée]cifi[ée]/i.test(p) || (vin && p === String(vin).trim())) return '';
+  return p;
+}
+const fmtMoney = (n) => `${Number(n || 0).toLocaleString('fr-FR')} DZD`;
+
+function statusGroup(status) {
+  switch (String(status || '').toUpperCase()) {
+    case 'COMPLETED': return 'done';
+    case 'IN_WORKSHOP': case 'IN_PROGRESS': case 'INCOMPLETE': return 'progress';
+    case 'CANCELLED': case 'CANCELED': case 'ANNULE': case 'NO_SHOW': case 'ABSENT': return 'cancelled';
+    default: return 'pending';   // PENDING و READY_FOR_WORKSHOP
+  }
+}
+const STATUS_LABEL = {
+  pending: ['En attente', 'bg-warning-subtle text-warning-emphasis'],
+  progress: ['En cours', 'bg-primary-subtle text-primary'],
+  done: ['Terminé', 'bg-success-subtle text-success'],
+  cancelled: ['Annulé', 'bg-danger-subtle text-danger']
+};
+
+// بداية الأسبوع = السبت (دوام الورشة: السبت → الأربعاء)
+function weekStart(now) {
+  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  d.setDate(d.getDate() - ((d.getDay() + 1) % 7));
+  return d;
+}
+
+function periodRange(period, now = new Date()) {
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if (period === 'today') return [startOfDay, new Date(startOfDay.getTime() + 86400000)];
+  if (period === 'week') { const s = weekStart(now); return [s, new Date(s.getTime() + 7 * 86400000)]; }
+  if (period === 'month') return [new Date(now.getFullYear(), now.getMonth(), 1), new Date(now.getFullYear(), now.getMonth() + 1, 1)];
+  return null;
+}
+
+function applyFilters(list, f, now = new Date()) {
+  const range = periodRange(f.period, now);
+  const term = f.term;
+  return list.filter((item) => {
+    if (f.status !== 'all' && statusGroup(item.status) !== f.status) return false;
+    if (range) {
+      const d = parseLocalAppointmentDate(item.appointment_date);
+      if (!d || d < range[0] || d >= range[1]) return false;
+    }
+    if (term) {
+      const hay = normalizeText([item.client_name, item.phone, item.vehicle_name, item.license_plate, item.VIN, item.service_type].join(' '));
+      if (!hay.includes(term)) return false;
+    }
+    return true;
+  });
+}
+
+// الفترات القادمة (اليوم/الأسبوع) تُرتَّب تصاعدياً، والبقية الأحدث أولاً
+function sortForPeriod(list, period) {
+  const key = (i) => { const d = parseLocalAppointmentDate(i.appointment_date); return d ? d.getTime() : 0; };
+  const asc = period === 'today' || period === 'week';
+  return [...list].sort((a, b) => (asc ? key(a) - key(b) : key(b) - key(a)));
+}
+// </helpers>
+
+/* ========================= الجلسة ========================= */
+const $ = (id) => document.getElementById(id);
+const getAuthToken = () => localStorage.getItem('token') || '';
+
+function getSession() {
+  for (const key of ['verifcar_reception_user', 'verifcar_user', 'verifcar_admin_user']) {
+    try {
+      const session = JSON.parse(localStorage.getItem(key) || 'null');
+      if (session && ['ADMIN', 'RECEPTION'].includes(String(session.role || '').toUpperCase())) return session;
+    } catch (e) { /* جلسة تالفة */ }
+  }
+  return null;
+}
+
+function redirectToLogin(message) {
+  if (redirecting) return;
+  redirecting = true;
+  if (message) alert(message);
+  window.location.href = '../Auth/index.html';
+}
+
+function checkAuth() {
+  const session = getSession();
+  if (!session || !getAuthToken()) { redirectToLogin('Accès non autorisé.'); return false; }
+  const name = session.fullName || session.full_name;
+  if (name) {
+    ['admin-name', 'receptionist-name'].forEach((id) => { const el = $(id); if (el) el.textContent = name; });
+    ['admin-avatar', 'mobile-avatar'].forEach((id) => { const el = $(id); if (el) el.textContent = name.charAt(0).toUpperCase(); });
+  }
+  return true;
+}
+
+/* ========================= البيانات ========================= */
+function showLoadError(message) { const b = $('load-error'); if (b) { b.textContent = message; b.classList.remove('d-none'); } }
+function hideLoadError() { $('load-error')?.classList.add('d-none'); }
+
+async function loadAllAppointments() {
+  try {
+    const res = await fetch(`${API_URL}/admin/appointments`, {
+      headers: { 'Authorization': `Bearer ${getAuthToken()}`, 'Content-Type': 'application/json' }
+    });
+    if (res.status === 401 || res.status === 403) { redirectToLogin('Session expirée. Veuillez vous reconnecter.'); return; }
+    if (!res.ok) { showLoadError(`Impossible de charger les rendez-vous (erreur ${res.status}).`); return; }
+
+    const data = await res.json();
+    allAppointments = Array.isArray(data) ? data : [];
+    hideLoadError();
+    render();
+  } catch (error) {
+    console.error('Erreur lors du chargement de tous les rendez-vous:', error);
+    showLoadError('Connexion au serveur impossible.');
+  }
+}
+
+/* ========================= العرض ========================= */
+function paymentCell(item) {
+  const total = Number(item.total_amount) || 0;
+  const rest = Math.max(0, total - (Number(item.versement) || 0));
+  const st = item.payment_status;
+  if (st === 'FULLY_PAID') return '<span class="badge bg-success-subtle text-success">Payé</span>';
+  const badge = st === 'ADVANCE_PAID'
+    ? '<span class="badge bg-warning-subtle text-warning-emphasis">Avance</span>'
+    : '<span class="badge bg-danger-subtle text-danger">Non payé</span>';
+  return `${badge}${rest > 0 ? `<div class="fs-11 text-muted mt-1">Reste : ${fmtMoney(rest)}</div>` : ''}`;
+}
+
+function rowHtml(item) {
+  const id = Number(item.id);
+  const d = parseLocalAppointmentDate(item.appointment_date);
+  const dateFormatted = d ? `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}/${d.getFullYear()}` : '--/--/----';
+  const timeFormatted = d ? `${pad2(d.getHours())}:${pad2(d.getMinutes())}` : '--:--';
+  const [label, cls] = STATUS_LABEL[statusGroup(item.status)];
+  const reason = statusGroup(item.status) === 'cancelled' && item.cancel_reason
+    ? `<div class="fs-11 text-muted mt-1">${escapeHtml(item.cancel_reason)}</div>` : '';
+
+  const vehicle = cleanVehicleText(item.vehicle_name) || 'Véhicule non précisé';
+  const plate = cleanPlateText(item.license_plate, item.VIN);
+
+  return `
+    <tr>
+      <td class="fw-bold text-dark">${escapeHtml(item.client_name || 'N/A')}</td>
+      <td>${escapeHtml(item.phone || 'N/A')}</td>
+      <td>
+        <div class="fw-semibold">${escapeHtml(vehicle)}</div>
+        <small class="text-muted">${escapeHtml(plate)}</small>
+      </td>
+      <td>
+        <div><i class="bi bi-calendar-event me-1 text-muted"></i>${dateFormatted}</div>
+        <small class="text-muted"><i class="bi bi-clock me-1"></i>${timeFormatted}</small>
+      </td>
+      <td><span class="badge bg-light text-dark border">${escapeHtml(item.service_type || 'Inspection')}</span></td>
+      <td><span class="badge ${cls}">${label}</span>${reason}</td>
+      <td>${paymentCell(item)}</td>
+      <td class="text-end">
+        <a class="btn btn-sm btn-outline-secondary me-1" title="Voir au planning" href="calendar.html?date=${d ? localDateStr(d) : ''}"><i class="bi bi-calendar-week"></i></a>
+        <button class="btn btn-sm btn-outline-primary" title="Imprimer Fiche" onclick="printAppointment(${id})"><i class="bi bi-printer"></i></button>
+      </td>
+    </tr>`;
+}
+
+function render() {
+  const tbody = $('rdv-table-body');
   if (!tbody) return;
 
-  if (data.length === 0) {
+  const list = sortForPeriod(applyFilters(allAppointments, filters), filters.period);
+  const shown = list.slice(0, visibleCount);
+
+  const counter = $('result-count');
+  if (counter) counter.textContent = list.length;
+
+  if (list.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="6" class="text-center py-4 text-muted">
-          <i class="bi bi-inbox fs-3 d-block mb-2"></i>
-          Aucun rendez-vous trouvé
+        <td colspan="8" class="text-center py-4 text-muted">
+          <i class="bi bi-inbox fs-3 d-block mb-2"></i>Aucun rendez-vous trouvé
         </td>
       </tr>`;
-    return;
-  }
-
-  tbody.innerHTML = data.map(item => {
-    const appDateRaw = item.appointment_date || item.start || item.appointmentDate;
-    const appDate = parseLocalAppointmentDate(appDateRaw);
-    
-    // تنسيق عرض التاريخ والساعة بشكل واضح
-    const dateFormatted = appDate 
-      ? appDate.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
-      : '--/--/----';
-
-    const timeFormatted = appDate 
-      ? appDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      : '--:--';
-
-    const clientName = item.client_name || item.title || item.clientName || 'N/A';
-    const phone = item.phone || item.extendedProps?.phone || 'N/A';
-    const vehicle = item.vehicle_name || item.extendedProps?.vehicle || item.carModel || 'Véhicule';
-    const licensePlate = item.license_plate || item.VIN || item.extendedProps?.vin || item.vin || '';
-    const service = item.service_type || item.extendedProps?.serviceType || item.typedeverification || 'Inspection';
-
-    return `
-      <tr>
-        <td class="fw-bold text-dark">${escapeHtml(clientName)}</td>
-        <td>${escapeHtml(phone)}</td>
-        <td>
-          <div class="fw-semibold">${escapeHtml(vehicle)}</div>
-          <small class="text-muted">${escapeHtml(licensePlate)}</small>
-        </td>
-        <td>
-          <div><i class="bi bi-calendar-event me-1 text-muted"></i>${dateFormatted}</div>
-          <small class="text-muted"><i class="bi bi-clock me-1"></i>${timeFormatted}</small>
-        </td>
-        <td><span class="badge bg-light text-dark border">${escapeHtml(service)}</span></td>
-        <td class="text-end">
-          <button class="btn btn-sm btn-outline-primary me-1" title="Imprimer Fiche" onclick="printAppointment('${item.id}')">
-            <i class="bi bi-printer"></i>
-          </button>
-        </td>
-      </tr>
-    `;
-  }).join('');
-}
-
-function renderCalendarView() {
-  const monthYearEl = document.getElementById('calendar-month-year');
-  const gridEl = document.getElementById('calendar-grid');
-  if (!gridEl) return;
-
-  const year = currentCalendarDate.getFullYear();
-  const month = currentCalendarDate.getMonth();
-
-  if (monthYearEl) {
-    monthYearEl.innerText = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(currentCalendarDate);
-  }
-  gridEl.innerHTML = '';
-
-  const firstDay = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  for (let i = 0; i < (firstDay === 0 ? 6 : firstDay - 1); i++) {
-    gridEl.innerHTML += `<div class="calendar-day bg-light opacity-50"></div>`;
-  }
-
-  for (let day = 1; day <= daysInMonth; day++) {
-    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    const dayAppointments = appointmentsData.filter(a => {
-      const d = a.appointment_date || a.start || a.appointmentDate;
-      return d && d.startsWith(dateStr);
-    });
-
-    let appListHtml = dayAppointments.map(a => `
-      <div class="bg-primary text-white fs-11 p-1 rounded mb-1 text-truncate" title="${escapeHtml(a.client_name || a.title || a.clientName)}">
-        ${escapeHtml(a.client_name || a.title || a.clientName)}
-      </div>
-    `).join('');
-
-    gridEl.innerHTML += `
-      <div class="calendar-day">
-        <div class="fw-bold text-secondary mb-1">${day}</div>
-        ${appListHtml}
-      </div>
-    `;
-  }
-}
-
-// ==========================================
-// 4. LISTENERS & UTILS
-// ==========================================
-function setupEventListeners() {
-  // Logout
-  const logoutBtn = document.getElementById('logout-btn');
-  if (logoutBtn) {
-    logoutBtn.addEventListener('click', () => {
-      localStorage.removeItem('token');
-      localStorage.removeItem('verifcar_reception_user');
-      localStorage.removeItem('verifcar_user');
-      localStorage.removeItem('verifcar_admin_user');
-      window.location.href = '../Auth/index.html';
-    });
-  }
-
-  // البحث في الجدول
-  const searchInput = document.getElementById('search-input');
-  if (searchInput) {
-    searchInput.addEventListener('input', (e) => {
-      const term = e.target.value.toLowerCase().trim();
-      const filtered = appointmentsData.filter(item => {
-        const client = (item.client_name || item.title || item.clientName || '').toLowerCase();
-        const phone = (item.phone || item.extendedProps?.phone || '');
-        const car = (item.vehicle_name || item.extendedProps?.vehicle || item.carModel || '').toLowerCase();
-        return client.includes(term) || phone.includes(term) || car.includes(term);
-      });
-      renderAppointmentsTable(filtered);
-    });
-  }
-}
-
-function toggleView(view) {
-  const tableContainer = document.getElementById('view-table-container');
-  const calendarContainer = document.getElementById('view-calendar-container');
-  const btnTable = document.getElementById('btn-view-table');
-  const btnCalendar = document.getElementById('btn-view-calendar');
-
-  if (view === 'table') {
-    tableContainer.classList.remove('d-none');
-    calendarContainer.classList.add('d-none');
-    btnTable.classList.add('active');
-    btnCalendar.classList.remove('active');
   } else {
-    tableContainer.classList.add('d-none');
-    calendarContainer.classList.remove('d-none');
-    btnCalendar.classList.add('active');
-    btnTable.classList.remove('active');
-    renderCalendarView();
+    tbody.innerHTML = shown.map(rowHtml).join('');
   }
-}
 
-function changeMonth(delta) {
-  currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
-  renderCalendarView();
+  const remaining = list.length - shown.length;
+  $('load-more-box')?.classList.toggle('d-none', remaining <= 0);
+  const moreBtn = $('load-more-btn');
+  if (moreBtn) moreBtn.textContent = `Afficher plus (${remaining} restants)`;
 }
 
 function printAppointment(id) {
-  window.open(`prise.de.rendez-vous.html?id=${id}`, '_blank');
+  window.open(`prise.de.rendez-vous.html?id=${encodeURIComponent(id)}`, '_blank', 'noopener');
 }
+
+/* ========================= الأحداث ========================= */
+function setupEventListeners() {
+  $('logout-btn')?.addEventListener('click', () => {
+    ['token', 'verifcar_reception_user', 'verifcar_user', 'verifcar_admin_user'].forEach((k) => localStorage.removeItem(k));
+    window.location.href = '../Auth/index.html';
+  });
+
+  const refilter = () => { visibleCount = PAGE_SIZE; render(); };
+  $('filter-period')?.addEventListener('change', (e) => { filters.period = e.target.value; refilter(); });
+  $('filter-status')?.addEventListener('change', (e) => { filters.status = e.target.value; refilter(); });
+  $('search-input')?.addEventListener('input', (e) => { filters.term = normalizeText(e.target.value.trim()); refilter(); });
+  $('load-more-btn')?.addEventListener('click', () => { visibleCount += PAGE_SIZE; render(); });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (!checkAuth()) return;
+  setupEventListeners();
+  loadAllAppointments();
+});
