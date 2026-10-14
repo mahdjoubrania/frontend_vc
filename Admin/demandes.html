@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VerifCar - Demandes en ligne (Admin)</title>
+  <link href="../img/IMG_7697.png" rel="icon">
+  <link href="../img/IMG_7697.png" rel="apple-touch-icon">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .tab-pill { border: 1px solid #e2e8f0; background: #fff; color: #334155; border-radius: 999px; padding: 6px 14px; font-size: .82rem; font-weight: 600; }
+    .tab-pill.active { background: var(--primary-color); border-color: var(--primary-color); color: #fff; }
+    .tab-pill .count { background: rgba(0,0,0,.08); border-radius: 999px; padding: 0 8px; margin-left: 6px; font-size: .72rem; }
+    .tab-pill.active .count { background: rgba(255,255,255,.25); }
+    .req-row { cursor: pointer; }
+    .req-row.is-new td:first-child { box-shadow: inset 3px 0 0 #f59e0b; }
+    .vin { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .03em; }
+    .receipt-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; min-height: 260px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .receipt-box img { max-width: 100%; max-height: 62vh; object-fit: contain; cursor: zoom-in; }
+    .receipt-box iframe { width: 100%; height: 62vh; border: 0; }
+    .info-grid small { display: block; color: #94a3b8; font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .3px; }
+    .info-grid strong { color: #0f172a; font-size: .9rem; word-break: break-word; }
+    .tx-box { background: #fff7ed; border: 1px dashed #fb923c; border-radius: 10px; padding: 10px 12px; }
+  </style>
+</head>
+<body>
+
+<!-- Mobile Top Navigation Bar -->
+<header class="mobile-navbar justify-content-between align-items-center px-3 py-2 bg-white border-bottom shadow-sm">
+  <div class="d-flex align-items-center gap-2">
+    <button class="btn btn-light border-0" id="sidebar-toggle-btn" type="button"><i class="bi bi-list fs-3 text-dark"></i></button>
+    <img src="../img/IMG_7697.png" alt="VérifCar Logo" style="max-height: 38px; object-fit: contain;">
+  </div>
+  <div class="avatar bg-primary text-white rounded-circle shadow-sm d-flex align-items-center justify-content-center" style="width: 34px; height: 34px; font-size: 13px;" id="mobile-avatar">RC</div>
+</header>
+
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+<div class="d-flex">
+  <aside id="sidebar" class="sidebar p-3 d-flex flex-column justify-content-between">
+    <div>
+      <div class="d-flex align-items-center gap-2 mb-4 px-2">
+        <img src="../img/IMG_7697.png" alt="VérifCar Logo" style="max-height: 45px; object-fit: contain;">
+        <div><h6 class="fw-bold mb-0 text-dark">VerifCar</h6><small class="text-muted fs-12">v1.0 - Admin</small></div>
+      </div>
+      <button class="btn-close d-lg-none" id="sidebar-close-btn"></button>
+      <div class="menu-label">WORKSPACE</div>
+      <ul class="nav nav-pills flex-column mb-3">
+        <li class="nav-item"><a href="index.html" class="nav-link text-secondary"><i class="bi bi-grid-1x2 me-2"></i> Tableau de bord</a></li>
+        <li class="nav-item"><a href="rdv-analytics.html" class="nav-link text-secondary"><i class="bi bi-bar-chart-line me-2"></i> Statistiques RDV</a></li>
+        <li class="nav-item"><a href="calendar.html" class="nav-link text-secondary"><i class="bi bi-calendar-week me-2"></i> Planning & RDV</a></li>
+        <li class="nav-item"><a href="demandes.html" class="nav-link active d-flex align-items-center" data-online-bookings-link><i class="bi bi-globe2 me-2"></i> Demandes en ligne <span class="badge rounded-pill bg-warning text-dark ms-auto d-none" data-online-bookings-badge>0</span></a></li>
+      </ul>
+      <div class="menu-label">GESTION</div>
+      <ul class="nav nav-pills flex-column">
+        <li class="nav-item"><a href="clients.html" class="nav-link text-secondary"><i class="bi bi-car-front me-2"></i> Clients & Véhicules</a></li>
+        <li class="nav-item"><a href="reports.html" class="nav-link text-secondary"><i class="bi bi-file-earmark-bar-graph me-2"></i> Rapports D'Inspection</a></li>
+        <li class="nav-item"><a href="tarifs.html" class="nav-link text-secondary"><i class="bi bi-tags me-2"></i> Tarifs &amp; Promotions</a></li>
+        <li class="nav-item"><a href="users.html" class="nav-link text-secondary"><i class="bi bi-people me-2"></i> Utilisateurs Système</a></li>
+      </ul>
+    </div>
+    <div class="user-profile p-2 rounded d-flex align-items-center justify-content-between border-top pt-3">
+      <div class="d-flex align-items-center gap-2">
+        <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" id="admin-avatar" style="width: 35px; height: 35px;">--</div>
+        <div>
+          <h6 class="mb-0 fw-bold fs-14" id="admin-name">Chargement...</h6>
+          <small class="text-muted fs-12">Administrateur</small>
+        </div>
+      </div>
+      <button id="logout-btn" class="btn btn-link text-danger p-0 fs-5" title="Déconnexion"><i class="bi bi-box-arrow-right"></i></button>
+    </div>
+  </aside>
+
+  <main class="main-content flex-grow-1 p-3 p-lg-4">
+    <header class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+      <div>
+        <h4 class="fw-bold text-dark mb-1 fs-5">Demandes de réservation en ligne</h4>
+        <p class="text-muted small mb-0">Vérifiez le reçu BaridiMob, puis validez la demande pour créer le rendez-vous — ou refusez-la.</p>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <small class="text-muted" id="last-updated"></small>
+        <button type="button" id="refresh-btn" class="btn btn-light border btn-sm px-3"><i class="bi bi-arrow-clockwise me-1"></i> Actualiser</button>
+      </div>
+    </header>
+
+    <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 bg-white">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
+        <div class="d-flex flex-wrap gap-2" id="status-tabs" role="tablist">
+          <button class="tab-pill active" data-status="PENDING_REVIEW">À vérifier<span class="count" id="count-PENDING_REVIEW">0</span></button>
+          <button class="tab-pill" data-status="ACCEPTED">Validées<span class="count" id="count-ACCEPTED">0</span></button>
+          <button class="tab-pill" data-status="REJECTED">Refusées<span class="count" id="count-REJECTED">0</span></button>
+          <button class="tab-pill" data-status="ALL">Toutes<span class="count" id="count-ALL">0</span></button>
+        </div>
+        <div class="input-group input-group-sm search-box w-100" style="max-width: 300px;">
+          <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-search"></i></span>
+          <input type="text" id="search-input" class="form-control bg-light border-start-0" placeholder="Nom, tél, VIN, réf, transaction..." autocomplete="off">
+        </div>
+      </div>
+
+      <div id="load-error" class="alert alert-warning py-2 small d-none" role="alert"></div>
+
+      <div class="table-responsive">
+        <table class="table align-middle custom-table mb-0 table-hover">
+          <thead>
+            <tr>
+              <th>RÉFÉRENCE</th>
+              <th>CLIENT</th>
+              <th>VÉHICULE / VIN</th>
+              <th>RDV DEMANDÉ</th>
+              <th>PRESTATION</th>
+              <th>N° TRANSACTION</th>
+              <th>STATUT</th>
+              <th class="text-end">ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody id="req-table-body">
+            <tr><td colspan="8" class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm me-2"></span>Chargement...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal : détail + reçu + décision -->
+<div class="modal fade" id="reqModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <div class="modal-header border-bottom p-3 px-4">
+        <div>
+          <small class="text-muted fw-semibold">Demande en ligne</small>
+          <h5 class="fw-bold modal-title text-dark mb-0"><span id="m-ref">VC-…</span> <span id="m-status" class="badge ms-2"></span></h5>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+      </div>
+      <div class="modal-body p-3 p-md-4">
+        <div class="row g-4">
+          <!-- Reçu -->
+          <div class="col-lg-6">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h6 class="fw-bold mb-0"><i class="bi bi-receipt me-1 text-primary"></i> Reçu de paiement</h6>
+              <a id="m-receipt-open" class="btn btn-sm btn-outline-secondary d-none" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right me-1"></i> Ouvrir</a>
+            </div>
+            <div class="receipt-box" id="m-receipt"><span class="text-muted small">Chargement du reçu...</span></div>
+            <div class="tx-box mt-3">
+              <small class="text-muted fw-semibold d-block">N° de transaction BaridiMob déclaré par le client</small>
+              <div class="d-flex align-items-center justify-content-between gap-2">
+                <strong class="vin fs-6" id="m-tx">-</strong>
+                <button type="button" class="btn btn-sm btn-light border" id="m-tx-copy"><i class="bi bi-clipboard"></i></button>
+              </div>
+              <small class="text-muted">Comparez-le avec le reçu et avec le relevé de votre compte CCP.</small>
+            </div>
+          </div>
+
+          <!-- Infos + décision -->
+          <div class="col-lg-6">
+            <div class="row g-3 info-grid mb-3">
+              <div class="col-6"><small>Client</small><strong id="m-name">-</strong></div>
+              <div class="col-6"><small>Téléphone</small><strong id="m-phone">-</strong></div>
+              <div class="col-6"><small>Véhicule</small><strong id="m-vehicle">-</strong></div>
+              <div class="col-6"><small>Immatriculation</small><strong id="m-plate">-</strong></div>
+              <div class="col-12"><small>VIN</small><strong class="vin" id="m-vin">-</strong></div>
+              <div class="col-6"><small>Prestation</small><strong id="m-service">-</strong></div>
+              <div class="col-6"><small>Langue du client</small><strong id="m-lang">-</strong></div>
+              <div class="col-6"><small>RDV demandé</small><strong id="m-date">-</strong></div>
+              <div class="col-6"><small>Reçue le</small><strong id="m-created">-</strong></div>
+              <div class="col-12"><small>Montant à payer en ligne (calculé par le système)</small><strong class="text-success" id="m-amount">-</strong></div>
+              <div class="col-12" id="m-message-wrap"><small>Remarque du client</small><strong id="m-message" style="white-space:pre-wrap;font-weight:500">-</strong></div>
+            </div>
+
+            <!-- Résultat (demande déjà traitée) -->
+            <div id="m-result" class="alert d-none mb-3"></div>
+
+            <!-- Décision -->
+            <div id="m-decision">
+              <div class="border rounded-3 p-3 mb-3">
+                <h6 class="fw-bold text-success mb-3"><i class="bi bi-check-circle me-1"></i> Valider et créer le rendez-vous</h6>
+                <div class="row g-2">
+                  <div class="col-6">
+                    <label class="form-label small text-muted fw-semibold mb-1">Date</label>
+                    <input type="date" id="a-date" class="form-control form-control-sm">
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label small text-muted fw-semibold mb-1">Heure</label>
+                    <input type="time" id="a-time" class="form-control form-control-sm" step="900">
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label small text-muted fw-semibold mb-1">Prix total (DZD)</label>
+                    <input type="number" id="a-total" class="form-control form-control-sm" min="0" step="1" inputmode="numeric" placeholder="ex. 9000">
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label small text-muted fw-semibold mb-1">Montant reçu (DZD) *</label>
+                    <input type="number" id="a-versement" class="form-control form-control-sm" min="0" step="1" inputmode="numeric" placeholder="Montant du reçu">
+                  </div>
+                </div>
+                <div id="a-warn" class="small text-warning-emphasis mt-2 d-none"></div>
+                <div id="a-error" class="small text-danger mt-2 d-none"></div>
+                <button type="button" id="accept-btn" class="btn btn-success w-100 mt-3 fw-bold"><i class="bi bi-check2-circle me-1"></i> Paiement vérifié — Valider</button>
+              </div>
+
+              <div class="border rounded-3 p-3">
+                <h6 class="fw-bold text-danger mb-2"><i class="bi bi-x-circle me-1"></i> Refuser la demande</h6>
+                <div class="d-flex flex-wrap gap-2 mb-2" id="reject-reasons">
+                  <button type="button" class="btn btn-sm btn-outline-secondary" data-reason="Reçu illisible ou incomplet">Reçu illisible</button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" data-reason="Paiement non reçu sur le compte">Paiement non reçu</button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" data-reason="Montant payé incorrect">Montant incorrect</button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" data-reason="Créneau indisponible">Créneau indisponible</button>
+                </div>
+                <input type="text" id="r-reason" class="form-control form-control-sm" maxlength="255" placeholder="Motif du refus (obligatoire)">
+                <div id="r-error" class="small text-danger mt-2 d-none"></div>
+                <button type="button" id="reject-btn" class="btn btn-outline-danger w-100 mt-2 fw-bold"><i class="bi bi-x-lg me-1"></i> Refuser</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-top p-3 px-4 bg-light rounded-bottom-4 justify-content-between">
+        <div class="d-flex gap-2">
+          <a id="m-call" class="btn btn-outline-primary btn-sm" href="#"><i class="bi bi-telephone me-1"></i> Appeler</a>
+          <a id="m-wa" class="btn btn-outline-success btn-sm" href="#" target="_blank" rel="noopener noreferrer"><i class="bi bi-whatsapp me-1"></i> WhatsApp</a>
+          <a id="m-print" class="btn btn-primary btn-sm d-none" href="#" target="_blank" rel="noopener"><i class="bi bi-printer me-1"></i> Fiche du RDV</a>
+        </div>
+        <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Fermer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="demandes.js"></script>
+<script src="online-bookings-badge.js"></script>
+</body>
+</html>

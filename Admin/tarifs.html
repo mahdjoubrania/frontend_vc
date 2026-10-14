@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VerifCar - Tarifs & Promotions</title>
+  <link href="../img/IMG_7697.png" rel="icon">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .sec-card { border: 0; border-radius: 18px; background: #fff; box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 6px 18px rgba(15,23,42,.05); padding: 1.25rem 1.25rem; }
+    .sec-title { font-weight: 800; font-size: 1.05rem; display: flex; align-items: center; gap: .5rem; }
+    .sec-title i { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; font-size: 1rem; }
+    .price-input { max-width: 130px; }
+    .lbl-input { min-width: 150px; }
+    .pill { font-size: .72rem; font-weight: 700; padding: .25rem .6rem; border-radius: 999px; display: inline-block; }
+    .pill-run { background: #dcfce7; color: #166534; } .pill-plan { background: #e0f2fe; color: #075985; }
+    .pill-exp { background: #f1f5f9; color: #64748b; } .pill-off { background: #fee2e2; color: #991b1b; }
+    .pill-auto { background: #dcfce7; color: #166534; } .pill-manual { background: #ede9fe; color: #5b21b6; }
+    .pill-none { background: #f1f5f9; color: #64748b; } .pill-excl { background: #fee2e2; color: #991b1b; }
+    .final-price { font-weight: 800; color: #0f172a; } .final-price s { color: #94a3b8; font-weight: 500; margin-left: .35rem; font-size: .85em; }
+    .rule-preview { background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px; padding: .75rem 1rem; font-size: .88rem; }
+    .row-dirty { background: #fffbeb !important; }
+    .table td, .table th { vertical-align: middle; }
+  </style>
+</head>
+<body class="bg-light">
+<div class="d-flex">
+  <aside id="sidebar" class="sidebar p-3 d-flex flex-column justify-content-between">
+    <div>
+      <div class="d-flex align-items-center gap-2 mb-4 px-2">
+        <img src="../img/IMG_7697.png" alt="VérifCar Logo" style="max-height: 45px; object-fit: contain;">
+        <div><h6 class="fw-bold mb-0 text-dark">VerifCar</h6><small class="text-muted fs-12">v1.0 - Admin</small></div>
+      </div>
+      <button class="btn-close d-lg-none" id="sidebar-close-btn"></button>
+      <div class="menu-label">WORKSPACE</div>
+      <ul class="nav nav-pills flex-column mb-3">
+        <li class="nav-item"><a href="index.html" class="nav-link text-secondary"><i class="bi bi-grid-1x2 me-2"></i> Tableau de bord</a></li>
+        <li class="nav-item"><a href="rdv-analytics.html" class="nav-link text-secondary"><i class="bi bi-bar-chart-line me-2"></i> Statistiques RDV</a></li>
+        <li class="nav-item"><a href="calendar.html" class="nav-link text-secondary"><i class="bi bi-calendar-week me-2"></i> Planning & RDV</a></li>
+        <li class="nav-item"><a href="demandes.html" class="nav-link text-secondary d-flex align-items-center" data-online-bookings-link><i class="bi bi-globe2 me-2"></i> Demandes en ligne <span class="badge rounded-pill bg-warning text-dark ms-auto d-none" data-online-bookings-badge>0</span></a></li>
+      </ul>
+      <div class="menu-label">GESTION</div>
+      <ul class="nav nav-pills flex-column">
+        <li class="nav-item"><a href="clients.html" class="nav-link text-secondary"><i class="bi bi-car-front me-2"></i> Clients & Véhicules</a></li>
+        <li class="nav-item"><a href="reports.html" class="nav-link text-secondary"><i class="bi bi-file-earmark-bar-graph me-2"></i> Rapports D'Inspection</a></li>
+        <li class="nav-item"><a href="tarifs.html" class="nav-link active"><i class="bi bi-tags me-2"></i> Tarifs &amp; Promotions</a></li>
+        <li class="nav-item"><a href="users.html" class="nav-link text-secondary"><i class="bi bi-people me-2"></i> Utilisateurs Système</a></li>
+      </ul>
+    </div>
+    <div class="user-profile p-2 rounded d-flex align-items-center justify-content-between border-top pt-3">
+      <div class="d-flex align-items-center gap-2">
+        <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" id="admin-avatar" style="width: 35px; height: 35px;">--</div>
+        <div>
+          <h6 class="mb-0 fw-bold fs-14" id="admin-name">Chargement...</h6>
+          <small class="text-muted fs-12">Administrateur</small>
+        </div>
+      </div>
+      <button id="logout-btn" class="btn btn-link text-danger p-0 fs-5" title="Déconnexion"><i class="bi bi-box-arrow-right"></i></button>
+    </div>
+  </aside>
+
+  <main class="main-content flex-grow-1 p-3 p-lg-4">
+    <header class="d-flex justify-content-between align-items-center mb-3">
+      <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-white border shadow-sm btn-sm d-lg-none" id="mobile-sidebar-toggle"><i class="bi bi-list fs-5"></i></button>
+        <div class="text-muted fs-14">Gestion <i class="bi bi-chevron-right mx-1" style="font-size:.65rem"></i> <span class="fw-bold text-dark">Tarifs &amp; Promotions</span></div>
+      </div>
+    </header>
+    <div class="mb-4">
+      <h2 class="fw-bold text-dark mb-1">Tarifs, promotions &amp; fidélité</h2>
+      <p class="text-muted mb-0">Les prix affichés sur le site et payés en ligne sont calculés à partir de ces réglages. Règle : le client obtient <b>la plus grande remise</b> entre la promotion en cours et sa remise fidélité (jamais les deux).</p>
+    </div>
+    <div id="load-error" class="alert alert-warning d-none"></div>
+
+    <!-- 1. Prix -->
+    <section class="sec-card mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div class="sec-title"><i class="bi bi-cash-coin bg-primary-subtle text-primary"></i> Prix des prestations</div>
+        <small class="text-muted">Prix vide = prestation <b>non réservable en ligne</b> (affichée « sur devis »).</small>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light"><tr class="fs-12 text-secondary">
+            <th>PRESTATION (FR / AR / EN)</th><th>PRIX DE BASE (DA)</th><th>PROMO EN COURS</th><th>PRIX AFFICHÉ</th><th class="text-center">EN LIGNE</th><th class="text-end">ACTION</th>
+          </tr></thead>
+          <tbody id="services-body"><tr><td colspan="6" class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm me-2"></span>Chargement...</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 2. Promotions -->
+    <section class="sec-card mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div class="sec-title"><i class="bi bi-percent bg-danger-subtle text-danger"></i> Promotions</div>
+        <button class="btn btn-primary btn-sm rounded-3 px-3" id="new-promo-btn"><i class="bi bi-plus-lg me-1"></i> Nouvelle promotion</button>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light"><tr class="fs-12 text-secondary">
+            <th>NOM</th><th>PRESTATION</th><th>REMISE</th><th>PÉRIODE</th><th>STATUT</th><th class="text-end">ACTIONS</th>
+          </tr></thead>
+          <tbody id="promos-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 3. Fidélité -->
+    <section class="sec-card mb-4">
+      <div class="sec-title mb-3"><i class="bi bi-award bg-warning-subtle text-warning-emphasis"></i> Clients fidèles</div>
+      <div class="row g-3 align-items-end mb-3">
+        <div class="col-md-3">
+          <div class="form-check form-switch fs-6">
+            <input class="form-check-input" type="checkbox" id="loy-enabled">
+            <label class="form-check-label fw-semibold" for="loy-enabled">Règle automatique activée</label>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <label class="form-label small text-muted fw-semibold mb-1">Inspections terminées requises</label>
+          <input type="number" id="loy-min" class="form-control" min="1" max="100" step="1">
+        </div>
+        <div class="col-6 col-md-3">
+          <label class="form-label small text-muted fw-semibold mb-1">Remise fidélité (%)</label>
+          <input type="number" id="loy-pct" class="form-control" min="1" max="90" step="0.5">
+        </div>
+        <div class="col-md-3"><button class="btn btn-success w-100" id="loy-save"><i class="bi bi-check2 me-1"></i> Enregistrer la règle</button></div>
+      </div>
+      <div class="rule-preview mb-3" id="loy-preview"></div>
+
+      <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+        <h6 class="fw-bold mb-0">Clients <span class="badge bg-light text-dark border" id="clients-count">0</span></h6>
+        <div class="d-flex gap-2 align-items-center">
+          <select id="clients-filter" class="form-select form-select-sm" style="width:auto">
+            <option value="all">Tous</option><option value="loyal">Bénéficiaires (remise &gt; 0)</option><option value="manual">Réglage manuel</option>
+          </select>
+          <div class="input-group input-group-sm" style="max-width:260px">
+            <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+            <input type="text" id="clients-search" class="form-control" placeholder="Nom ou téléphone…">
+          </div>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light"><tr class="fs-12 text-secondary">
+            <th>CLIENT</th><th>TÉLÉPHONE</th><th class="text-center">INSPECTIONS TERMINÉES</th><th>REMISE APPLIQUÉE</th><th>RÉGLAGE</th><th class="text-end">REMISE MANUELLE</th>
+          </tr></thead>
+          <tbody id="clients-body"></tbody>
+        </table>
+      </div>
+      <small class="text-muted d-block mt-2">Remise manuelle : un pourcentage forcé pour ce client (prioritaire sur la règle). <b>0 %</b> = client exclu. « Auto » = revenir à la règle.</small>
+    </section>
+  </main>
+</div>
+
+<!-- Modal promotion -->
+<div class="modal fade" id="promoModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content rounded-4 border-0 shadow" id="promo-form" novalidate>
+      <div class="modal-header border-0 pb-0"><h5 class="modal-title fw-bold" id="promo-modal-title">Nouvelle promotion</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <input type="hidden" id="p-id">
+        <div class="mb-3"><label class="form-label small fw-semibold">Nom (affiché sur le site)</label><input id="p-label" class="form-control" maxlength="100" placeholder="ex. Offre de lancement"></div>
+        <div class="row g-2 mb-3">
+          <div class="col-7"><label class="form-label small fw-semibold">Prestation</label><select id="p-service" class="form-select"></select></div>
+          <div class="col-5"><label class="form-label small fw-semibold">Remise (%)</label><input id="p-percent" type="number" class="form-control" min="1" max="90" step="0.5"></div>
+        </div>
+        <div class="row g-2 mb-2">
+          <div class="col-6"><label class="form-label small fw-semibold">Début (optionnel)</label><input id="p-start" type="date" class="form-control"></div>
+          <div class="col-6"><label class="form-label small fw-semibold">Fin incluse (optionnel)</label><input id="p-end" type="date" class="form-control"></div>
+        </div>
+        <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="p-active" checked><label class="form-check-label" for="p-active">Activée</label></div>
+        <div class="rule-preview" id="p-preview"></div>
+        <div class="text-danger small mt-2 d-none" id="p-error"></div>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Annuler</button>
+        <button type="submit" class="btn btn-primary px-4" id="p-save">Enregistrer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index:1100"><div id="toast" class="toast align-items-center text-bg-dark border-0" role="status"><div class="d-flex"><div class="toast-body" id="toast-body"></div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="tarifs.js"></script>
+<script src="online-bookings-badge.js"></script>
+</body>
+</html>
