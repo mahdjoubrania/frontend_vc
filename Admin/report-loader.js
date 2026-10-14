@@ -139,8 +139,29 @@ function setupAdminEditButton(inspectionId) {
 }
 
 // 4. عرض بيانات التقرير بالكامل
+// QR de vérification : uniquement pour une inspection terminée (le serveur décide)
+async function loadVerifyQR(inspectionId) {
+    const box = document.getElementById('verify-qr');
+    if (!box || !inspectionId || !window.VCQR) return;
+    try {
+        const API_URL = 'https://romantic-enjoyment-production-f458.up.railway.app/api';
+        const res = await fetch(`${API_URL}/inspection/verify-code/${encodeURIComponent(inspectionId)}`, {
+            headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+        });
+        if (!res.ok) return;
+        const j = await res.json();
+        if (!j.code || !j.url) return;                 // rapport non terminé → pas de QR
+        document.getElementById('verify-qr-img').innerHTML = window.VCQR.svg(j.url, 96);
+        document.getElementById('verify-qr-code').textContent = j.code;
+        box.hidden = false;
+    } catch (e) {
+        console.warn('QR de vérification indisponible :', e);
+    }
+}
+
 function renderFullReport(data) {
     setupAdminEditButton(data.id);
+    loadVerifyQR(data.inspection_id || data.id);
     // 0. معرض الصور الخمسة المرسومة (Tôle & Carrosserie) — الصفحة الأخيرة
     renderCarImagesGallery(data);
 

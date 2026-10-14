@@ -79,6 +79,11 @@
         .cover-header::before { content: ''; position: absolute; top: -40%; right: -15%; width: 75%; height: 180%; background: rgba(255,255,255,0.06) !important; transform: rotate(18deg); }
         .cover-header-content { position: relative; z-index: 2; display: flex; justify-content: space-between; align-items: flex-start; padding: 8mm 12mm; height: 100%; box-sizing: border-box; }
         .cover-logo { height: 38px; background: #ffffff !important; padding: 6px 10px; border-radius: 8px; }
+        .cover-head-right { display: flex; align-items: flex-start; gap: 10px; }
+        .verify-qr { background: #ffffff !important; border-radius: 8px; padding: 4px 4px 3px; text-align: center; width: 27mm; box-sizing: border-box; }
+        .verify-qr svg { display: block; width: 100%; height: auto; }
+        .verify-qr small { display: block; color: #0d1b3d !important; font-size: 6.5px; font-weight: 800; line-height: 1.25; letter-spacing: .2px; }
+        .verify-qr b { display: block; color: #0d6efd !important; font-size: 7.5px; font-family: monospace; letter-spacing: .5px; }
         .cover-tagline { color: #ffffff !important; font-size: 10px; font-weight: 700; text-align: right; letter-spacing: 1px; line-height: 1.6; opacity: 0.92; }
 
         .cover-title-block { display: flex; align-items: center; gap: 14px; padding: 7mm 12mm 1mm 12mm; }
@@ -144,7 +149,15 @@
         <div class="cover-header">
             <div class="cover-header-content">
                 <img src="../img/IMG_7697.png" alt="VerifCar Logo" class="cover-logo">
-                <div class="cover-tagline">VOTRE VÉHICULE<br>EN TOUTE CONFIANCE</div>
+                <div class="cover-head-right">
+                    <div class="cover-tagline">VOTRE VÉHICULE<br>EN TOUTE CONFIANCE</div>
+                    <!-- QR de vérification d'authenticité (rempli par report-loader.js si l'inspection est terminée) -->
+                    <div class="verify-qr" id="verify-qr" hidden>
+                        <div id="verify-qr-img"></div>
+                        <small>Scannez pour vérifier<br>l'authenticité</small>
+                        <b id="verify-qr-code"></b>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -359,6 +372,7 @@
         <div class="report-footer">Page 4 / 4 — VERIFCAR SARL — Oran, Algérie</div>
     </div>
 
+    <script src="vc-qr.js"></script>
     <script src="report-loader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

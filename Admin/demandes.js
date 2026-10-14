@@ -257,6 +257,7 @@ function openRequest(id) {
     result.innerHTML = r.status === 'ACCEPTED'
       ? `<i class="bi bi-check-circle me-1"></i> Validée${who}${when ? ` le ${escapeHtml(when)}` : ''}. Rendez-vous <b>#RDV-${Number(r.appointment_id) || '?'}</b> créé.`
       : `<i class="bi bi-x-circle me-1"></i> Refusée${who}${when ? ` le ${escapeHtml(when)}` : ''}.<br><b>Motif :</b> ${escapeHtml(r.reject_reason || '-')}`;
+    result.innerHTML += notifyLine(r.notify_status, r.notify_error);
   }
 
   // formulaire de validation
@@ -270,7 +271,8 @@ function openRequest(id) {
   $('m-call').href = `tel:${String(r.phone).replace(/[^\d+]/g, '')}`;
   const kind = r.status === 'ACCEPTED' ? 'accepted' : r.status === 'REJECTED' ? 'rejected' : 'pending';
   $('m-wa').classList.toggle('d-none', !wa);
-  if (wa) $('m-wa').href = `https://wa.me/${wa}?text=${encodeURIComponent(waMessage(r, kind, { reason: r.reject_reason }))}`;
+  // lien du serveur (contient le lien de suivi du client), sinon message local
+  if (wa) $('m-wa').href = r.wa_link || `https://wa.me/${wa}?text=${encodeURIComponent(waMessage(r, kind, { reason: r.reject_reason }))}`;
   const print = $('m-print');
   print.classList.toggle('d-none', !(r.status === 'ACCEPTED' && r.appointment_id));
   if (r.appointment_id) print.href = `${FICHE_URL}?id=${encodeURIComponent(r.appointment_id)}`;
@@ -289,6 +291,25 @@ function updateScheduleWarn() {
 function setBusy(btn, on, text) {
   if (on) { btn.dataset.label = btn.innerHTML; btn.disabled = true; btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>${text}`; }
   else { btn.disabled = false; if (btn.dataset.label) btn.innerHTML = btn.dataset.label; }
+}
+
+// Résultat de l'envoi WhatsApp automatique (serveur) → ligne d'information
+function notifyLine(status, error) {
+  if (status === 'SENT') return '<div class="mt-2 small"><i class="bi bi-whatsapp me-1"></i> Message WhatsApp envoyé automatiquement au client.</div>';
+  if (status === 'FAILED') return `<div class="mt-2 small text-danger"><i class="bi bi-exclamation-triangle me-1"></i> Envoi WhatsApp automatique échoué${error ? ' : ' + escapeHtml(error) : ''}. Utilisez le bouton WhatsApp ci-dessous.</div>`;
+  if (status === 'INVALID_PHONE') return '<div class="mt-2 small text-danger"><i class="bi bi-exclamation-triangle me-1"></i> Numéro de téléphone invalide pour WhatsApp.</div>';
+  return '';
+}
+
+// Après validation / refus : si le serveur a déjà envoyé le message, on le dit ;
+// sinon on propose d'ouvrir WhatsApp avec le message prêt.
+function afterDecision(notify, title, manualLink) {
+  const st = notify && notify.status;
+  if (st === 'SENT') { alert(`${title}\n\n✅ Le client a été prévenu automatiquement sur WhatsApp.`); return; }
+  const link = (notify && notify.wa_link) || manualLink;
+  if (!link) { alert(`${title}\n\n⚠ Numéro WhatsApp invalide : prévenez le client par téléphone.`); return; }
+  const why = st === 'FAILED' ? '\n\n⚠ L\'envoi automatique a échoué.' : '';
+  if (confirm(`${title}${why}\n\nEnvoyer le message au client sur WhatsApp ?`)) window.open(link, '_blank', 'noopener');
 }
 
 async function acceptCurrent() {
@@ -320,9 +341,8 @@ async function acceptCurrent() {
     await loadRequests();
     openRequest(req.id);   // réaffiche la demande avec son résultat + boutons WhatsApp / fiche
     const wa = waNumber(req.phone);
-    if (wa && confirm('Rendez-vous créé ✅\n\nEnvoyer la confirmation au client sur WhatsApp ?')) {
-      window.open(`https://wa.me/${wa}?text=${encodeURIComponent(waMessage(req, 'accepted', { date: `${date} ${time}` }))}`, '_blank', 'noopener');
-    }
+    afterDecision(body && body.notify, 'Rendez-vous créé ✅',
+      wa ? `https://wa.me/${wa}?text=${encodeURIComponent(waMessage(req, 'accepted', { date: `${date} ${time}` }))}` : null);
   } catch (e) {
     if (e.message !== '401') show('Connexion au serveur impossible.');
   } finally {
@@ -347,9 +367,8 @@ async function rejectCurrent() {
     await loadRequests();
     openRequest(req.id);
     const wa = waNumber(req.phone);
-    if (wa && confirm('Demande refusée.\n\nPrévenir le client sur WhatsApp ?')) {
-      window.open(`https://wa.me/${wa}?text=${encodeURIComponent(waMessage(req, 'rejected', { reason }))}`, '_blank', 'noopener');
-    }
+    afterDecision(body && body.notify, 'Demande refusée.',
+      wa ? `https://wa.me/${wa}?text=${encodeURIComponent(waMessage(req, 'rejected', { reason }))}` : null);
   } catch (e) {
     if (e.message !== '401') { err.textContent = 'Connexion au serveur impossible.'; err.classList.remove('d-none'); }
   } finally {
