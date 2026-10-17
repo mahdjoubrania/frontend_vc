@@ -1,24 +1,40 @@
 // 1. دالة جلب التوكين (Global)
+// قد يحتوي المتصفح على عدة جلسات (تقني / أدمين / استقبال)، بعضها منتهي الصلاحية.
+// نختار توكيناً غير منتهٍ، مع أولوية لجلسة القسم الحالي (Admin/ أو Reception/).
+function jwtExp(token) {
+    try {
+        const part = token.split('.')[1];
+        if (!part) return null;
+        const json = JSON.parse(atob(part.replace(/-/g, '+').replace(/_/g, '/')));
+        return typeof json.exp === 'number' ? json.exp * 1000 : null;
+    } catch (e) { return null; }
+}
+
 function getAuthToken() {
-    const sessionKeys = [
-        'verifcar_technician_user',
-        'verifcar_admin_user',
-        'verifcar_reception_user',
-        'verifcar_user'
-    ];
-    for (const key of sessionKeys) {
-        const sessionData = localStorage.getItem(key);
-        if (sessionData) {
-            try {
-                const parsed = JSON.parse(sessionData);
-                if (parsed.token) return parsed.token;
-                if (parsed.accessToken) return parsed.accessToken;
-            } catch (e) {
-                if (sessionData.length > 20) return sessionData;
-            }
+    const path = (location.pathname || '').toLowerCase();
+    let keys = ['verifcar_admin_user', 'verifcar_reception_user', 'verifcar_technician_user', 'verifcar_user'];
+    if (path.includes('/reception/')) keys = ['verifcar_reception_user', 'verifcar_admin_user', 'verifcar_technician_user', 'verifcar_user'];
+
+    const candidates = [];
+    for (const key of keys) {
+        const raw = localStorage.getItem(key);
+        if (!raw) continue;
+        try {
+            const parsed = JSON.parse(raw);
+            const t = parsed && (parsed.token || parsed.accessToken);
+            if (t) candidates.push(t);
+        } catch (e) {
+            if (raw.length > 20) candidates.push(raw);
         }
     }
-    return localStorage.getItem('token') || sessionStorage.getItem('token') || '';
+    ['token'].forEach((k) => {
+        const t = localStorage.getItem(k) || sessionStorage.getItem(k);
+        if (t) candidates.push(t);
+    });
+
+    const now = Date.now();
+    const valid = candidates.find((t) => { const exp = jwtExp(t); return exp === null || exp > now + 5000; });
+    return valid || candidates[0] || '';
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -154,13 +170,45 @@ async function loadVerifyQR(inspectionId) {
         document.getElementById('verify-qr-img').innerHTML = window.VCQR.svg(j.url, 96);
         document.getElementById('verify-qr-code').textContent = j.code;
         box.hidden = false;
+        const rb = document.getElementById('review-btn');     // inspection terminée → avis possible
+        if (rb) rb.classList.remove('d-none');
     } catch (e) {
         console.warn('QR de vérification indisponible :', e);
     }
 }
 
+// Bouton « Demander un avis » : visible si le QR est disponible (inspection terminée)
+function setupReviewButton(inspectionId) {
+    const btn = document.getElementById('review-btn');
+    if (!btn || !inspectionId) return;
+    btn.addEventListener('click', async () => {
+        btn.disabled = true;
+        try {
+            const API_URL = 'https://romantic-enjoyment-production-f458.up.railway.app/api';
+            const res = await fetch(`${API_URL}/inspection/review-link/${encodeURIComponent(inspectionId)}`, {
+                headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+            });
+            const j = await res.json().catch(() => ({}));
+            if (!res.ok) { alert(j.message || `Erreur ${res.status}`); return; }
+            if (j.status && j.status !== 'INVITED') {
+                if (!confirm('Ce client a déjà laissé son avis. Renvoyer quand même le lien ?')) return;
+            }
+            if (j.wa_link) window.open(j.wa_link, '_blank', 'noopener');
+            else {
+                try { await navigator.clipboard.writeText(j.url); } catch (e) { /* */ }
+                alert(`Numéro WhatsApp invalide.\nLien d'avis copié :\n${j.url}`);
+            }
+        } catch (e) {
+            alert('Connexion au serveur impossible.');
+        } finally {
+            btn.disabled = false;
+        }
+    });
+}
+
 function renderFullReport(data) {
     setupAdminEditButton(data.id);
+    setupReviewButton(data.inspection_id || data.id);
     loadVerifyQR(data.inspection_id || data.id);
     // 0. معرض الصور الخمسة المرسومة (Tôle & Carrosserie) — الصفحة الأخيرة
     renderCarImagesGallery(data);

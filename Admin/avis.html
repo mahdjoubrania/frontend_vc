@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VerifCar - Avis clients</title>
+  <link href="../img/IMG_7697.png" rel="icon">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .sec-card { border: 0; border-radius: 18px; background: #fff; box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 6px 18px rgba(15,23,42,.05); padding: 1.25rem; }
+    .stat { border-radius: 14px; background: #fff; box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 6px 18px rgba(15,23,42,.05); padding: .9rem 1rem; }
+    .stat b { font-size: 1.5rem; display: block; } .stat small { color: #64748b; font-weight: 600; }
+    .stars { color: #f59e0b; letter-spacing: 1px; white-space: nowrap; } .stars .off { color: #e2e8f0; }
+    .rev { border: 1px solid #e2e8f0; border-radius: 14px; padding: 1rem 1.1rem; background: #fff; }
+    .rev + .rev { margin-top: .75rem; }
+    .rev-text { white-space: pre-wrap; color: #1e293b; margin: .5rem 0; }
+    .pill { font-size: .72rem; font-weight: 700; padding: .25rem .6rem; border-radius: 999px; display: inline-block; }
+    .pill-PENDING { background: #fef3c7; color: #92400e; } .pill-APPROVED { background: #dcfce7; color: #166534; }
+    .pill-REJECTED { background: #fee2e2; color: #991b1b; } .pill-INVITED { background: #f1f5f9; color: #64748b; }
+    .nav-tabs .badge { font-size: .7rem; }
+  </style>
+</head>
+<body class="bg-light">
+<div class="d-flex">
+  <aside id="sidebar" class="sidebar p-3 d-flex flex-column justify-content-between">
+    <div>
+      <div class="d-flex align-items-center gap-2 mb-4 px-2">
+        <img src="../img/IMG_7697.png" alt="VérifCar Logo" style="max-height: 45px; object-fit: contain;">
+        <div><h6 class="fw-bold mb-0 text-dark">VerifCar</h6><small class="text-muted fs-12">v1.0 - Admin</small></div>
+      </div>
+      <button class="btn-close d-lg-none" id="sidebar-close-btn"></button>
+      <div class="menu-label">WORKSPACE</div>
+      <ul class="nav nav-pills flex-column mb-3">
+        <li class="nav-item"><a href="index.html" class="nav-link text-secondary"><i class="bi bi-grid-1x2 me-2"></i> Tableau de bord</a></li>
+        <li class="nav-item"><a href="rdv-analytics.html" class="nav-link text-secondary"><i class="bi bi-bar-chart-line me-2"></i> Statistiques RDV</a></li>
+        <li class="nav-item"><a href="calendar.html" class="nav-link text-secondary"><i class="bi bi-calendar-week me-2"></i> Planning & RDV</a></li>
+        <li class="nav-item"><a href="demandes.html" class="nav-link text-secondary d-flex align-items-center" data-online-bookings-link><i class="bi bi-globe2 me-2"></i> Demandes en ligne <span class="badge rounded-pill bg-warning text-dark ms-auto d-none" data-online-bookings-badge>0</span></a></li>
+      </ul>
+      <div class="menu-label">GESTION</div>
+      <ul class="nav nav-pills flex-column">
+        <li class="nav-item"><a href="clients.html" class="nav-link text-secondary"><i class="bi bi-car-front me-2"></i> Clients & Véhicules</a></li>
+        <li class="nav-item"><a href="reports.html" class="nav-link text-secondary"><i class="bi bi-file-earmark-bar-graph me-2"></i> Rapports D'Inspection</a></li>
+        <li class="nav-item"><a href="tarifs.html" class="nav-link text-secondary"><i class="bi bi-tags me-2"></i> Tarifs &amp; Promotions</a></li>
+        <li class="nav-item"><a href="avis.html" class="nav-link active"><i class="bi bi-star me-2"></i> Avis clients</a></li>
+        <li class="nav-item"><a href="users.html" class="nav-link text-secondary"><i class="bi bi-people me-2"></i> Utilisateurs Système</a></li>
+      </ul>
+    </div>
+    <div class="user-profile p-2 rounded d-flex align-items-center justify-content-between border-top pt-3">
+      <div class="d-flex align-items-center gap-2">
+        <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" id="admin-avatar" style="width: 35px; height: 35px;">--</div>
+        <div>
+          <h6 class="mb-0 fw-bold fs-14" id="admin-name">Chargement...</h6>
+          <small class="text-muted fs-12">Administrateur</small>
+        </div>
+      </div>
+      <button id="logout-btn" class="btn btn-link text-danger p-0 fs-5" title="Déconnexion"><i class="bi bi-box-arrow-right"></i></button>
+    </div>
+  </aside>
+
+  <main class="main-content flex-grow-1 p-3 p-lg-4">
+    <header class="d-flex justify-content-between align-items-center mb-3">
+      <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-white border shadow-sm btn-sm d-lg-none" id="mobile-sidebar-toggle"><i class="bi bi-list fs-5"></i></button>
+        <div class="text-muted fs-14">Gestion <i class="bi bi-chevron-right mx-1" style="font-size:.65rem"></i> <span class="fw-bold text-dark">Avis clients</span></div>
+      </div>
+    </header>
+    <div class="mb-4">
+      <h2 class="fw-bold text-dark mb-1">Avis clients</h2>
+      <p class="text-muted mb-0">Seuls les clients dont l'inspection est terminée peuvent laisser un avis (bouton <b>« Demander un avis »</b> sur le rapport). Un avis n'apparaît sur le site qu'après votre <b>approbation</b>. Le texte du client ne peut pas être modifié.</p>
+    </div>
+    <div id="load-error" class="alert alert-warning d-none"></div>
+
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-lg-3"><div class="stat"><small>Note moyenne publiée</small><b id="st-avg">--</b></div></div>
+      <div class="col-6 col-lg-3"><div class="stat"><small>Avis publiés</small><b id="st-approved">0</b></div></div>
+      <div class="col-6 col-lg-3"><div class="stat"><small>En attente de validation</small><b id="st-pending" class="text-warning">0</b></div></div>
+      <div class="col-6 col-lg-3"><div class="stat"><small>Invitations sans réponse</small><b id="st-invited">0</b></div></div>
+    </div>
+
+    <section class="sec-card">
+      <ul class="nav nav-tabs mb-3" id="tabs">
+        <li class="nav-item"><button class="nav-link active" data-status="PENDING">En attente <span class="badge bg-warning text-dark ms-1" id="b-PENDING">0</span></button></li>
+        <li class="nav-item"><button class="nav-link" data-status="APPROVED">Publiés <span class="badge bg-success ms-1" id="b-APPROVED">0</span></button></li>
+        <li class="nav-item"><button class="nav-link" data-status="REJECTED">Refusés <span class="badge bg-secondary ms-1" id="b-REJECTED">0</span></button></li>
+        <li class="nav-item"><button class="nav-link" data-status="INVITED">Invitations <span class="badge bg-light text-dark ms-1" id="b-INVITED">0</span></button></li>
+      </ul>
+      <div id="list"><div class="text-center text-muted py-5">Chargement...</div></div>
+    </section>
+  </main>
+</div>
+
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index:1100"><div id="toast" class="toast align-items-center text-bg-dark border-0" role="status"><div class="d-flex"><div class="toast-body" id="toast-body"></div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="avis.js"></script>
+<script src="online-bookings-badge.js"></script>
+</body>
+</html>
